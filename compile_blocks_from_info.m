@@ -63,7 +63,7 @@ for i = 1:size(currentInfo,1)
     end
     
     setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
-    setup.Tosca_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename);
+    setup.Tosca_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
     
     block = compile_block(setup);
 
@@ -72,7 +72,9 @@ for i = 1:size(currentInfo,1)
         visualize_block(block);
     end
     
+    disp('Saving...');
     cd(save_path)
     save(setup.block_name, 'block');
-    
-end        
+end       
+
+disp('Finished compiling all blocks.');

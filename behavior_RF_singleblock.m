@@ -1,16 +1,18 @@
-function [data] = behavior_RF_singleblock(setup)
+function [block] = behavior_RF_singleblock(block, setup)
+%Uses functions 
 
-display('Pulling out Tosca data...');
+disp('Pulling out Tosca data...');
 
 %Needed from setup:
 %Tosca_path
 %Tosca_session
 %Tosca_run
-%Imaging_set
-%Mousename ??
+%mousename
+%stim_protocol
+
+%% Go to Tosca folder and pull out files related to setup.Tosca_run
 
 cd(setup.Tosca_path)
-
 allfiles=dir('*Run*');
 
 countblock=1;
@@ -54,19 +56,13 @@ end
 [~,sortedIndex] = sort(runs);
 behaveblock = behaveblock(sortedIndex);
 
-bl=0;
-%a
-Var1=[]; Var2=[]; isLocoSound=[];sound_v1=[]; sound_v2=[];
-Imaging_Block_String = num2str(Imaging_Block(i));
-Imaging_Num =  sprintf( '%03d', Imaging_Block(i));
-b=setup.Tosca_Runs{a,1}(i);
-display(['Processing ' mouseID ': Block ' Imaging_Block_String ' Session ' Tosca_Session ' Run ' num2str(b)]);
+%% Read data from the run
 
-bl=bl+1;
-clear binfo inblock
+Var1=[]; Var2=[];
+b=setup.Tosca_run;
+
 [Data,Params] = tosca_read_run(behaveblock{b}); %Load block meta-data%%%HACK!!!!!
 inblock=trials(contains(trials,['Run' num2str(b) '-'])); %% added hyphen to eliminate double digit spurious entries...
-trialcount=0;
 
 if length(inblock)>length(Data)
     inblock=inblock(1:end-1);
@@ -93,36 +89,31 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
     end
 end
 
+%% Extract stimulus-specific variables
 
-
-%for RF
-%for q=1:length(setup.Tosca_Runs{a,i}(i))
-    for m = 1:length(Data)
-        if setup.stim_protocol==1
-            V1 = 0;
-            V2 = 0;
-            break
-        elseif setup.stim_protocol == 2
-            V1(i,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
-            V2(i,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
-        elseif setup.stim_protocol == 5
-            V1(i,m)  = Data{m}.Sound.Signal.SAM.Rate_Hz;
-            V2(i,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
-        elseif setup.stim_protocol == 3 %FM sweep
-            V1(i,m)  = Data{m}.Sound.Signal.FMSweep.Rate_oct_s;
-            V2(i,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
-        elseif setup.stim_protocol == 6
-            V1(i,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
-            V2(i,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
-        end
+for m = 1:length(Data)
+    if setup.stim_protocol==1
+        V1 = 0;
+        V2 = 0;
+        break
+    elseif setup.stim_protocol == 2
+        V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
+        V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
+    elseif setup.stim_protocol == 5
+        V1(1,m)  = Data{m}.Sound.Signal.SAM.Rate_Hz;
+        V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
+    elseif setup.stim_protocol == 3 %FM sweep
+        V1(1,m)  = Data{m}.Sound.Signal.FMSweep.Rate_oct_s;
+        V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
+    elseif setup.stim_protocol == 6
+        V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
+        V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
     end
-%end
+end
 
 
-%for noiseburst
+%% Check for tosca trials that are errors, and remove them from the data
 
-
-%ERROR: Check for tosca trials that are errors, and remove them from the data
 error_trials = {};
 for j=1:length(Data)
     if isequal(Data{j}.Result,'Error')
@@ -137,58 +128,35 @@ k = find(error_trials>0);
 if ~isempty(k)
     warning('Error trials found in Tosca data')
 end
-clear error_trials;
-
-
 
 New_sound_times(:,k)=[];
 if setup.stim_protocol==2
     V1(:,k)=[];
     V2(:,k)=[];
 end
-data.([mouseID]).(['ImagingBlock' Imaging_Num]).New_sound_times=New_sound_times;
-data.([mouseID]).(['ImagingBlock' Imaging_Num]).start_time=start_time;
-
-size(V1);
-
-%make an 'else' for noiseburst?
-
-
 
 Var1=[Var1,V1];
 Var2=[Var2,V2];
-clear V1 V2
 
+%% Pull out loco info
 
-%pull out loco info
-Tosca_Run_number = num2str(setup.Tosca_Runs{a,1}(i));
+Tosca_Run_number = num2str(setup.Tosca_run);
+Tosca_Session = num2str(setup.Tosca_session);
+mouseID = char(setup.mousename);
 loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']);%locomotor data
 loco_times = loco_data(:,1)-start_time;% I am only looking at column 1
 loco_times = loco_times(:,1)+abs(loco_times(1,1));
 loco_activity = (abs(loco_data(:,3)));
-data.([mouseID]).(['ImagingBlock' Imaging_Num]).loco_activity=loco_activity;
-data.([mouseID]).(['ImagingBlock' Imaging_Num]).loco_times=loco_times;
 
+%% Save everything to block
+%Format used to be: data.([mouseID]).(['ImagingBlock' Imaging_Num]).VARIABLE
+%And: data.([mouseID]).parameters
 
-
-
-
-
+block.New_sound_times = New_sound_times;
+block.start_time = start_time;
+block.parameters.variable1=Var1;%index of variable1 (frequency)
+block.parameters.variable2=Var2;%index of variable 2 (level)
+block.loco_activity = loco_activity;
+block.loco_times = loco_times;
 
 end
-data.([mouseID]).parameters.variable1=Var1;%index of variable1 (frequency)
-data.([mouseID]).parameters.variable2=Var2;%index of variable 2 (level)
-
-    %locomotor data
-    %     for i=1:length(Imaging_Block(a,:))
-    %         Tosca_Run_number = num2str(setup.Tosca_Runs(a,i));
-    %         loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']);%locomotor data
-    %         loco_times = loco_data(:,1)-start_time;% I am only looking at column 1
-    %         loco_times = loco_times(:,1)+abs(loco_times(1,1));
-    %         loco_activity = (abs(loco_data(:,3)));
-    %         data.([mouseID]).(['ImagingBlock' Imaging_Num]).loco_activity=loco_activity;
-    %         data.([mouseID]).(['ImagingBlock' Imaging_Num]).loco_times=loco_times;
-    %     end
-end
-end
-

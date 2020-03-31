@@ -43,13 +43,6 @@ SP = 15; %stim protocol (number corresponding to stim)
 ignore = [Info{:,I}]';
 currentInfo = Info(ignore == 0,:);
 
-
-%Find table rows that match stim_protocol
-stims = [Info{:,SP}]';
-matching_stims = stims == setup.stim_protocol;
-currentInfo = Info(matching_stims,:);
-
-
 % Create setup variable that will contain all the necessary information about the block
 
 % 

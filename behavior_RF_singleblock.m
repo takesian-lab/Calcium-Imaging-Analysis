@@ -111,7 +111,6 @@ for m = 1:length(Data)
     end
 end
 
-
 %% Check for tosca trials that are errors, and remove them from the data
 
 error_trials = {};
@@ -143,8 +142,8 @@ Var2=[Var2,V2];
 Tosca_Run_number = num2str(setup.Tosca_run);
 Tosca_Session = num2str(setup.Tosca_session);
 mouseID = char(setup.mousename);
-loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']);%locomotor data
-loco_times = loco_data(:,1)-start_time;% I am only looking at column 1
+loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']); %locomotor data
+loco_times = loco_data(:,1)-start_time; %I am only looking at column 1
 loco_times = loco_times(:,1)+abs(loco_times(1,1));
 loco_activity = (abs(loco_data(:,3)));
 
@@ -154,8 +153,8 @@ loco_activity = (abs(loco_data(:,3)));
 
 block.New_sound_times = New_sound_times;
 block.start_time = start_time;
-block.parameters.variable1=Var1;%index of variable1 (frequency)
-block.parameters.variable2=Var2;%index of variable 2 (level)
+block.parameters.variable1 = Var1; %index of variable1 (e.g. frequency)
+block.parameters.variable2 = Var2; %index of variable 2 (e.g. level)
 block.loco_activity = loco_activity;
 block.loco_times = loco_times;
 

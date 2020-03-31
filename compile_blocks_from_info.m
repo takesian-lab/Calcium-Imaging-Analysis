@@ -62,10 +62,10 @@ for i = 1:size(currentInfo,1)
         usernameSlash = '';
     end
     
-    suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
-    Tosca_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename);
+    setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
+    setup.Tosca_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename);
     
-    block = compile_block(setup, suite2p_path, Tosca_path);
+    block = compile_block(setup);
 
     %Optionally visually check block
     if visualize == 1

@@ -1,4 +1,11 @@
-function block = compile_block(setup, 2p_path, Tosca_path)
+% Pull out and compile:
+%   - 2p data from Fall.mat
+%   - Tosca data (locomotion, trial types)
+%   - Bruker-derived timestamps
+
+function block = compile_block(setup)
+
+    display(['Processing ' setup.mousename ': Block ' setup.imaging_set ' Session ' setup.Tosca_session ' Run ' setup.Tosca_run]);
 
     tempFrame_set = {};
     for k = 1:size(currentInfo_R,1)
@@ -15,3 +22,20 @@ function block = compile_block(setup, 2p_path, Tosca_path)
     end
     
         setup.Frame_set         =   tempFrame_set;
+
+        %% Behavior, locomotion, and sound
+
+    %pull out the Tosca-derived, behaviorally relevant data
+    [data] = behavior_RF_singleblock(setup);
+
+    %pull out the Bruker-derived timestamps
+    [data] = define_sound(data,setup);
+
+    %determine which trials are considered "active (locomotor)"
+    % [loco_activity,isLocoSound,data] = isLoco(setup,data);
+    [data] = define_loco(setup,data);
+
+    block = struct;
+    block.setup = setup;
+
+end

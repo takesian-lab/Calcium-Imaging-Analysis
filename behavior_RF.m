@@ -30,7 +30,36 @@ for a=1:length(setup.mousename)
                 counttrials=counttrials+1;
             end
         end
-        
+       
+        %The above method of indexing files does not work if Run # >9
+        %This is because MATLAB alphabetizes: Run 1, Run 10, Run 11, Run 2, etc.
+        %Block name should be format: MouseID-Session##-Run#.txt
+        %Find Run #, which could be an arbitrary number of digits:
+        TrialString = '.txt';
+        N = length(TrialString); %N characters to remove from end of block name
+        runs = nan(size(behaveblock));
+        for f = 1:length(behaveblock)
+            tempRun = '';
+            isNumber = 1;
+            A = 0;
+            while isNumber == 1 %Check each character at the end of the 
+                possibleNum = behaveblock{f}(end-N-A);
+                if ~isnan(str2double(possibleNum))
+                    tempRun = strcat(possibleNum, tempRun); %combine digits in the number
+                    A = A+1;
+                else
+                    if A == 0
+                        error('No run number found.')
+                    end
+                    isNumber = 0;
+                end
+            end
+            runs(f) = str2double(tempRun);
+        end
+        %Reorder behaveblock based on Run #
+        [~,sortedIndex] = sort(runs);
+        behaveblock = behaveblock(sortedIndex);
+    
         bl=0;
         %a
         Var1=[]; Var2=[]; isLocoSound=[];sound_v1=[]; sound_v2=[];
@@ -49,7 +78,7 @@ for a=1:length(setup.mousename)
             inblock=inblock(1:end-1);
         end
 
-        for t=1:length(inblock) %Hypothesis is trial00 is generated abberantly, so start on trial 1
+        for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so start on trial 1
             s=tosca_read_trial(Params,Data,t);%the read_trial gives us more info than read_run alone
             if ~isempty(s)
                 Tosca_times{t}=s.Time_s; %pulls out the tosca generated timestamps for each trial

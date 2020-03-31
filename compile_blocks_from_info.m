@@ -13,8 +13,9 @@
 
 %% Load Info
 
-path_name = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study'; %Include end slash if you're Carolyn
-cd(path_name)
+info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
+save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
+cd(info_path)
 load('Info.mat')
 
 %Info.mat Table is a variable that stores all recording file information
@@ -43,44 +44,37 @@ SP = 15; %stim protocol (number corresponding to stim)
 ignore = [Info{:,I}]';
 currentInfo = Info(ignore == 0,:);
 
-% Create setup variable that will contain all the necessary information about the block
+%Loop through all remaining rows
+for i = 1:size(currentInfo,1)
 
-% 
+    %Create setup variable that will contain all the necessary information about the block
+    setup = struct;
+    setup.Info              =   Info;
+    setup.username          =   [currentInfo_R{i,U}];
+    setup.mousename         =   [currentInfo_R{i,M}];
+    setup.pathname          =   [currentInfo_R{i,P}];
+    setup.expt_date         =   [currentInfo_R{i,D}];
+    setup.ROI               =   [currentInfo_R{i,R}];
+    setup.imaging_set       =   [currentInfo_R{i,IS}];
+    setup.Tosca_session     =   [currentInfo_R{i,TS}];
+    setup.Tosca_run         =   [currentInfo_R{i,TR}];
+    setup.analysis_name     =   [currentInfo_R{i,AP}];
+    setup.framerate         =   [currentInfo_R{i,FR}];
+    setup.run_redcell       =   [currentInfo_R{i,RR}];
+    setup.voltage_recording =   [currentInfo_R{i,VR}];
+    setup.stim_name         =   [currentInfo_R{i,SN}];
+    setup.stim_protocol     =   [currentInfo_R{i,SP}];
 
-setup = struct;
-setup.username = ''; %'Carolyn'
-setup.pathname
-setup = fillSetupFromInfoTable(setup, Info);
-setup.Info = Info;
+    setup.block_name = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
+        '_Block', setup.imaging_set, '_Session', setup.Tosca_session, '_Run', setup.Tosca_run, ...
+        setup.stim_name);
+    
+    suite2p_path = strcat(setup.pathname, '/', setup.mousename, '/', setup.analysis_name);
+    Tosca_path = strcat(setup.pathname, '/', setup.mousename, '/Tosca_', setup.mousename);
+    
+    block = compile_block(setup, suite2p_path, Tosca_path);
 
-
-
-
-
-        tempFrame_set = {};
-        for k = 1:size(currentInfo_R,1)
-            path = strcat(currentInfo_R{k,P}, '/', currentInfo_R{k,M}, '/', currentInfo_R{k,AP});
-            cd(path);
-            load('Fall.mat', 'ops');
-            Imaging_Block = currentInfo_R{k,IS};
-            showTable = 0;
-            if k == 1
-                display(currentMouse);
-                showTable = 1;
-            end
-            tempFrame_set{1,k} = get_frames_from_Fall(ops,Imaging_Block,showTable);
-        end
-        
-        %Fill setup with structure {Mouse, ROI}
-        setup.mousename{i,j}         =   currentMouse;
-        setup.expt_date{i,j}         =   [currentInfo_R{:,D}];
-        setup.Imaging_sets{i,j}      =   [currentInfo_R{:,IS}];
-        setup.Session{i,j}           =   [currentInfo_R{:,TS}];
-        setup.Tosca_Runs{i,j}        =   [currentInfo_R{:,TR}];
-        setup.analysis_name{i,j}     =   [currentInfo_R{:,AP}];
-        setup.framerate{i,j}         =   [currentInfo_R{:,FR}];
-        %setup.run_redcell{i,j}       =   [currentInfo_R{:,RR}];
-        setup.voltage_recording{i,j} =   [currentInfo_R{:,VR}];
-        setup.Frame_set{i,j}         =   tempFrame_set;
-        
-%%
+    cd(save_path)
+    save(setup.block_name, 'block.mat');
+    
+end        

@@ -2,16 +2,18 @@
 %  Save one compiled 'block.mat' file for each block listed in info.mat
 %  A compiled block contains the 2p and Tosca data for that recording session
 %
-%  If data is missing, the script will still run in order to allow for the
+%  Goal: If data is missing, the script will still run in order to allow for the
 %  user to look at Tosca data separate from 2p data or vice versa.
 %
-%  Uses the functions compile_block, fillSetupFromInfoTable
+%  Uses the function compile_block and verify_block
 %
-%  Use the script verify_block to preview the block contents prior to analysis
+%  Use verify_block to preview the block contents prior to analysis
 %
 %  Maryse Thomas - March 2020
 
 %% Load Info
+
+verify = 0; %1 to plot figures of the block immediately, 0 to skip
 
 info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
 save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
@@ -74,6 +76,11 @@ for i = 1:size(currentInfo,1)
     
     block = compile_block(setup, suite2p_path, Tosca_path);
 
+    %Optionally visually check block
+    if verify == 1
+        verify_block(block);
+    end
+    
     cd(save_path)
     save(setup.block_name, 'block');
     

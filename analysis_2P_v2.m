@@ -4,6 +4,8 @@ clear all;
 %updated Carolyn, compatible with Python version of Suite2p. Also does Red vs Green cell 7/23/19
 %Updated Feb 2020, CGS - put most of the analysis into functions.
 
+% Maryse is awesome!
+
 %define what type of analysis you are doing
 %stim protocol code is:
 %noiseburst=1

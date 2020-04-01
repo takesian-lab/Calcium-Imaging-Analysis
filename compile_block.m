@@ -14,14 +14,15 @@ function block = compile_block(setup)
     %% Behavior, locomotion, sound, and Suite2p data
 
     %pull out the Tosca-derived, behaviorally relevant data
-    [block] = behavior_RF_singleblock(block, setup);
+    [block] = behavior_RF_singleblock(block);
 
     %pull out the Bruker-derived timestamps from BOTs and Voltage Recordings
-    [block] = define_sound(block, setup);
+    [block] = define_sound_singleblock(block);
 
     %determine which trials are considered "active (locomotor)"
+    % This might not be necessary to do here, but leaving in for now.
+    [block] = define_loco_singleblock(block);
     % [loco_activity,isLocoSound,data] = isLoco(setup,data);
-    [block] = define_loco(block, setup);
 
 
     tempFrame_set = {};

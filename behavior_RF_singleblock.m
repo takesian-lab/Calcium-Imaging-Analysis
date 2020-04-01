@@ -1,4 +1,4 @@
-function [block] = behavior_RF_singleblock(block, setup)
+function [block] = behavior_RF_singleblock(block)
 
 disp('Pulling out Tosca data...');
 
@@ -11,6 +11,7 @@ disp('Pulling out Tosca data...');
 
 %% Go to Tosca folder and pull out files related to setup.Tosca_run
 
+setup = block.setup;
 cd(setup.Tosca_path)
 allfiles=dir('*Run*');
 
@@ -154,7 +155,8 @@ block.New_sound_times = New_sound_times;
 block.start_time = start_time;
 block.parameters.variable1 = Var1; %index of variable1 (e.g. frequency)
 block.parameters.variable2 = Var2; %index of variable 2 (e.g. level)
+block.loco_data = loco_data;
 block.loco_activity = loco_activity;
 block.loco_times = loco_times;
-
+block.setup = setup;
 end

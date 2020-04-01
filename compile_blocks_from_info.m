@@ -34,7 +34,7 @@ ignore = [Info{:,1}]';
 currentInfo = Info(ignore == 0,:);
 
 %Loop through all remaining rows
-for i = 1:size(currentInfo,1) %2 to start after header
+for i = 1%:size(currentInfo,1)
 
     %Create setup variable that will contain all the necessary information about the block
     setup = struct;
@@ -70,27 +70,33 @@ for i = 1:size(currentInfo,1) %2 to start after header
     setup.block_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.block_name);
     setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
     setup.Tosca_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
+    if setup.voltage_recording == 0
+        setup.VR_path  = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.VR_name);
+    end
     
     %Test paths prior to starting to compile
     try
         cd(setup.block_path)
         cd(setup.suite2p_path)
         cd(setup.Tosca_path)
+        if setup.voltage_recording == 0
+            cd(setup.VR_path)
+        end
     catch
         disp(setup.block_filename)
         error('One of your paths is incorrect.')
     end
     
-    %block = compile_block(setup);
+    block = compile_block(setup); %COMPILE BLOCK
 
     %Optionally visually check block
     if visualize == 1
         visualize_block(block);
     end
     
-%     disp('Saving...');
-%     cd(save_path)
-%     save(setup.block_name, 'block');
+    disp('Saving...');
+    cd(save_path)
+    save(setup.block_name, 'block');
 end       
 
 disp('Finished compiling all blocks.');

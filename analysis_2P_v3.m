@@ -10,7 +10,7 @@ clear all;
 %noiseburst=1
 %ReceptiveField=2
 %FM sweep=3
-%SAM = 5
+%SAM = 6
 %widefield=4
 %SAM freq = 6
 
@@ -48,7 +48,7 @@ end
 
 %this only works for green data currently
 std_level = 1.5;%set this here to change std
-[data]=isresponsive_all(data,setup,std_level)
+[data] = isresponsive_all(data,setup,std_level)
 %
 clear std_level
 

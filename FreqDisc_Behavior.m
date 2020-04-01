@@ -20,10 +20,10 @@ setup = fillSetupFromInfoTable(setup, Info);
 setup.Info = Info;
 
 %% Experiment mice 
-mouseID=setup.mousename{1,1};
-sid=setup.Session{};
-folder = sprintf(['D:/Behavior analysis/Behavior local data/' mouseID '/' sid]);
-boi=[3:14];%blocks of interest (which ones are we actually analyzing)
+mouseID='VxAC031419M1';
+sid='Session 25';
+folder = sprintf(['D:/2P analysis/2P local data/Carolyn/' mouseID '/Tosca_' mouseID '/'  sid]);
+boi=[2:9];%blocks of interest (which ones are we actually analyzing)
 Day=[('27')];
  
 %% Load behavior data
@@ -83,27 +83,42 @@ for b=boi%Loop through blocks of interest and extract trial data + run data, boi
             if isequal(binfo{t}.Result,'Hit')
                 block{bl}.trial{t}.result=1;
                 target=block{bl}.trial{t}.freq;%pull out the target frequency
+                block{bl}.trial{t}.type='Cs+';
             elseif isequal(binfo{t}.Result,'Miss')
                 block{bl}.trial{t}.result=0;
+                block{bl}.trial{t}.type='Cs+';
             elseif isequal(binfo{t}.Result,'Withhold')
                 block{bl}.trial{t}.result=3;
+                block{bl}.trial{t}.type='Cs-';
             elseif isequal(binfo{t}.Result,'False Alarm')
                 block{bl}.trial{t}.result=4;
+                block{bl}.trial{t}.type='Cs-';
             else
                 block{bl}.trial{t}.result=NaN;
             end
             
-            else 
-                block{bl}.trial{t}.result=NaN;
-            end
+            
         end
+        end  
+end
+    
+    %find %hit
+            
+            
+            %find %FA
+            
+            %find filepath name - used to get rid of Operant Tone Daily
+            %prep, and remove it from the analysis
+            
+            
+            %make an index of datasets to analyze based on 1) file types
+            %and 2) %hit to determine if the mouse is paying attention or
+            %not
         
-    end
-        
 
 
 
-%% Analyze session 
+%% Analyze session - this will be where FreqDisc will actually start!
 session=[]; 
 count=1;
 for bl=1:length(block) 

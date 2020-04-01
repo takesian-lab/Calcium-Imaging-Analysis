@@ -68,6 +68,15 @@ for i = 1:size(currentInfo,1)
     setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
     setup.Tosca_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
     
+    %Test paths prior to starting to compile
+    try
+        cd(setup.block_path)
+        cd(setup.suite2p_path)
+        cd(setup.Tosca_path)
+    catch
+        error('One of your paths is incorrect.')
+    end
+    
     block = compile_block(setup);
 
     %Optionally visually check block

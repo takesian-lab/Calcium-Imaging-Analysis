@@ -1,7 +1,7 @@
 % Pull out and compile:
-%   - 2p data from Fall.mat
 %   - Tosca data (locomotion, trial types)
 %   - Bruker-derived timestamps
+%   - 2p data from Fall.mat
 
 function block = compile_block(setup)
 
@@ -11,12 +11,12 @@ function block = compile_block(setup)
     block = struct;
     block.setup = setup;
 
-    %% Behavior, locomotion, and sound
+    %% Behavior, locomotion, sound, and Suite2p data
 
     %pull out the Tosca-derived, behaviorally relevant data
     [block] = behavior_RF_singleblock(block, setup);
 
-    %pull out the Bruker-derived timestamps
+    %pull out the Bruker-derived timestamps from BOTs and Voltage Recordings
     [block] = define_sound(block, setup);
 
     %determine which trials are considered "active (locomotor)"

@@ -36,20 +36,22 @@ for i = 1:size(currentInfo,1)
     %Create setup variable that will contain all the necessary information about the block
     setup = struct;
     setup.Info              =   Info;                   %Record Info for records only
-    setup.username          =   [currentInfo{i,2}];     %part of the path, not every user will have this, okay to leave empty
-    setup.mousename         =   [currentInfo{i,3}];     %part of the path, no underscores
-    setup.pathname          =   [currentInfo{i,4}];     %first part of the path
+    setup.pathname          =   [currentInfo{i,2}];     %first part of the path
+    setup.username          =   [currentInfo{i,3}];     %part of the path, not every user will have this, okay to leave empty
+    setup.mousename         =   [currentInfo{i,4}];     %part of the path, no underscores
     setup.expt_date         =   [currentInfo{i,5}];     %part of the path, YYYY-MM-DD
-    setup.ROI               =   [currentInfo{i,6}];     %which data to consider as coming from the same ROI, per mouse
-    setup.imaging_set       =   [currentInfo{i,7}];     %block or BOT numbers
-    setup.Tosca_session     =   [currentInfo{i,8}];     %Tosca session
-    setup.Tosca_run         =   [currentInfo{i,9}];     %Tosca run
-    setup.analysis_name     =   [currentInfo{i,10}];    %part of the path, folder where fall.mats are stored
-    setup.framerate         =   [currentInfo{i,11}];    %15 or 30, eventually we can detect this automatically
-    setup.run_redcell       =   [currentInfo{i,12}];    %do you have red cells? 0 or 1
-    setup.voltage_recording =   [currentInfo{i,13}];    %0 for widefield, 1 for 2p
-    setup.stim_name         =   [currentInfo{i,14}];    %type of stim presentation in plain text
-    setup.stim_protocol     =   [currentInfo{i,15}];    %number corresponding to stim protocol
+    setup.block_name        =   [currentInfo{i,6}];     %part of the path - full block name used for BOT
+    setup.ROI               =   [currentInfo{i,7}];     %which data to consider as coming from the same ROI, per mouse
+    setup.imaging_set       =   [currentInfo{i,8}];     %block or BOT numbers
+    setup.Tosca_session     =   [currentInfo{i,9}];     %Tosca session
+    setup.Tosca_run         =   [currentInfo{i,10}];    %Tosca run
+    setup.analysis_name     =   [currentInfo{i,11}];    %part of the path, folder where fall.mats are stored
+    setup.framerate         =   [currentInfo{i,12}];    %15 or 30, eventually we can detect this automatically
+    setup.run_redcell       =   [currentInfo{i,13}];    %do you have red cells? 0 or 1
+    setup.voltage_recording =   [currentInfo{i,14}];    %0 for widefield, 1 for 2p
+    setup.VR_name           =   [currentInfo{i,15}];    %full voltage recording name (if widefield only)
+    setup.stim_name         =   [currentInfo{i,16}];    %type of stim presentation in plain text
+    setup.stim_protocol     =   [currentInfo{i,17}];    %number corresponding to stim protocol
 
     setup.block_name = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
         '_Block_', num2str(setup.imaging_set), '_Session_', num2str(setup.Tosca_session), ...
@@ -62,6 +64,7 @@ for i = 1:size(currentInfo,1)
         usernameSlash = '';
     end
     
+    setup.block_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.block_name);
     setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
     setup.Tosca_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
     

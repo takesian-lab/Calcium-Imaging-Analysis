@@ -18,6 +18,7 @@
 %% Load Info.mat
 
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
+recompile = 0; %1 to save over previously compiled blocks, 0 to skip
 
 info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
 save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
@@ -34,7 +35,7 @@ ignore = [Info{:,1}]';
 currentInfo = Info(ignore == 0,:);
 
 %Loop through all remaining rows
-for i = 1%:size(currentInfo,1)
+for i = 1:size(currentInfo,1)
 
     %Create setup variable that will contain all the necessary information about the block
     setup = struct;
@@ -59,6 +60,14 @@ for i = 1%:size(currentInfo,1)
     setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
         '_Block_', num2str(setup.imaging_set), '_Session_', num2str(setup.Tosca_session), ...
         '_Run_', num2str(setup.Tosca_run), '_', setup.stim_name);
+    
+    %Skip files that have previously been compiled
+    if ~recompile
+        cd(save_path)
+        if isfile(strcat(setup.block_filename, '.mat'))
+            continue
+        end
+    end
     
     %Not every user has a username folder, allow for this column to be empty
     if ~isnan(setup.username)

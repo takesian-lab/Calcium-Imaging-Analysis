@@ -91,6 +91,9 @@ end
 
 %% Extract stimulus-specific variables
 
+V1 = [];
+V2 = [];
+
 for m = 1:length(Data)
     if setup.stim_protocol==1
         V1 = 0;

@@ -22,16 +22,19 @@ visualize = 0; %1 to plot figures of the block immediately, 0 to skip
 info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
 save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
 cd(info_path)
-load('Info.mat')
+Info = importfile('Info');
 
 %% Compile all blocks unless they are set to "Ignore"
+
+%Remove header from Info
+Info(1,:) = [];
 
 %Remove rows that are set to "Ignore"
 ignore = [Info{:,1}]';
 currentInfo = Info(ignore == 0,:);
 
 %Loop through all remaining rows
-for i = 1:size(currentInfo,1)
+for i = 1:size(currentInfo,1) %2 to start after header
 
     %Create setup variable that will contain all the necessary information about the block
     setup = struct;
@@ -53,18 +56,18 @@ for i = 1:size(currentInfo,1)
     setup.stim_name         =   [currentInfo{i,16}];    %type of stim presentation in plain text
     setup.stim_protocol     =   [currentInfo{i,17}];    %number corresponding to stim protocol
 
-    setup.block_name = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
+    setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
         '_Block_', num2str(setup.imaging_set), '_Session_', num2str(setup.Tosca_session), ...
         '_Run_', num2str(setup.Tosca_run), '_', setup.stim_name);
     
     %Not every user has a username folder, allow for this column to be empty
-    if ~isempty(setup.username)
+    if ~isnan(setup.username)
         usernameSlash = strcat(setup.username, '/');
     else
         usernameSlash = '';
     end
     
-    setup.block_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.block_name);
+    setup.block_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.block_name);
     setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
     setup.Tosca_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
     
@@ -74,19 +77,20 @@ for i = 1:size(currentInfo,1)
         cd(setup.suite2p_path)
         cd(setup.Tosca_path)
     catch
+        disp(setup.block_filename)
         error('One of your paths is incorrect.')
     end
     
-    block = compile_block(setup);
+    %block = compile_block(setup);
 
     %Optionally visually check block
     if visualize == 1
         visualize_block(block);
     end
     
-    disp('Saving...');
-    cd(save_path)
-    save(setup.block_name, 'block');
+%     disp('Saving...');
+%     cd(save_path)
+%     save(setup.block_name, 'block');
 end       
 
 disp('Finished compiling all blocks.');

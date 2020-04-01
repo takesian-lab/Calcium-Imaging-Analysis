@@ -16,7 +16,7 @@ Fall = load('Fall.mat'); %Must load like this because iscell is a matlab functio
 %% Get Frame_set using get_frames_from_Fall
 
 Imaging_Block = setup.imaging_set;
-showTable = 0;
+showTable = 1;
 Frame_set = get_frames_from_Fall(Fall.ops,Imaging_Block,showTable);
 setup.Frame_set = Frame_set;
 
@@ -41,9 +41,9 @@ block.img.Vcorr = Fall.ops.Vcorr;
 block.img.sdmov = Fall.ops.sdmov;
 
 block.stat = Fall.stat;
-block.F = Fall.F(Frame_set);
-block.Fneu = Fall.Fneu(Frame_set);
-block.spks = Fall.spks(Frame_set);
+block.F = Fall.F(:,Frame_set);
+block.Fneu = Fall.Fneu(:,Frame_set);
+block.spks = Fall.spks(:,Frame_set);
 block.iscell = Fall.iscell;
 try
     block.redcell = Fall.redcell; %Not all runs will have red cells

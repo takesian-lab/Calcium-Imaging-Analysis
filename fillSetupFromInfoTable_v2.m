@@ -1,4 +1,4 @@
-function [setup] = fillSetupFromInfoTable_v2(setup, Info)
+function [data, setup] = fillSetupFromInfoTable_v2(setup, Info, compiled_blocks_path)
 %% Info.mat Table is a variable that stores all recording file information
 
 %  Currently, the column order of Info is:
@@ -45,7 +45,14 @@ currentInfo = Info(matching_stims,:);
 ignore = [currentInfo{:,I}]';
 currentInfo = currentInfo(ignore == 0,:);
 
-%% Fill setup
+%% Fill setup and data
+
+%Make data struct with the following format:
+%data.([mouseID]).(['ImagingBlock' Imaging_Num]).VARIABLE
+%And: data.([mouseID]).parameters
+
+cd(compiled_blocks_path)
+data = struct;
 
 %Per each mouse, combine blocks that come from the same ROI
 mice = cellstr([currentInfo{:,M}])';
@@ -70,14 +77,24 @@ for i = 1:length(uniqueMice)
         setup.Session{i,j}           =   [currentInfo_R{:,TS}];
         setup.Tosca_Runs{i,j}        =   [currentInfo_R{:,TR}];
         
-        block_filename = cell(1,size(currentInfo_R,1));
+        block_filenames = cell(1,size(currentInfo_R,1));
+        unique_block_names = cell(1,size(currentInfo_R,1));
         for r = 1:size(currentInfo_R,1)
-            block_filename{1,r} = strcat('Compiled_', currentMouse, '_', [currentInfo_R{r,D}], ...
+            block_filenames{1,r} = strcat('Compiled_', currentMouse, '_', [currentInfo_R{r,D}], ...
             '_Block_', num2str([currentInfo_R{r,IS}]), '_Session_', num2str([currentInfo_R{r,TS}]), ...
             '_Run_', num2str([currentInfo_R{r,TR}]), '_', [currentInfo_R{r,SN}]);
+            
+            load(block_filenames{1,r})
+        
+            unique_block_names{1,r} = strcat('Block', num2str([currentInfo_R{r,IS}]),...
+                '_Session', num2str([currentInfo_R{r,TS}]), '_Run', num2str([currentInfo_R{r,TR}]));
+
+            data.([currentMouse]).parameters = block.parameters; %This will be written over every time, but thats ok because its the same when stims are the same
+            data.([currentMouse]).([unique_block_names{1,r}]) = block;
+            clear('block');
         end
-        setup.block_filename{i,j} = [block_filename{:,:}];
-    
+        setup.block_filename{i,j} = [block_filenames{:,:}];
+        setup.unique_block_names{i,j} = [string(unique_block_names(:,:))];
     end
 end
 

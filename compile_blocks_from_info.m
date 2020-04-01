@@ -21,7 +21,7 @@ visualize = 0; %1 to plot figures of the block immediately, 0 to skip
 recompile = 0; %1 to save over previously compiled blocks, 0 to skip
 
 info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
+save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
 cd(info_path)
 Info = importfile('Info');
 

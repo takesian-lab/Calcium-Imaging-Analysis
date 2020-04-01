@@ -21,7 +21,7 @@ stim_protocol=1;
 % Later we can also add other things like groups
 
 info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
+compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
 %save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study'; %To save figures later
 cd(info_path)
 Info = importfile('Info');
@@ -30,12 +30,11 @@ Info = importfile('Info');
 setup = struct;
 setup.Info = Info;
 setup.stim_protocol = stim_protocol;
-setup = fillSetupFromInfoTable_v2(setup, Info);
-data = combine_compiled_blocks(setup);
+[data, setup] = fillSetupFromInfoTable_v2(setup, Info, compiled_blocks_path);
 
 %% Now find processed suite2P data
 if setup.run_redcell==0
-    [data]=Noiseburst_analysis_greenonly(data,setup);
+    [data]=Noiseburst_analysis_greenonly_v2(data,setup);
     %red cells need to be updated and checked to make sure that they work.
 elseif setup.run_redcell==1
     [data,traces_R,traces_G]=Noiseburst_analysis(a,Frames,Frame_rate,Imaging_Block_String,Imaging_Num,mouseID,date,Sound_Time,...

@@ -1,5 +1,4 @@
 function [block] = behavior_RF_singleblock(block, setup)
-%Uses functions 
 
 disp('Pulling out Tosca data...');
 

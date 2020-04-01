@@ -24,25 +24,7 @@ function block = compile_block(setup)
     [block] = define_loco_singleblock(block);
     % [loco_activity,isLocoSound,data] = isLoco(setup,data);
 
-
-    tempFrame_set = {};
-    for k = 1:size(currentInfo_R,1)
-        path = strcat(currentInfo_R{k,P}, '/', currentInfo_R{k,M}, '/', currentInfo_R{k,AP});
-        cd(path);
-        load('Fall.mat', 'ops');
-        Imaging_Block = currentInfo_R{k,IS};
-        showTable = 0;
-        if k == 1
-            display(currentMouse);
-            showTable = 1;
-        end
-        tempFrame_set{1,k} = get_frames_from_Fall(ops,Imaging_Block,showTable);
-    end
-    
-        setup.Frame_set         =   tempFrame_set;
-
-
-    block = struct;
-    block.setup = setup;
+    %pull out block-specific data from Fall.mat
+    [block] = define_suite2p_singleblock(block);
 
 end

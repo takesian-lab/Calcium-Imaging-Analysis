@@ -18,10 +18,10 @@
 %% Load Info.mat
 
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
-recompile = 0; %1 to save over previously compiled blocks, 0 to skip
+recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 
-info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
+info_path = 'D:/2P analysis/2P local data/Carolyn';
+save_path = 'D:/2P analysis/2P local data/Carolyn/analyzed/Daily Imaging';
 cd(info_path)
 Info = importfile('Info');
 

@@ -1,6 +1,23 @@
 %% Find blocks of interest/day
 
+info_path = 'D:/2P analysis/2P local data/Carolyn';
+cd(info_path)
+Info = importfile('Info');
+save_path = 'D:/2P analysis/2P local data/Carolyn/analyzed/Daily Imaging';
+cd(save_path)
+allfiles=dir('*Block*');
 
+bl=1
+for i = 1:size(allfiles,1)
+name = ({allfiles(bl).name});
+load(name{1});
+Block_number = sprintf('%03d',bl);
+FreqDiscData.(['block' Block_number]) = block;
+bl = bl+1
+end
+
+%% find blocks of interest
+% first, remove "daily prep trials"
 
 %% Analyze session - this will be where FreqDisc will actually start!
 session=[]; 

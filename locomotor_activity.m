@@ -9,7 +9,11 @@
 %     Tosca_folder_name = ['Tosca_' mouseID]; %name of the Tosca folder 
 %     folder = (['D:/2P analysis/2P local data/' username '/' mouseID '/' Tosca_folder_name '/Session ' Tosca_Session]); %direct to specific Tosca folder within a 
 %      %addpath (folder); %navigate to this folder
-function [loco_data,active_time] = locomotor_activity(loco_data,M,read_loco,setup,mouseID,date,Imaging_Block_String,Imaging_Block,filename);
+
+%function [loco_data,active_time] = locomotor_activity(loco_data,M,read_loco,setup,mouseID,date,Imaging_Block_String,Imaging_Block,filename);
+
+
+function [loco_data,active_time] = locomotor_activity(loco_data,filename)
 % read_loco= [mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt'];
 %loco_data = dlmread(read_loco);%locomotor data
 r=loco_data(:,1);% I am only looking at column 1
@@ -21,7 +25,7 @@ B=r;
 % B = padarray(loco_timedif, [1,0], 'pre');%add a 0 to first time stamp (it is lost during the diff function...?)
 %%
 % load the voltage recording data
-Imaging_Num =  sprintf( '%03d', Imaging_Block);
+%Imaging_Num =  sprintf( '%03d', Imaging_Block);
 %       folder = sprintf([setup.path_name setup.username '/' mouseID '/' date '/' Imaging_Block_String]); %direct to specific Tosca folder within a 
 %         addpath (folder); %navigate to this folder
 

@@ -1,32 +1,31 @@
 
 % Experiment mice 
-mouseID='VxAC031419M1';
-sid='Session 25';
-folder = sprintf(['D:/2P analysis/2P local data/Carolyn/' mouseID '/Tosca_' mouseID '/'  sid]);
-boi=[2:9];%blocks of interest (which ones are we actually analyzing)
-Day=[('27')];
+% mouseID='VxAC031419M1';
+% sid='Session 25';
+% folder = sprintf(['D:/2P analysis/2P local data/Carolyn/' mouseID '/Tosca_' mouseID '/'  sid]);
+% boi=[2:9];%blocks of interest (which ones are we actually analyzing)
+% Day=[('27')];
+%  
+
+%something about stimtype=7......
+Hit_threshold = 0.5;
+Ignore_prep_trial = 1;
+by_date=1;
+
+%operant tone daily prep does not contain CS- trials. screen out trials
+%that do not have CS- trials.
+
+%determine %hit so that we can only look at blocks that are at teh
+%Hit_threshold
+ Hits = find(cell2mat(block.b_Outcome)==1);
+ FA = find(cell2mat(block.b_Outcome)==4);
+ Total = length(block.b_Outcome);
+ perHit = length(Hits)/Total;
  
-
-
-    
-    %find %hit
-            
-            
-            %find %FA
-
-   %find %FA
-
-            
-            %find filepath name - used to get rid of Operant Tone Daily
-            %prep, and remove it from the analysis
-            
-            
-            %make an index of datasets to analyze based on 1) file types
-            %and 2) %hit to determine if the mouse is paying attention or
-            %not
-        
-
-
+ %blocks of interest are ones that meet all of these criteria - for a given
+ %mouse? for a given day? 
+ 
+ 
 
 %% Analyze session - this will be where FreqDisc will actually start!
 session=[]; 

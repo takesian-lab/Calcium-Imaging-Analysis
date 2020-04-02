@@ -38,7 +38,7 @@ block.img.refImg = Fall.ops.refImg;
 block.img.max_proj = Fall.ops.max_proj;
 block.img.meanImgE = Fall.ops.meanImgE;
 block.img.Vcorr = Fall.ops.Vcorr;
-block.img.sdmov = Fall.ops.sdmov;
+% block.img.sdmov = Fall.ops.sdmov;
 
 block.stat = Fall.stat;
 block.F = Fall.F(:,Frame_set);

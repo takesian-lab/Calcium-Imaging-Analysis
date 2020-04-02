@@ -98,7 +98,7 @@ for i = 1:size(currentInfo,1)
     
     %% COMPILE BLOCK
     disp('Processing...');
-    disp(setup.block_name);
+    disp(setup.block_filename);
 
     block = struct;
     block.setup = setup;

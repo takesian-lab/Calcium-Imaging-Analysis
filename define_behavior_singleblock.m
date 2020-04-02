@@ -73,7 +73,6 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
     if ~isempty(s)
         Tosca_times{t}=s.Time_s; %pulls out the tosca generated timestamps for each trial
         start_time=Tosca_times{1,1}(1,1);
-        %             StateChange(t,:)=find(~s.State_Change,1,'first'); %state change from 1 to zero = when the sound is played
         states{t}=[0 (diff(s.State_Change)>0)];
         if states{t}(:,:)~=1
             StateChange(t,:)=1;
@@ -81,6 +80,31 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
         else
             StateChange(t,:)=find(states{1,t}(:,:)~=0, 1, 'first');
         end
+        licks{t,:}=(find(s.Lickometer==1));
+        
+        
+         %Get CS+/CS- results
+            if isequal(Data{t}.Result,'Hit')
+                b_Outcome{t}=1;
+                if setup.stim_protocol == 7
+                    targetFreq=s.cue.Signal.Waveform.Frequency_kHz;%pull out the target frequency
+                end
+                trialType{t}='Cs+';
+            elseif isequal(Data{t}.Result,'Miss')
+                b_Outcome{t}=0;
+                trialType{t}='Cs+';
+                targetFreq=s.cue.Signal.Waveform.Frequency_kHz;
+            elseif isequal(Data{t}.Result,'Withhold')
+               b_Outcome{t}=3;
+                trialType{t}='Cs-';
+            elseif isequal(Data{t}.Result,'False Alarm')
+                b_Outcome{t}=4;
+                trialType{t}='Cs-';;
+            else
+                b_Outcome{t}=NaN;
+                trialType{t}='NaN';
+                
+            end
 
         for y=1:length(Tosca_times) % find the time (in Tosca units) for the new sound
             n=StateChange(y,1);
@@ -89,6 +113,10 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
     end
 end
 
+A=exist('targetFreq');
+if A==0
+    targetFreq=NaN;
+end
 %% Extract stimulus-specific variables
 
 V1 = [];
@@ -111,6 +139,9 @@ for m = 1:length(Data)
     elseif setup.stim_protocol == 6
         V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
+    elseif setup.stim_protocol == 7
+          V1(1,m)  = Data{m}.cue.Signal.Waveform.Frequency_kHz;
+          V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
     end
 end
 
@@ -132,7 +163,7 @@ if ~isempty(k)
 end
 
 New_sound_times(:,k)=[];
-if setup.stim_protocol==2
+if setup.stim_protocol>=2
     V1(:,k)=[];
     V2(:,k)=[];
 end
@@ -156,6 +187,10 @@ loco_activity = (abs(loco_data(:,3)));
 
 block.New_sound_times = New_sound_times;
 block.start_time = start_time;
+block.lick_time = licks;
+block. b_Outcome =  b_Outcome;
+block.trialType = trialType;
+block.TargetFreq = targetFreq;
 block.parameters.variable1 = Var1; %index of variable1 (e.g. frequency)
 block.parameters.variable2 = Var2; %index of variable 2 (e.g. level)
 block.loco_data = loco_data;

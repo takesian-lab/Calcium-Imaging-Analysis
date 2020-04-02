@@ -27,6 +27,8 @@ for n=1:length(allfiles)
     end
 end
 
+
+
 %The above method of indexing files does not work if Run # >9
 %This is because MATLAB alphabetizes: Run 1, Run 10, Run 11, Run 2, etc.
 %Block name should be format: MouseID-Session##-Run#.txt
@@ -38,7 +40,9 @@ for f = 1:length(behaveblock)
     tempRun = '';
     isNumber = 1;
     A = 0;
-    while isNumber == 1 %Check each character at the end of the
+
+    while isNumber == 1 %Check each character at the end of the 
+
         possibleNum = behaveblock{f}(end-N-A);
         if ~isnan(str2double(possibleNum))
             tempRun = strcat(possibleNum, tempRun); %combine digits in the number
@@ -57,7 +61,6 @@ end
 behaveblock = behaveblock(sortedIndex);
 
 %% Read data from the run
-
 Var1=[]; Var2=[];
 b=setup.Tosca_run;
 
@@ -73,6 +76,7 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
     if ~isempty(s)
         Tosca_times{t}=s.Time_s; %pulls out the tosca generated timestamps for each trial
         start_time=Tosca_times{1,1}(1,1);
+        licks{t,:}=s.Lickometer;
         states{t}=[0 (diff(s.State_Change)>0)];
         if states{t}(:,:)~=1
             StateChange(t,:)=1;
@@ -80,35 +84,32 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
         else
             StateChange(t,:)=find(states{1,t}(:,:)~=0, 1, 'first');
         end
-        licks{t,:}=(find(s.Lickometer==1));
+
+        for y=1:length(Tosca_times) % find the time (in Tosca units) for the new sound
+            n=StateChange(y,1);
+            New_sound_times(y)=Tosca_times{1,y}(1,n);
+        end
         
-        
-        %Get CS+/CS- results
+         %Get CS+/CS- results
         if isequal(Data{t}.Result,'Hit')
             b_Outcome{t}=1;
             if setup.stim_protocol == 7
                 targetFreq=s.cue.Signal.Waveform.Frequency_kHz;%pull out the target frequency
             end
-            trialType{t}='Cs+';
+            trialType{t}=1;
         elseif isequal(Data{t}.Result,'Miss')
             b_Outcome{t}=0;
-            trialType{t}='Cs+';
+            trialType{t}=1;
             targetFreq=s.cue.Signal.Waveform.Frequency_kHz;
         elseif isequal(Data{t}.Result,'Withhold')
             b_Outcome{t}=3;
-            trialType{t}='Cs-';
+            trialType{t}=0;
         elseif isequal(Data{t}.Result,'False Alarm')
             b_Outcome{t}=4;
-            trialType{t}='Cs-';;
+            trialType{t}=0;;
         else
             b_Outcome{t}=NaN;
-            trialType{t}='NaN';
-            
-        end
-        
-        for y=1:length(Tosca_times) % find the time (in Tosca units) for the new sound
-            n=StateChange(y,1);
-            New_sound_times(y)=Tosca_times{1,y}(1,n);
+            trialType{t}=NaN;
         end
     end
 end
@@ -189,8 +190,9 @@ loco_activity = (abs(loco_data(:,3)));
 block.New_sound_times = New_sound_times;
 block.start_time = start_time;
 block.lick_time = licks;
-block.b_Outcome =  b_Outcome;
-block.trialType = trialType;
+block.Tosca_times = Tosca_times;
+block.Outcome =  cell2mat(b_Outcome);
+block.trialType = cell2mat(trialType);
 block.TargetFreq = targetFreq;
 block.parameters.variable1 = Var1; %index of variable1 (e.g. frequency)
 block.parameters.variable2 = Var2; %index of variable 2 (e.g. level)

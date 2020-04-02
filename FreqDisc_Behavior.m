@@ -1,111 +1,21 @@
-%%Behavioral analysis for frequency discrimination (Coronavirus updates 2020)
 
-
-%%this intro section is here for the purposes of developing this funciton.
-%%Eventually, it will exist within the Behavior_RF function as an option to
-%%run or not 
-
-stim_protocol=2;
-
-%Create setup variable for files corresponding to stim_protocol using Info.mat
-setup = struct;
-setup.username = ''; %'Carolyn'
-%setup.path_name = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-setup.path_name = 'D:\2P analysis\2P local data';
-setup.stim_protocol = stim_protocol;
-setup.run_redcell = 0;
-cd(setup.path_name)
-load('Info.mat')
-setup = fillSetupFromInfoTable(setup, Info);
-setup.Info = Info;
-
-%% Experiment mice 
+% Experiment mice 
 mouseID='VxAC031419M1';
 sid='Session 25';
 folder = sprintf(['D:/2P analysis/2P local data/Carolyn/' mouseID '/Tosca_' mouseID '/'  sid]);
 boi=[2:9];%blocks of interest (which ones are we actually analyzing)
 Day=[('27')];
  
-%% Load behavior data
-
-%Read in all data files
-%cd(tosca_dir)
-cd(folder)
-allfiles=dir('*Run*'); %dir will list folder contents with the name Run
-countblock=1;
-counttrials=1; 
-for i=1:length(allfiles)
-    if numel(allfiles(i).name)<=32 %Get all run summaries %27 for other %cgs: numel is the number of array elements
-        behaveblock{countblock}=allfiles(i).name;
-        countblock=countblock+1;
-    elseif numel(allfiles(i).name)>=38 %Get all trials  
-        trials{counttrials}=allfiles(i).name;
-        counttrials=counttrials+1;
-    end
-
-end
-behaveblock=sort_nat(behaveblock); %cgs-this line puts the trial in
-%natural order such that it goes 1,2...10 vs 1, 10, 2... but it already
-%seems to do that, and it was causing an error, so I took it out
-%trials=sort_nat(trials);
 
 
-%% Read inclear  blocks of interest.
-%to run this section you need the following files " create_valid_varname,
-%parse_ini_config, tosca_plot_trial, tosca_read_run, tosca_read_trial,
-%tosca_trace. Ask how to direct back to these files. In the mean time, I
-%copy them in at this point. 
-bl=0;
-for b=boi%Loop through blocks of interest and extract trial data + run data, boi was defined above 
-    bl=bl+1; 
-    bl
-    clear binfo inblock 
-    [binfo,params] = tosca_read_run(behaveblock{b}); %Load block meta-data%%%HACK!!!!! 
-    inblock=trials(contains(trials,['Run' num2str(b) '-'])); %% added hyphen to eliminate double digit spurious entries... 
-    trialcount=0;
-    
-    if length(inblock)>length(binfo)
-        inblock=inblock(1:end-1)
-    end
-%    
-        for t=1:length(inblock) %Hypothesis is trial00 is generated abberantly, so start on trial 1
-            
-            %[block{bl}.trial{t}.Timems, block{bl}.trial{t}.Looptimems, block{bl}.trial{t}.TrialChange, block{bl}.trial{t}.StateChange, block{bl}.trial{t}.RepTrigger, block{bl}.trial{t}.Lickometer, block{bl}.trial{t}.Lick] =
-            s=tosca_read_trial(params,binfo,t);
-            if isempty(s)~=1
-            block{bl}.trial{t}.time=s.Loop_time_s-s.Loop_time_s(1); %align trial times to beginning of trial
-            
-            block{bl}.trial{t}.licktimes=block{bl}.trial{t}.time(find(s.Lickometer==1));
-            block{bl}.trial{t}.StateChange= [0 block{bl}.trial{t}.time(diff(s.State_Change)>0)];
-            block{bl}.trial{t}.freq= binfo{t}.cue.Signal.Waveform.Frequency_kHz;
-           
-            %Get CS+/CS- results
-            if isequal(binfo{t}.Result,'Hit')
-                block{bl}.trial{t}.result=1;
-                target=block{bl}.trial{t}.freq;%pull out the target frequency
-                block{bl}.trial{t}.type='Cs+';
-            elseif isequal(binfo{t}.Result,'Miss')
-                block{bl}.trial{t}.result=0;
-                block{bl}.trial{t}.type='Cs+';
-            elseif isequal(binfo{t}.Result,'Withhold')
-                block{bl}.trial{t}.result=3;
-                block{bl}.trial{t}.type='Cs-';
-            elseif isequal(binfo{t}.Result,'False Alarm')
-                block{bl}.trial{t}.result=4;
-                block{bl}.trial{t}.type='Cs-';
-            else
-                block{bl}.trial{t}.result=NaN;
-            end
-            
-            
-        end
-        end  
-end
     
     %find %hit
             
             
             %find %FA
+
+   %find %FA
+
             
             %find filepath name - used to get rid of Operant Tone Daily
             %prep, and remove it from the analysis

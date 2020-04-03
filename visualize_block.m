@@ -18,6 +18,7 @@ plot(loco_data(:,1), loco_data(:,3));
 subplot(2,1,2); hold on
 ylabel('Considered active')
 xlabel('Seconds')
+set(gca, 'ytick', [0 1])
 plot(loco_data(:,1), active_time > 0); hold on;
 
 %% Plot activity from cells (divided into red and green)
@@ -89,7 +90,22 @@ end
 
 %% Plot mean image from suite2p with ROIs outlined and labelled
 
-
 figure;
-imagesc(block.img.max_proj)
+
+subplot(2,2,1)
+imagesc(block.img.refImg)
+axis square
 colormap('bone')
+
+subplot(2,2,2)
+imagesc(block.img.meanImgE)
+axis square
+colormap('bone')
+
+subplot(2,2,3); hold on
+imagesc(block.img.refImg)
+axis square
+colormap('bone')
+
+for a = 1:length(
+

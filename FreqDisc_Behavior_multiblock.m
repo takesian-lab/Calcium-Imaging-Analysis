@@ -2,6 +2,7 @@
 
 Hit_threshold = 0.5;
 remove_dailyPrep = 1;
+by_date = 1;
 
 info_path = 'D:/2P analysis/2P local data/Carolyn';
 cd(info_path)
@@ -26,6 +27,7 @@ for i = 1:numBlocks
     Block_number = sprintf('%03d',i);
     prepTrials(i) = FreqDiscData.(['block' Block_number]).prepTrial;
     HitRate (i) = FreqDiscData.(['block' Block_number]).HitRate;
+    dates (i) = FreqDiscData.(['block' Block_number]).setup.Info;%where I left off
     HitRate;
     if HitRate(i) >= Hit_threshold
         includeBlock(i) = 1;
@@ -38,6 +40,9 @@ if remove_dailyPrep == 1;
     includeBlock(r) = 0;
 end
 boi = find(includeBlock);
+%% include this day in analysis or not.
+% we train the mice to perform well in 
+
 %% Analyze session - this will be where FreqDisc will actually start!
 session=[]; 
 count=1;

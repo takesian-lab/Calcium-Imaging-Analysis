@@ -23,6 +23,8 @@ plot(loco_data(:,1), active_time > 0); hold on;
 
 %% Plot activity from cells (divided into red and green)
 
+bin = 10; %Number of cells to plot at a time (for visibility)
+
 timestamp = block.timestamp;
 Sound_Time = block.Sound_Time;
 
@@ -67,6 +69,10 @@ for f = 1:2
     z = 1; %Portion of recording to plot e.g. 0.5, 0.33, 1
     Z = round(length(timestamp)*z);
     SF = 0.5; %Shrinking factor for traces to appear more spread out
+    
+    B = floor(length(currentCells)/bin);
+    extraCells = mod(length(currentCells),bin);
+    if extraCells 
     
     figure;  %one cell/row of the graph
     for a=1:length(currentCells) %for all of the cells

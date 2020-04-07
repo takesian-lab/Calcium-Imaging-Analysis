@@ -144,6 +144,9 @@ for m = 1:length(Data)
     elseif setup.stim_protocol == 7
         V1(1,m)  = Data{m}.cue.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
+    elseif setup.stim_protocol == 8
+        V1(1,m)  = Data{m}.cue.CurrentSource.Level.dB_re_1_Vrms;
+        V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
     end
 end
 

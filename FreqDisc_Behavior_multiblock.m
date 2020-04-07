@@ -1,5 +1,8 @@
 %% Find blocks of interest/day
 
+Hit_threshold = 0.5;
+remove_dailyPrep = 1;
+
 info_path = 'D:/2P analysis/2P local data/Carolyn';
 cd(info_path)
 Info = importfile('Info');
@@ -7,18 +10,34 @@ save_path = 'D:/2P analysis/2P local data/Carolyn/analyzed/Daily Imaging';
 cd(save_path)
 allfiles=dir('*Block*');
 
-bl=1
+bl=0
 for i = 1:size(allfiles,1)
+bl=bl+1
 name = ({allfiles(bl).name});
 load(name{1});
 Block_number = sprintf('%03d',bl);
 FreqDiscData.(['block' Block_number]) = block;
-bl = bl+1
+
 end
+numBlocks = bl;
 
 %% find blocks of interest
-% first, remove "daily prep trials"
-
+for i = 1:numBlocks
+    Block_number = sprintf('%03d',i);
+    prepTrials(i) = FreqDiscData.(['block' Block_number]).prepTrial;
+    HitRate (i) = FreqDiscData.(['block' Block_number]).HitRate;
+    HitRate;
+    if HitRate(i) >= Hit_threshold
+        includeBlock(i) = 1;
+    else includeBlock(i) = 0;
+        
+    end
+end
+if remove_dailyPrep == 1;
+    r = find(prepTrials)
+    includeBlock(r) = 0;
+end
+boi = find(includeBlock);
 %% Analyze session - this will be where FreqDisc will actually start!
 session=[]; 
 count=1;

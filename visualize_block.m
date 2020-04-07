@@ -72,46 +72,123 @@ for f = 1:2
     
     B = floor(length(currentCells)/bin);
     extraCells = mod(length(currentCells),bin);
-    if extraCells 
-    
-    figure;  %one cell/row of the graph
-    for a=1:length(currentCells) %for all of the cells
-
-        row_num = currentCells(a);
-        cell_trace = F7(row_num,:);%pull out the total trace for each cell
-        mean_gCAMP = mean(cell_trace);% average green for each cell
-        df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
-        A = smooth(df_f,10);
-        plot(timestamp, A*SF + a,'LineWidth',1);
-        hold on;
-
+    if extraCells <= 5
+        lastBin = bin + extraCells;
+    else
+        lastBin = extraCells;
     end
-    line = vline(Sound_Time);
-    xlim([0 timestamp(Z)])
-    ylim([0 a])
-    ylabel('Cell number')
-    xlabel('Timestamp')
-    title(fig_title)
+    
+    for b = 1:B %Plot one graph for each bin of cells
+        
+        c1 = bin*(b-1) + 1;
+        c2 = bin*(b);
+        
+        if b == B
+            c2 = length(currentCells);
+        end
+
+        figure;
+        subplot(3,1,1:2) %one cell/row of the graph
+        count = 1;
+        
+        for a=c1:c2 %for all of the cells
+            row_num = currentCells(a);
+            cell_trace = F7(row_num,:);%pull out the total trace for each cell
+            mean_gCAMP = mean(cell_trace);% average green for each cell
+            df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
+            A = smooth(df_f,10);
+            plot(timestamp, A + count,'LineWidth',1);
+            hold on;
+            
+            count = count + 1;
+        end
+        %line = vline(Sound_Time);
+        xlim([0 timestamp(Z)])
+        ylim([0 (count - 0.5)])
+        set(gca, 'YTick', [1:1:count-1])
+        set(gca, 'YTickLabel', [c1:1:c2])
+        ylabel('Cell number')
+        xlabel('Timestamp')
+        title(fig_title)
+        
+        subplot(3,1,3); hold on %loco
+        title('Locomotor activity')
+        ylabel('Activity')
+        xlabel('Timestamp')
+        plot(loco_data(:,1), loco_data(:,3));
+    end
 end
 
 %% Plot mean image from suite2p with ROIs outlined and labelled
 
-figure;
+stat = block.stat;
+stat = stat(:,2:end); %python to matlab correction
 
-subplot(2,2,1)
-imagesc(block.img.refImg)
-axis square
-colormap('bone')
+%Plot maps twice, second will have ROI labels,
+%third will have red cell labels
+for f = 1:3
+    if f == 1
+        plotROIs = 0;
+    elseif f == 2
+        plotROIs = 1;
+        currentCells = nonredcell;
+    elseif f == 3&& redcells_exist
+        plotROIs = 1;
+        currentCells = redcell_iscell;
+    else
+        continue
+    end
+    
+    figure('units','normalized','outerposition',[0 0 1 1])
+    for m = 1:2
 
-subplot(2,2,2)
-imagesc(block.img.meanImgE)
-axis square
-colormap('bone')
+        subplot(1,2,m); hold on
 
-subplot(2,2,3); hold on
-imagesc(block.img.refImg)
-axis square
-colormap('bone')
+        if m == 1
+            figtitle = 'Ref Image';
+            img = block.img.refImg;
+            image(img);
+        elseif m == 2 
+            figtitle = 'Mean Image Enhanced';
+            img = block.img.meanImgE;
+            imagesc(img);
+        end
 
-for a = 1:length(
+        title(figtitle)
+        axis square
+        xlim([0 512])
+        ylim([0 512])
+        colormap('bone')
+        set(gca,'YDir','reverse')
+    end
+    
+    if plotROIs == 1
+        
+        for a = 1:length(currentCells)
+            row_num = currentCells(a);
+            xcirc = double(block.stat{1,row_num}.xcirc);
+            ycirc = double(block.stat{1,row_num}.ycirc);
 
+            subplot(1,2,1);
+            if f == 2
+                plot(xcirc,ycirc,'Linewidth', 1.5);
+            elseif f == 3
+                plot(xcirc,ycirc,'Linewidth', 1.5, 'Color', 'r');
+            end
+            text(max(xcirc),max(ycirc),num2str(a), 'Color', 'w');
+
+            subplot(1,2,2);
+            if f == 2
+                plot(xcirc,ycirc,'Linewidth', 1.5);
+            elseif f == 3
+                plot(xcirc,ycirc,'Linewidth', 1.5, 'Color', 'r');
+            end
+        end
+
+        subplot(1,2,1);
+        set(gca,'YDir','reverse')
+
+        subplot(1,2,2);
+        set(gca,'YDir','reverse')
+    end
+end

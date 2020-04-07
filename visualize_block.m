@@ -87,8 +87,9 @@ for f = 1:2
             c2 = length(currentCells);
         end
 
-        figure;
-        subplot(3,1,1:2) %one cell/row of the graph
+        figure('units','normalized','outerposition',[0 0 1 1])
+
+        subplot(3,4,1:8) %one cell/row of the graph
         count = 1;
         
         for a=c1:c2 %for all of the cells
@@ -97,12 +98,14 @@ for f = 1:2
             mean_gCAMP = mean(cell_trace);% average green for each cell
             df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
             A = smooth(df_f,10);
-            plot(timestamp, A + count,'LineWidth',1);
+            plot(timestamp, A*SF + count,'LineWidth',1);
             hold on;
             
             count = count + 1;
         end
-        %line = vline(Sound_Time);
+        if Z < 10000 %Don't plot red lines if there is too much data, otherwise its messy
+            line = vline(Sound_Time, 'r');
+        end
         xlim([0 timestamp(Z)])
         ylim([0 (count - 0.5)])
         set(gca, 'YTick', [1:1:count-1])
@@ -111,7 +114,7 @@ for f = 1:2
         xlabel('Timestamp')
         title(fig_title)
         
-        subplot(3,1,3); hold on %loco
+        subplot(3,4,9:12); hold on %loco
         title('Locomotor activity')
         ylabel('Activity')
         xlabel('Timestamp')

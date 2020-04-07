@@ -20,8 +20,8 @@ stim_protocol=1;
 % Make setup and data structure out of all blocks that correspond to stim_protocol
 % Later we can also add other things like groups
 
-info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
+info_path = '\\apollo\research\ENT\Takesian Lab\2P club resources\Example datasets for new 2p code\Example widefield dataset';
+compiled_blocks_path = '\\apollo\research\ENT\Takesian Lab\2P club resources\Example datasets for new 2p code\Example widefield dataset\Compiled';
 %save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study'; %To save figures later
 cd(info_path)
 Info = importfile('Info');

@@ -113,6 +113,7 @@ for i = 1:size(currentInfo,1)
 
     %pull out the Tosca-derived, behaviorally relevant data
     [block] = define_behavior_singleblock(block);
+    [block] = FreqDisc_Behavior_singleblock(block);
 
     %pull out the Bruker-derived timestamps from BOTs and Voltage Recordings
     [block] = define_sound_singleblock(block);

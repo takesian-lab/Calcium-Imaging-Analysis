@@ -40,6 +40,7 @@ block.img.meanImgE = Fall.ops.meanImgE;
 block.img.Vcorr = Fall.ops.Vcorr;
 %block.img.sdmov = Fall.ops.sdmov; %Files saved with older versions of suite2p dont have this
 
+
 block.stat = Fall.stat;
 block.F = Fall.F(:,Frame_set);
 block.Fneu = Fall.Fneu(:,Frame_set);

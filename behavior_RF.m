@@ -120,6 +120,9 @@ for a=1:length(setup.mousename)
                 elseif setup.stim_protocol == 6
                     V1(i,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
                     V2(i,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
+                elseif setup.stim_protocol == 7
+                    V1(i,m)  = Data{m}.cue.Signal.Waveform.Frequency_kHz;
+                    V2(i,m)  = Data{m}.cue.Signal.Level.dB_SPL;;
                 end
             end
         %end

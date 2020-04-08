@@ -14,6 +14,7 @@ clear all;
 %SAM = 5
 %widefield=4
 %SAM freq = 6
+%Go/No-go behavior = 7
 
 stim_protocol=1;
 

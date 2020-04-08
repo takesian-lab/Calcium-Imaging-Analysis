@@ -18,10 +18,11 @@
 %% Load Info.mat
 
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
-recompile = 0; %1 to save over previously compiled blocks, 0 to skip
+recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 
-info_path = '\\apollo\research\ENT\Takesian Lab\2P club resources\Example datasets for new 2p code\Example 2p dataset';
-save_path = '\\apollo\research\ENT\Takesian Lab\2P club resources\Example datasets for new 2p code\Example 2p dataset\Compiled';
+info_path = 'D:/2P analysis/2P local data/Carolyn';
+save_path = 'D:/2P analysis/2P local data/Carolyn/analyzed/Daily Imaging';
+
 cd(info_path)
 Info = importfile('Info');
 
@@ -57,8 +58,14 @@ for i = 1:size(currentInfo,1)
     setup.stim_name         =   [currentInfo{i,16}];    %type of stim presentation in plain text
     setup.stim_protocol     =   [currentInfo{i,17}];    %number corresponding to stim protocol
 
-    setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
-        '_Block_', num2str(setup.imaging_set), '_Session_', num2str(setup.Tosca_session), ...
+    Block_number = sprintf('%03d',setup.imaging_set);
+    
+%     setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
+%         '_Block_', num2str('%03d',setup.imaging_set), '_Session_', num2str(setup.Tosca_session), ...
+%         '_Run_', num2str(setup.Tosca_run), '_', setup.stim_name);
+    
+     setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
+        '_Block_', Block_number, '_Session_', num2str(setup.Tosca_session), ...
         '_Run_', num2str(setup.Tosca_run), '_', setup.stim_name);
     
     %Skip files that have previously been compiled
@@ -107,6 +114,7 @@ for i = 1:size(currentInfo,1)
 
     %pull out the Tosca-derived, behaviorally relevant data
     [block] = define_behavior_singleblock(block);
+    [block] = FreqDisc_Behavior_singleblock(block);
 
     %pull out the Bruker-derived timestamps from BOTs and Voltage Recordings
     [block] = define_sound_singleblock(block);

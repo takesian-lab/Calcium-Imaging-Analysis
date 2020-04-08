@@ -30,7 +30,9 @@ Info = importfile('Info');
 setup = struct;
 setup.Info = Info;
 setup.stim_protocol = stim_protocol;
+setup.run_redcell = 0;
 [data, setup] = fillSetupFromInfoTable_v2(setup, Info, compiled_blocks_path);
+data.setup = setup; %Save this info
 
 %% Now find processed suite2P data
 if setup.run_redcell==0

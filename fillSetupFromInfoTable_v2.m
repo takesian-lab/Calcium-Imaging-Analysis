@@ -63,7 +63,8 @@ for i = 1:length(uniqueMice)
     matching_mice = strcmp(currentMouse, mice);
     
     currentInfo_M = currentInfo(matching_mice,:);
-    ROIs = [currentInfo_M{:,R}]';
+    ROIs = [currentInfo_M{:,R}]'; %This requires every block to have an ROI number, which corresponds
+    %to which data was run together in Suite2p. If left empty there will be an error
     uniqueROIs = unique(ROIs);
     
     for j = 1:length(uniqueROIs)
@@ -72,11 +73,13 @@ for i = 1:length(uniqueMice)
 
         %Fill setup with structure {Mouse, ROI}
         setup.mousename{i,j}         =   currentMouse;
+        setup.ROIs{i,j}              =   currentROI;
         setup.expt_date{i,j}         =   [currentInfo_R{:,D}];
         setup.Imaging_sets{i,j}      =   [currentInfo_R{:,IS}];
         setup.Session{i,j}           =   [currentInfo_R{:,TS}];
         setup.Tosca_Runs{i,j}        =   [currentInfo_R{:,TR}];
         
+
         block_filenames = cell(1,size(currentInfo_R,1));
         unique_block_names = cell(1,size(currentInfo_R,1));
         for r = 1:size(currentInfo_R,1)
@@ -89,7 +92,9 @@ for i = 1:length(uniqueMice)
             unique_block_names{1,r} = strcat('Block', num2str([currentInfo_R{r,IS}]),...
                 '_Session', num2str([currentInfo_R{r,TS}]), '_Run', num2str([currentInfo_R{r,TR}]));
 
-            data.([currentMouse]).parameters = block.parameters; %This will be written over every time, but thats ok because its the same when stims are the same
+            data.([currentMouse]).parameters = block.parameters; %This will be written over every time
+            %This assumes that the block parameters are the same for every stim paradigm, but they might not be
+            %For example if some trials are lost. We'll have to fix this at some point.
             data.([currentMouse]).([unique_block_names{1,r}]) = block;
             clear('block');
         end

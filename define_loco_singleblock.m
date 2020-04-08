@@ -52,17 +52,17 @@ for time=1:length(Sound_Time)
 end
 
 %% Plot locomotor activity
-figure;
-
-subplot(2,1,1); hold on
-title('Locomotor activity')
-ylabel('Activity')
-plot(loco_data(:,1), loco_data(:,3));
-
-subplot(2,1,2); hold on
-ylabel('Considered active')
-xlabel('Seconds')
-plot(loco_data(:,1), active_time > 0); hold on;
+% figure;
+% 
+% subplot(2,1,1); hold on
+% title('Locomotor activity')
+% ylabel('Activity')
+% plot(loco_data(:,1), loco_data(:,3));
+% 
+% subplot(2,1,2); hold on
+% ylabel('Considered active')
+% xlabel('Seconds')
+% plot(loco_data(:,1), active_time > 0); hold on;
 
 %% Save results
 block.isLoco = Loco_1;

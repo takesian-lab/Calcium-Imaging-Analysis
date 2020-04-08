@@ -20,8 +20,8 @@
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
 recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 
-info_path = '\\apollo\research\ENT\Takesian Lab\2P club resources\Example datasets for new 2p code\Example 2p dataset';
-save_path = '\\apollo\research\ENT\Takesian Lab\2P club resources\Example datasets for new 2p code\Example 2p dataset\Compiled';
+info_path = 'D:/2P analysis/2P local data/Carolyn';
+save_path = 'D:/2P analysis/2P local data/Carolyn/analyzed/Daily Imaging';
 
 cd(info_path)
 Info = importfile('Info');

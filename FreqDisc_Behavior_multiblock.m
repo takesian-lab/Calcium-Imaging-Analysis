@@ -1,14 +1,16 @@
 %% Find blocks of interest/day
 
+
 Hit_threshold = 0.5;
 remove_dailyPrep = 1;
-by_date = 1;
 
-info_path = 'D:/2P analysis/2P local data/Carolyn';
-cd(info_path)
-Info = importfile('Info');
-save_path = 'D:/2P analysis/2P local data/Carolyn/analyzed/Daily Imaging';
-cd(save_path)
+%right now all of our analysis is by date; however, I am putting this in as
+%a way to potentially change the way we look at our data
+by_date = 1; 
+
+%the save_path is where the data are
+block_path = 'D:/2P analysis/2P local data/Carolyn/analyzed/Daily Imaging';
+cd(block_path)
 allfiles=dir('*Block*');
 
 bl=0
@@ -21,13 +23,12 @@ FreqDiscData.(['block' Block_number]) = block;
 
 end
 numBlocks = bl;
-
 %% find blocks of interest
 for i = 1:numBlocks
     Block_number = sprintf('%03d',i);
     prepTrials(i) = FreqDiscData.(['block' Block_number]).prepTrial;
     HitRate (i) = FreqDiscData.(['block' Block_number]).HitRate;
-    dates (i) = FreqDiscData.(['block' Block_number]).setup.Info;%where I left off
+    dates (i) = FreqDiscData.(['block' Block_number]).setup.expt_date;
     HitRate;
     if HitRate(i) >= Hit_threshold
         includeBlock(i) = 1;
@@ -36,12 +37,13 @@ for i = 1:numBlocks
     end
 end
 if remove_dailyPrep == 1;
-    r = find(prepTrials)
+    r = find(prepTrials);
     includeBlock(r) = 0;
 end
 boi = find(includeBlock);
-%% include this day in analysis or not.
-% we train the mice to perform well in 
+all_dates = unique(dates);
+%% now sort by date
+
 
 %% Analyze session - this will be where FreqDisc will actually start!
 session=[]; 

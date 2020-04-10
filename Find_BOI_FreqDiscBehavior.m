@@ -3,7 +3,11 @@
 
 Hit_threshold = 0.5;
 remove_dailyPrep = 1;
-stim_protocol = 7;
+
+%this currently only works for fequency discrimination, but we could make
+%this part of the pipeline more generic, and have it combine appropriate
+%blocks for all of the different types of behavior
+stim_protocol = 7; 
 
 %right now all of our analysis is by date; however, I am putting this in as
 %a way to potentially change the way we look at our data
@@ -16,31 +20,32 @@ allfiles=dir('*Block*');
 
 %loop through all of the blocks, and pull out the ones with the appropriate
 %stim protocol
-bl=0
+bl=0;
+b=0;
 for i = 1:size(allfiles,1)
-    bl=bl+1
-    name = ({allfiles(bl).name});
+    b=b+1;
+    name = ({allfiles(b).name});
     load(name{1});
-    Block_number = sprintf('%03d',bl);
-    if block.setup.stim_protocol == stim_protocol;
-        FreqDiscData.(['block' Block_number]) = block;
-        bl=bl+1
-    end
     
+    if block.setup.stim_protocol == stim_protocol;
+        bl=bl+1
+        Behav_number = sprintf('%03d',bl);
+        behavData.(['behavblock' Behav_number]) = block;
+        
+    end   
 end
 numBlocks = bl;
 %% find blocks of interest
 for i = 1:numBlocks
-    Block_number = sprintf('%03d',i);
-    prepTrials(i) = FreqDiscData.(['block' Block_number]).prepTrial;
-    HitRate (i) = FreqDiscData.(['block' Block_number]).HitRate;
-    dates (i) = FreqDiscData.(['block' Block_number]).setup.expt_date;
-    Mousename (i) = FreqDiscData.(['block' Block_number]).setup.mousename;
+    Behav_number = sprintf('%03d',bl);
+    prepTrials(i) = behavData.(['behavblock' Behav_number]).prepTrial;
+    HitRate (i) = behavData.(['behavblock' Behav_number]).HitRate;
+    dates (i) = behavData.(['behavblock' Behav_number]).setup.expt_date;
+    Mousename (i) = behavData.(['behavblock' Behav_number]).setup.mousename;
     HitRate;
     if HitRate(i) >= Hit_threshold
         includeBlock(i) = 1;
     else includeBlock(i) = 0;
-        
     end
 end
 if remove_dailyPrep == 1;
@@ -51,6 +56,9 @@ boi = find(includeBlock);
 all_dates = unique(dates);
 all_mice = unique(Mousename);
 %% now sort by mouse then by date
+%find blocks where all_mice=Mousename
+%find blocks where all_dates=dates - but for each mouse
+
 
 
 

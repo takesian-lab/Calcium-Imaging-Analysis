@@ -73,25 +73,30 @@ for i = 1:size(currentInfo,1)
     end
     
     %Not every user has a username folder, allow for this column to be empty
-    if ~isnan(setup.username)
+    if ~ismissing(setup.username)
         usernameSlash = strcat(setup.username, '/');
     else
         usernameSlash = '';
     end
     
-    %Establish and test paths, allowing for all paths to be missing except Tosca path
+    %Establish and test paths, allowing fo paths to be missing
     %TOSCA PATH
-    setup.Tosca_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
-
-    try
-        cd(setup.Tosca_path)
-    catch
-        disp(setup.block_filename)
-        error('Your Tosca path is incorrect.')
+    if ismissing(setup.Tosca_session)
+        setup.Tosca_path = nan;
+    else
+        setup.Tosca_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
+        try
+            cd(setup.Tosca_path)
+        catch
+            disp(setup.block_filename)
+            error('Your Tosca path is incorrect.')
+        end
     end
     
     %BLOCK PATH
-    if isstring(setup.block_name)
+    if ismissing(setup.block_name)
+        setup.block_path = nan;
+    else
         setup.block_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.block_name);
         try
             cd(setup.block_path)
@@ -99,15 +104,12 @@ for i = 1:size(currentInfo,1)
             disp(setup.block_filename)
             error('Your block path is incorrect.')
         end
-    elseif isnan(setup.block_name)
-        setup.block_path = nan;
-    else
-        disp(setup.block_filename)
-        error('Check block_name')
     end
     
     %VR PATH
-    if isstring(setup.VR_name)
+    if ismissing(setup.VR_name)
+        setup.VR_path = nan;
+    else
         setup.VR_path  = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.VR_name);
         try
             cd(setup.VR_path)
@@ -115,15 +117,12 @@ for i = 1:size(currentInfo,1)
             disp(setup.block_filename)
             error('Your voltage recording path is incorrect.')
         end
-    elseif isnan(setup.VR_name) 
-        setup.VR_path = nan;
-    else
-        disp(setup.block_filename)
-        error('Check VR_name')
     end
     
     %SUITE2P PATH
-    if isstring(setup.analysis_name)
+    if ismissing(setup.analysis_name)
+        setup.suite2p_path = nan;
+    else
         setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
         try
             cd(setup.suite2p_path)
@@ -131,11 +130,6 @@ for i = 1:size(currentInfo,1)
             disp(setup.block_filename)
             error('Your Suite2p analysis path is incorrect.')
         end
-    elseif isnan(setup.analysis_name) 
-        setup.suite2p_path = nan;
-    else
-        disp(setup.block_filename)
-        error('Check analysis_name')
     end
    
     

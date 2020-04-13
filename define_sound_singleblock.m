@@ -1,6 +1,11 @@
 function [block] = define_sound_singleblock(block)
 
-display('Pulling out Bruker data...');
+if ismissing(block.setup.block_path) && ismissing(block.setup.VR_path)
+    disp('Skipping Bruker data...');
+    return
+end
+
+disp('Pulling out Bruker data...');
 
 %Needed from setup:
 %block_path

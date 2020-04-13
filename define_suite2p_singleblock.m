@@ -1,5 +1,10 @@
 function [block] = define_suite2p_singleblock(block)
 
+if ismissing(block.setup.suite2p_path)
+    disp('Skipping Suite2p data...');
+    return
+end
+
 disp('Pulling out Suite2p data...');
 
 %Needed from setup:

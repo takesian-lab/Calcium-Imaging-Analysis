@@ -79,25 +79,65 @@ for i = 1:size(currentInfo,1)
         usernameSlash = '';
     end
     
-    setup.block_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.block_name);
-    setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
+    %Establish and test paths, allowing for all paths to be missing except Tosca path
+    %TOSCA PATH
     setup.Tosca_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
-    if setup.voltage_recording == 0
-        setup.VR_path  = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.VR_name);
-    end
-    
-    %Test paths prior to starting to compile
+
     try
-        cd(setup.block_path)
-        cd(setup.suite2p_path)
         cd(setup.Tosca_path)
-        if setup.voltage_recording == 0
-            cd(setup.VR_path)
-        end
     catch
         disp(setup.block_filename)
-        error('One of your paths is incorrect.')
+        error('Your Tosca path is incorrect.')
     end
+    
+    %BLOCK PATH
+    if isstring(setup.block_name)
+        setup.block_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.block_name);
+        try
+            cd(setup.block_path)
+        catch
+            disp(setup.block_filename)
+            error('Your block path is incorrect.')
+        end
+    elseif isnan(setup.block_name)
+        setup.block_path = nan;
+    else
+        disp(setup.block_filename)
+        error('Check block_name')
+    end
+    
+    %VR PATH
+    if isstring(setup.VR_name)
+        setup.VR_path  = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.VR_name);
+        try
+            cd(setup.VR_path)
+        catch
+            disp(setup.block_filename)
+            error('Your voltage recording path is incorrect.')
+        end
+    elseif isnan(setup.VR_name) 
+        setup.VR_path = nan;
+    else
+        disp(setup.block_filename)
+        error('Check VR_name')
+    end
+    
+    %SUITE2P PATH
+    if isstring(setup.analysis_name)
+        setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
+        try
+            cd(setup.suite2p_path)
+        catch
+            disp(setup.block_filename)
+            error('Your Suite2p analysis path is incorrect.')
+        end
+    elseif isnan(setup.analysis_name) 
+        setup.suite2p_path = nan;
+    else
+        disp(setup.block_filename)
+        error('Check analysis_name')
+    end
+   
     
     %% COMPILE BLOCK
     disp('Processing...');

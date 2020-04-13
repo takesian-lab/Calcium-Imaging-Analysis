@@ -20,8 +20,8 @@
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
 recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 
-info_path = 'D:/2P analysis/2P local data/Carolyn';
-save_path = 'D:/2P analysis/2P local data/Carolyn/analyzed/Daily Imaging';
+info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
+save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks';
 
 cd(info_path)
 Info = importfile('Info');
@@ -60,11 +60,7 @@ for i = 1:size(currentInfo,1)
 
     Block_number = sprintf('%03d',setup.imaging_set);
     
-%     setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
-%         '_Block_', num2str('%03d',setup.imaging_set), '_Session_', num2str(setup.Tosca_session), ...
-%         '_Run_', num2str(setup.Tosca_run), '_', setup.stim_name);
-    
-     setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
+    setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
         '_Block_', Block_number, '_Session_', num2str(setup.Tosca_session), ...
         '_Run_', num2str(setup.Tosca_run), '_', setup.stim_name);
     

@@ -1,32 +1,21 @@
 function [block] = define_loco_singleblock(block)
 
+if ismissing(block.setup.Tosca_path)
+    disp('Skipping define_loco...');
+    return
+end
+
 disp('Finding active trials')
 
-%Needed from setup:
-%VR_path
-%VR_filename
-%stim_protocol
-%voltage_recording
+%Needed from block:
+%block.Sound_Time - define_behavior_singleblock
+%block.locomotion_data - define_sound_singleblock
+%block.active_time - define_sound_singleblock
 
 setup = block.setup;
 Sound_Time = block.Sound_Time;
-loco_data = block.loco_data; %RAW LOCO DATA
-
-%% Prepare to read VoltageRecording file in locomotor_activity
-
-isLoco = []; 
-       
-if setup.stim_protocol == 4 || setup.voltage_recording == 0
-    cd(setup.VR_path) %Widefield
-else
-    cd(setup.block_path) %2p
-end
-filename = setup.VR_filename;
-
-[loco_data,active_time] = locomotor_activity(loco_data,filename);
-block.locomotion_data = loco_data; %TRANSFORMED LOCO DATA
-block.active_time = active_time;
-
+loco_data = block.locomotion_data; %TRANSFORMED LOCO DATA
+active_time = block.active_time;
 
 %% Find sound times when animal is active
 for time=1:length(Sound_Time)

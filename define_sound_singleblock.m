@@ -14,8 +14,9 @@ disp('Pulling out Bruker data...');
 %stim_protocol
 
 %Dependent on Tosca data:
-%block.New_sound_times;
-%block.start_time; 
+%block.New_sound_times
+%block.start_time
+%block.loco_data
 
 setup = block.setup;
 
@@ -45,6 +46,7 @@ if ~ismissing(block.setup.Tosca_path) %Skip if Tosca info is missing
     %Load variables previously obtained during define_behavior_singleblock
     New_sound_times = block.New_sound_times;
     start_time = block.start_time;
+    loco_data = block.loco_data;
     
     %Align with VR csv
     display(['Loading ' VR_filename])
@@ -54,6 +56,11 @@ if ~ismissing(block.setup.Tosca_path) %Skip if Tosca info is missing
     loco_times = block.loco_times;
     locTime2 = start + loco_times;
     
+    %Moved this part from define_loco:
+    [loco_data,active_time] = locomotor_activity(loco_data,VR_filename);
+    block.locomotion_data = loco_data; %TRANSFORMED LOCO DATA
+    block.active_time = active_time;
+
     %Record aligned times in block 
     block.Sound_Time = Sound_Time;
     block.locTime = locTime2;

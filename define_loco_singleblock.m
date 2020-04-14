@@ -1,6 +1,10 @@
 function [block] = define_loco_singleblock(block)
 
+%Requires both Tosca and Bruker data
 if ismissing(block.setup.Tosca_path)
+    disp('Skipping define_loco...');
+    return
+elseif ismissing(block.setup.block_path) && ismissing(block.setup.VR_path)
     disp('Skipping define_loco...');
     return
 end
@@ -8,7 +12,7 @@ end
 disp('Finding active trials')
 
 %Needed from block:
-%block.Sound_Time - define_behavior_singleblock
+%block.Sound_Time - define_sound_singleblock
 %block.locomotion_data - define_sound_singleblock
 %block.active_time - define_sound_singleblock
 

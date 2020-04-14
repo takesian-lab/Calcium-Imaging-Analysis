@@ -24,7 +24,7 @@ info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
 save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocksTest';
 
 cd(info_path)
-Info = importfile('InfoTest');
+Info = importfile('Info');
 
 %% Compile all blocks unless they are set to "Ignore"
 
@@ -36,7 +36,7 @@ ignore = [Info{:,1}]';
 currentInfo = Info(ignore == 0,:);
 
 %Loop through all remaining rows
-for i = 3%:size(currentInfo,1)
+for i = 1:size(currentInfo,1)
 
     %Create setup variable that will contain all the necessary information about the block
     setup = struct;

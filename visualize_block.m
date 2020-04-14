@@ -3,24 +3,39 @@ function visualize_block(block)
 
 setup = block.setup;
 
-%% Plot locomotor activity
+%% Behavior Section - SKIP if Tosca data wasn't present
+if ismissing(block.setup.Tosca_path)
+    disp('Skipping Tosca plots...');
+else
 
-loco_data = block.locomotion_data;
-active_time = block.active_time;
+    %% Plot locomotor activity
 
-figure;
+    if isfield(block, 'locomotion_data')
+        loco_data = block.locomotion_data;
+    else
+        loco_data = block.loco_data;
+    end
+    
+    if isfield(block, 'active_time')
+        active_time = block.active_time;
+    end
 
-subplot(2,1,1); hold on
-title('Locomotor activity')
-ylabel('Activity')
-plot(loco_data(:,1), loco_data(:,3));
+    figure;
 
-subplot(2,1,2); hold on
-ylabel('Considered active')
-xlabel('Seconds')
-set(gca, 'ytick', [0 1])
-plot(loco_data(:,1), active_time > 0); hold on;
+    subplot(2,1,1); hold on
+    title('Locomotor activity')
+    ylabel('Activity')
+    plot(loco_data(:,1), loco_data(:,3));
 
+    subplot(2,1,2); hold on
+    ylabel('Considered active')
+    xlabel('Seconds')
+    set(gca, 'ytick', [0 1])
+    if isfield(block, 'active_time') 
+        plot(loco_data(:,1), active_time > 0); hold on;
+    end
+
+end %Skip if Tosca data is missing
 
 %% Suite2p Section - SKIP if Fall.mat wasn't present
 
@@ -31,9 +46,10 @@ else
     %% Plot activity from cells (divided into red and green)
 
     bin = 10; %Number of cells to plot at a time (for visibility)
-
-    timestamp = block.timestamp;
-    Sound_Time = block.Sound_Time;
+    
+    if isfield(block, 'Sound_Time')
+        Sound_Time = block.Sound_Time;
+    end
 
     cell = block.F; %all the cell fluorescence data
     Fneu = block.Fneu; %neuropil
@@ -42,13 +58,22 @@ else
     F7 = cell-0.7*Fneu; %neuropil corrected traces
     F7 = F7(2:end,:); %python to matlab correction
 
+    if isfield(block, 'timestamp')
+        timestamp = block.timestamp;
+        timeUnit = 'Timestamp';
+    else
+        timestamp = 1:size(F7,2);
+        timeUnit = 'Frames';
+    end
+    
     %Identify cells
     cell_id = find(iscell(:,1));
     redcell_ones = find(redcell(:,1));
 
     redcells_exist = 0;
 
-    if ~isempty(redcell_ones)
+    %NEED TO FIX NOW THAT NONCELLS ARE NOT SAVED - MT
+    if ~isempty(redcell_ones) 
         idx = find(ismember(redcell_ones,cell_id)); %identify active red cells within all cells
         redcell_iscell = redcell_ones(idx); %which red cells are active
         nonredcell = setdiff(cell_id, redcell_iscell); %what are the active non-red cells
@@ -77,7 +102,7 @@ else
         Z = round(length(timestamp)*z);
         SF = 0.5; %Shrinking factor for traces to appear more spread out
 
-        B = floor(length(currentCells)/bin);
+        B = floor(size(currentCells)/bin);
         extraCells = mod(length(currentCells),bin);
         if extraCells <= 5
             lastBin = bin + extraCells;
@@ -100,8 +125,8 @@ else
             count = 1;
 
             for a=c1:c2 %for all of the cells
-                row_num = currentCells(a);
-                cell_trace = F7(row_num,:);%pull out the total trace for each cell
+                %row_num = currentCells(a);
+                cell_trace = F7(count,:);%pull out the total trace for each cell
                 mean_gCAMP = mean(cell_trace);% average green for each cell
                 df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
                 A = smooth(df_f,10);
@@ -110,7 +135,7 @@ else
 
                 count = count + 1;
             end
-            if Z < 10000 %Don't plot red lines if there is too much data, otherwise its messy
+            if Z < 10000 && isfield(block, 'Sound_Time') %Don't plot red lines if there is too much data, otherwise its messy
                 line = vline(Sound_Time, 'r');
             end
             xlim([0 timestamp(Z)])
@@ -118,14 +143,16 @@ else
             set(gca, 'YTick', [1:1:count-1])
             set(gca, 'YTickLabel', [c1:1:c2])
             ylabel('Cell number')
-            xlabel('Timestamp')
+            xlabel(timeUnit)
             title(fig_title)
 
             subplot(3,4,9:12); hold on %loco
             title('Locomotor activity')
             ylabel('Activity')
-            xlabel('Timestamp')
-            plot(loco_data(:,1), loco_data(:,3));
+            xlabel(timeUnit)
+            if ~ismissing(block.setup.Tosca_path)
+                plot(loco_data(:,1), loco_data(:,3));
+            end
         end
     end
 

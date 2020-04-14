@@ -26,7 +26,9 @@ Frame_set = get_frames_from_Fall(Fall.ops,Imaging_Block,showTable);
 setup.Frame_set = Frame_set;
 
 %Check that Frame_set matches timestamp from Bruker function
-if length(Frame_set) ~= length(block.timestamp)
+if ismissing(block.setup.block_path) && ismissing(block.setup.VR_path)
+    warning('Frame_set could not be checked against timestamp')
+elseif length(Frame_set) ~= length(block.timestamp)
     error('Frame_set does not match timestamp')
 end
 

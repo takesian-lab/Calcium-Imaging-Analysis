@@ -169,13 +169,13 @@ else
         elseif f == 2
             plotROIs = 1;
             currentCells = nonredcell;
-        elseif f == 3&& redcells_exist
+        elseif f == 3 && redcells_exist
             plotROIs = 1;
             currentCells = redcell_iscell;
         else
             continue
         end
-
+ 
         figure('units','normalized','outerposition',[0 0 1 1])
         for m = 1:2
 
@@ -185,6 +185,9 @@ else
                 figtitle = 'Ref Image';
                 img = block.img.refImg;
                 image(img);
+                if block.setup.voltage_recording == 0
+                    imagesc(img);
+                end
             elseif m == 2 
                 figtitle = 'Mean Image Enhanced';
                 img = block.img.meanImgE;

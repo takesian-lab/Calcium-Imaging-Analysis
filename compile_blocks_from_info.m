@@ -60,9 +60,15 @@ for i = 1:size(currentInfo,1)
 
     Block_number = sprintf('%03d',setup.imaging_set);
     
+    if setup.voltage_recording == 0
+        widefieldTag = 'widefield-';
+    else
+        widefieldTag = '';
+    end
+    
     setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
         '_Block_', Block_number, '_Session_', num2str(setup.Tosca_session), ...
-        '_Run_', num2str(setup.Tosca_run), '_', setup.stim_name);
+        '_Run_', num2str(setup.Tosca_run), '_', widefieldTag, setup.stim_name);
     
     %Skip files that have previously been compiled
     if ~recompile

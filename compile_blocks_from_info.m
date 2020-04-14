@@ -20,8 +20,8 @@
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
 recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 
-info_path = 'D:/2P analysis/2P local data/Carolyn';
-save_path = 'D:/2P analysis/2P local data/Carolyn/analyzed/Daily Imaging';
+info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
+save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocksTest';
 
 cd(info_path)
 Info = importfile('Info');
@@ -46,7 +46,7 @@ for i = 1:size(currentInfo,1)
     setup.mousename         =   [currentInfo{i,4}];     %part of the path, no underscores
     setup.expt_date         =   [currentInfo{i,5}];     %part of the path, YYYY-MM-DD
     setup.block_name        =   [currentInfo{i,6}];     %part of the path - full block name used for BOT
-    setup.ROI               =   [currentInfo{i,7}];     %which data to consider as coming from the same ROI, per mouse
+    setup.FOV               =   [currentInfo{i,7}];     %which data to consider as coming from the same field of view, per mouse
     setup.imaging_set       =   [currentInfo{i,8}];     %block or BOT numbers
     setup.Tosca_session     =   [currentInfo{i,9}];     %Tosca session
     setup.Tosca_run         =   [currentInfo{i,10}];    %Tosca run
@@ -60,13 +60,15 @@ for i = 1:size(currentInfo,1)
 
     Block_number = sprintf('%03d',setup.imaging_set);
     
-%     setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
-%         '_Block_', num2str('%03d',setup.imaging_set), '_Session_', num2str(setup.Tosca_session), ...
-%         '_Run_', num2str(setup.Tosca_run), '_', setup.stim_name);
+    if setup.voltage_recording == 0
+        widefieldTag = 'widefield-';
+    else
+        widefieldTag = '';
+    end
     
-     setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
+    setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
         '_Block_', Block_number, '_Session_', num2str(setup.Tosca_session), ...
-        '_Run_', num2str(setup.Tosca_run), '_', setup.stim_name);
+        '_Run_', num2str(setup.Tosca_run), '_', widefieldTag, setup.stim_name);
     
     %Skip files that have previously been compiled
     if ~recompile
@@ -77,31 +79,65 @@ for i = 1:size(currentInfo,1)
     end
     
     %Not every user has a username folder, allow for this column to be empty
-    if ~isnan(setup.username)
+    if ~ismissing(setup.username)
         usernameSlash = strcat(setup.username, '/');
     else
         usernameSlash = '';
     end
     
-    setup.block_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.block_name);
-    setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
-    setup.Tosca_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
-    if setup.voltage_recording == 0
-        setup.VR_path  = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.VR_name);
+    %Establish and test paths, allowing fo paths to be missing
+    %TOSCA PATH
+    if ismissing(setup.Tosca_session)
+        setup.Tosca_path = nan;
+    else
+        setup.Tosca_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
+        try
+            cd(setup.Tosca_path)
+        catch
+            disp(setup.block_filename)
+            error('Your Tosca path is incorrect.')
+        end
     end
     
-    %Test paths prior to starting to compile
-    try
-        cd(setup.block_path)
-        cd(setup.suite2p_path)
-        cd(setup.Tosca_path)
-        if setup.voltage_recording == 0
-            cd(setup.VR_path)
+    %BLOCK PATH
+    if ismissing(setup.block_name)
+        setup.block_path = nan;
+    else
+        setup.block_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.block_name);
+        try
+            cd(setup.block_path)
+        catch
+            disp(setup.block_filename)
+            error('Your block path is incorrect.')
         end
-    catch
-        disp(setup.block_filename)
-        error('One of your paths is incorrect.')
     end
+    
+    %VR PATH
+    if ismissing(setup.VR_name)
+        setup.VR_path = nan;
+    else
+        setup.VR_path  = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.VR_name);
+        try
+            cd(setup.VR_path)
+        catch
+            disp(setup.block_filename)
+            error('Your voltage recording path is incorrect.')
+        end
+    end
+    
+    %SUITE2P PATH
+    if ismissing(setup.analysis_name)
+        setup.suite2p_path = nan;
+    else
+        setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
+        try
+            cd(setup.suite2p_path)
+        catch
+            disp(setup.block_filename)
+            error('Your Suite2p analysis path is incorrect.')
+        end
+    end
+   
     
     %% COMPILE BLOCK
     disp('Processing...');

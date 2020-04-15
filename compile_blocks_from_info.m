@@ -20,11 +20,26 @@
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
 recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 
-info_path = 'D:\2P analysis\2P local data\Carolyn';
-save_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
+PC_name = getenv('computername');
+
+switch PC_name
+    case 'RD0366' %Maryse
+        info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
+        save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
+        info_filename = 'Info';
+    case 'RD0332' %Carolyn
+        info_path = 'D:\2P analysis\2P local data\Carolyn';
+        save_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
+        info_filename = 'Info';
+    case 'RD0386' %Wisam
+        % INSERT PATHS HERE
+        info_filename = 'Info';
+    otherwise
+        disp('Computer does not match known users')
+end
 
 cd(info_path)
-Info = importfile('Info');
+Info = importfile(info_filename);
 
 %% Compile all blocks unless they are set to "Ignore"
 

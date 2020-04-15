@@ -21,11 +21,26 @@ stim_protocol=1;
 % Make setup and data structure out of all blocks that correspond to stim_protocol
 % Later we can also add other things like groups
 
-info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
-%save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study'; %To save figures later
+PC_name = getenv('computername');
+
+switch PC_name
+    case 'RD0366' %Maryse
+        info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
+        compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
+        info_filename = 'Info';
+    case 'RD0332' %Carolyn
+        info_path = 'D:\2P analysis\2P local data\Carolyn';
+        compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
+        info_filename = 'Info';
+    case 'RD0386' %Wisam
+        % INSERT PATHS HERE
+        info_filename = 'Info';
+    otherwise
+        disp('Computer does not match known users')
+end
+
 cd(info_path)
-Info = importfile('Info');
+Info = importfile(info_filename);
 
 %Create setup variable for files corresponding to stim_protocol
 setup = struct;

@@ -4,6 +4,11 @@
 Hit_threshold = 0.5;
 remove_dailyPrep = 1;
 
+%this currently only works for fequency discrimination, but we could make
+%this part of the pipeline more generic, and have it combine appropriate
+%blocks for all of the different types of behavior
+stim_protocol = 7; 
+
 %right now all of our analysis is by date; however, I am putting this in as
 %a way to potentially change the way we look at our data
 by_date = 1; 
@@ -13,27 +18,34 @@ block_path = 'D:/2P analysis/2P local data/Carolyn/analyzed/Daily Imaging';
 cd(block_path)
 allfiles=dir('*Block*');
 
-bl=0
+%loop through all of the blocks, and pull out the ones with the appropriate
+%stim protocol
+bl=0;
+b=0;
 for i = 1:size(allfiles,1)
-bl=bl+1
-name = ({allfiles(bl).name});
-load(name{1});
-Block_number = sprintf('%03d',bl);
-FreqDiscData.(['block' Block_number]) = block;
-
+    b=b+1;
+    name = ({allfiles(b).name});
+    load(name{1});
+    
+    if block.setup.stim_protocol == stim_protocol;
+        bl=bl+1
+        Behav_number = sprintf('%03d',bl);
+        behavData.(['behavblock' Behav_number]) = block;
+        
+    end   
 end
 numBlocks = bl;
 %% find blocks of interest
 for i = 1:numBlocks
-    Block_number = sprintf('%03d',i);
-    prepTrials(i) = FreqDiscData.(['block' Block_number]).prepTrial;
-    HitRate (i) = FreqDiscData.(['block' Block_number]).HitRate;
-    dates (i) = FreqDiscData.(['block' Block_number]).setup.expt_date;
+    Behav_number = sprintf('%03d',bl);
+    prepTrials(i) = behavData.(['behavblock' Behav_number]).prepTrial;
+    HitRate (i) = behavData.(['behavblock' Behav_number]).HitRate;
+    dates (i) = behavData.(['behavblock' Behav_number]).setup.expt_date;
+    Mousename (i) = behavData.(['behavblock' Behav_number]).setup.mousename;
     HitRate;
     if HitRate(i) >= Hit_threshold
         includeBlock(i) = 1;
     else includeBlock(i) = 0;
-        
     end
 end
 if remove_dailyPrep == 1;
@@ -42,7 +54,20 @@ if remove_dailyPrep == 1;
 end
 boi = find(includeBlock);
 all_dates = unique(dates);
-%% now sort by date
+all_mice = unique(Mousename);
+%% now sort by mouse then by date
+%find blocks where all_mice=Mousename
+%find blocks where all_dates=dates - but for each mouse
+
+for i = 1:length(all_mice)
+    %should I make this a structure that will make it easy to loop through
+    %mice and then loop through blocks, or is it easier to keep it in this
+    %big matrix?
+    mouse_blocks{i} = find(all_mice(i)==Mousename(:));
+    for j = 1:length(mouse_blocks{i}
+        %you need to loop through the days
+    end
+end
 
 
 %% Analyze session - this will be where FreqDisc will actually start!

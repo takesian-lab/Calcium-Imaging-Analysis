@@ -49,14 +49,15 @@ block.img.Vcorr = Fall.ops.Vcorr;
 
 block.iscell = Fall.iscell;
 keep_ind = find(block.iscell(:,1)); %Only keep data from 'is cells'
-block.originalCellNum = keep_ind;
+block.cell_number = keep_ind-1;
 block.stat = Fall.stat(1,keep_ind);
 block.F = Fall.F(keep_ind,Frame_set);
 block.Fneu = Fall.Fneu(keep_ind,Frame_set);
 block.spks = Fall.spks(keep_ind,Frame_set);
 
 try
-    block.redcell = Fall.redcell; %Not all runs will have red cells
+    redcell = Fall.redcell; %Not all runs will have red cells
+    block.redcell = redcell(keep_ind);
 catch
     block.redcell = nan;
 end

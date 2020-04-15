@@ -52,11 +52,11 @@ else
     end
 
     cell = block.F; %all the cell fluorescence data
+    cell_number = block.cell_number;
     Fneu = block.Fneu; %neuropil
     iscell = block.iscell;
     redcell = block.redcell;
     F7 = cell-0.7*Fneu; %neuropil corrected traces
-    F7 = F7(2:end,:); %python to matlab correction
 
     if isfield(block, 'timestamp')
         timestamp = block.timestamp;

@@ -59,7 +59,15 @@ all_mice = unique(Mousename);
 %find blocks where all_mice=Mousename
 %find blocks where all_dates=dates - but for each mouse
 
-
+for i = 1:length(all_mice)
+    %should I make this a structure that will make it easy to loop through
+    %mice and then loop through blocks, or is it easier to keep it in this
+    %big matrix?
+    mouse_blocks{i} = find(all_mice(i)==Mousename(:));
+    for j = 1:length(mouse_blocks{i}
+        %you need to loop through the days
+    end
+end
 
 
 %% Analyze session - this will be where FreqDisc will actually start!

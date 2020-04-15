@@ -8,7 +8,7 @@ U = 3; %part of the path, not every user will have this, okay to leave empty
 M = 4; %part of the path, no underscores
 D = 5; %part of the path, YYYY-MM-DD
 B = 6; %part of the path - full block name used for BOT
-R = 7; %which data to consider as coming from the same ROI, per mouse
+F = 7; %which data to consider as coming from the same FOV, per mouse
 IS = 8; %block or BOT numbers
 TS = 9; %Tosca session #
 TR = 10; %Tosca run #
@@ -54,7 +54,7 @@ currentInfo = currentInfo(ignore == 0,:);
 cd(compiled_blocks_path)
 data = struct;
 
-%Per each mouse, combine blocks that come from the same ROI
+%Per each mouse, combine blocks that come from the same FOV
 mice = cellstr([currentInfo{:,M}])';
 uniqueMice = unique(mice);
 
@@ -63,17 +63,17 @@ for i = 1:length(uniqueMice)
     matching_mice = strcmp(currentMouse, mice);
     
     currentInfo_M = currentInfo(matching_mice,:);
-    ROIs = [currentInfo_M{:,R}]'; %This requires every block to have an ROI number, which corresponds
+    FOVs = [currentInfo_M{:,F}]'; %This requires every block to have an FOV number, which corresponds
     %to which data was run together in Suite2p. If left empty there will be an error
-    uniqueROIs = unique(ROIs);
+    uniqueFOVs = unique(FOVs);
     
-    for j = 1:length(uniqueROIs)
-        currentROI = uniqueROIs(j);
-        currentInfo_R = currentInfo_M(ROIs == currentROI,:); 
+    for j = 1:length(uniqueFOVs)
+        currentfOV = uniqueFOVs(j);
+        currentInfo_R = currentInfo_M(FOVs == currentFOV,:); 
 
-        %Fill setup with structure {Mouse, ROI}
+        %Fill setup with structure {Mouse, FOV}
         setup.mousename{i,j}         =   currentMouse;
-        setup.ROIs{i,j}              =   currentROI;
+        setup.FOVs{i,j}              =   currentfOV;
         setup.expt_date{i,j}         =   [currentInfo_R{:,D}];
         setup.Imaging_sets{i,j}      =   [currentInfo_R{:,IS}];
         setup.Session{i,j}           =   [currentInfo_R{:,TS}];

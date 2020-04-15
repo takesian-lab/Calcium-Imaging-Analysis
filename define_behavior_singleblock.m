@@ -1,5 +1,10 @@
 function [block] = define_behavior_singleblock(block)
 
+if ismissing(block.setup.Tosca_path)
+    disp('Skipping Tosca data...');
+    return
+end
+
 disp('Pulling out Tosca data...');
 
 %Needed from setup:

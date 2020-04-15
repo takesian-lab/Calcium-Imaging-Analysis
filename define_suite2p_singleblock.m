@@ -1,5 +1,10 @@
 function [block] = define_suite2p_singleblock(block)
 
+if ismissing(block.setup.suite2p_path)
+    disp('Skipping Suite2p data...');
+    return
+end
+
 disp('Pulling out Suite2p data...');
 
 %Needed from setup:
@@ -21,7 +26,9 @@ Frame_set = get_frames_from_Fall(Fall.ops,Imaging_Block,showTable);
 setup.Frame_set = Frame_set;
 
 %Check that Frame_set matches timestamp from Bruker function
-if length(Frame_set) ~= length(block.timestamp)
+if ismissing(block.setup.block_path) && ismissing(block.setup.VR_path)
+    warning('Frame_set could not be checked against timestamp')
+elseif length(Frame_set) ~= length(block.timestamp)
     error('Frame_set does not match timestamp')
 end
 
@@ -40,12 +47,14 @@ block.img.meanImgE = Fall.ops.meanImgE;
 block.img.Vcorr = Fall.ops.Vcorr;
 %block.img.sdmov = Fall.ops.sdmov; %Files saved with older versions of suite2p dont have this
 
-
-block.stat = Fall.stat;
-block.F = Fall.F(:,Frame_set);
-block.Fneu = Fall.Fneu(:,Frame_set);
-block.spks = Fall.spks(:,Frame_set);
 block.iscell = Fall.iscell;
+keep_ind = find(block.iscell(:,1)); %Only keep data from 'is cells'
+block.originalCellNum = keep_ind;
+block.stat = Fall.stat(1,keep_ind);
+block.F = Fall.F(keep_ind,Frame_set);
+block.Fneu = Fall.Fneu(keep_ind,Frame_set);
+block.spks = Fall.spks(keep_ind,Frame_set);
+
 try
     block.redcell = Fall.redcell; %Not all runs will have red cells
 catch

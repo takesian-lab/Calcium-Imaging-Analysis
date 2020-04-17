@@ -55,10 +55,10 @@ block.F = Fall.F(keep_ind,Frame_set);
 block.Fneu = Fall.Fneu(keep_ind,Frame_set);
 block.spks = Fall.spks(keep_ind,Frame_set);
 
-try
+if isfield(Fall, 'redcell')
     redcell = Fall.redcell; %Not all runs will have red cells
     block.redcell = redcell(keep_ind);
-catch
+else
     block.redcell = nan;
 end
 

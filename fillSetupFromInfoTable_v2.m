@@ -68,33 +68,45 @@ for i = 1:length(uniqueMice)
     uniqueFOVs = unique(FOVs);
     
     for j = 1:length(uniqueFOVs)
-        currentfOV = uniqueFOVs(j);
+        currentFOV = uniqueFOVs(j);
         currentInfo_R = currentInfo_M(FOVs == currentFOV,:); 
 
         %Fill setup with structure {Mouse, FOV}
         setup.mousename{i,j}         =   currentMouse;
-        setup.FOVs{i,j}              =   currentfOV;
+        setup.FOVs{i,j}              =   currentFOV;
         setup.expt_date{i,j}         =   [currentInfo_R{:,D}];
         setup.Imaging_sets{i,j}      =   [currentInfo_R{:,IS}];
         setup.Session{i,j}           =   [currentInfo_R{:,TS}];
         setup.Tosca_Runs{i,j}        =   [currentInfo_R{:,TR}];
-        
-
+                
         block_filenames = cell(1,size(currentInfo_R,1));
         unique_block_names = cell(1,size(currentInfo_R,1));
+        
         for r = 1:size(currentInfo_R,1)
+            
+            Block_number = sprintf('%03d',currentInfo_R{r,IS});
+  
+            if currentInfo_R{r,VR} == 0
+                widefieldTag = 'widefield-';
+            else
+                widefieldTag = '';
+            end
+    
             block_filenames{1,r} = strcat('Compiled_', currentMouse, '_', [currentInfo_R{r,D}], ...
-            '_Block_', num2str([currentInfo_R{r,IS}]), '_Session_', num2str([currentInfo_R{r,TS}]), ...
-            '_Run_', num2str([currentInfo_R{r,TR}]), '_', [currentInfo_R{r,SN}]);
+            '_Block_', Block_number, '_Session_', num2str([currentInfo_R{r,TS}]), ...
+            '_Run_', num2str([currentInfo_R{r,TR}]), '_', widefieldTag, [currentInfo_R{r,SN}]);
             
             load(block_filenames{1,r})
         
             unique_block_names{1,r} = strcat('Block', num2str([currentInfo_R{r,IS}]),...
                 '_Session', num2str([currentInfo_R{r,TS}]), '_Run', num2str([currentInfo_R{r,TR}]));
 
-            data.([currentMouse]).parameters = block.parameters; %This will be written over every time
-            %This assumes that the block parameters are the same for every stim paradigm, but they might not be
-            %For example if some trials are lost. We'll have to fix this at some point.
+            if isfield(block, 'parameters')
+                data.([currentMouse]).parameters = block.parameters; %This will be written over every time
+                %This assumes that the block parameters are the same for every stim paradigm, but they might not be
+                %For example if some trials are lost. We'll have to fix this at some point.
+            else block.parameters = nan;
+            end
             data.([currentMouse]).([unique_block_names{1,r}]) = block;
             clear('block');
         end

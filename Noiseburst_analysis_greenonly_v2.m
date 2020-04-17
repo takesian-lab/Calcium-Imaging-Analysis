@@ -25,6 +25,14 @@ for a=1:size(setup.mousename,1) %Mice
        
         unique_block_name = setup.unique_block_names{a,b}(i);
         block = data.([mouseID]).([unique_block_name]);
+        
+        if ismissing(block.setup.suite2p_path)
+            disp('Skipping Suite2p data for block...');
+            disp(unique_block_name);
+            return
+        end
+
+        
         timestamp =  block.timestamp;
         Sound_Time = block.Sound_Time;
         
@@ -35,9 +43,10 @@ for a=1:size(setup.mousename,1) %Mice
         nonredcell = cell_id;%what are the active non-red cells
         F7 = cell-0.7*Fneu;%Find neuropil corrected traces
         
-        %python to matlab correction
-        cell_number = size(F7,1);
-        F7 = F7(1:cell_number,:);
+        
+%         %python to matlab correction %NO LONGER NEEDED
+%         cell_number = size(F7,1);
+%         F7 = F7(1:cell_number,:);
         
         % Pull out the sound traces to each noiseburst
         %define sound window
@@ -83,7 +92,7 @@ for a=1:size(setup.mousename,1) %Mice
             for k = 1:length(nonredcell)
                 
                 %pull out raw trace around sound
-                trace_green = (F7(nonredcell(k),:))';%neuropil corrected traces
+                trace_green = (F7(k,:))';%neuropil corrected traces
                 raw_trace_around_sound_green(k,time,:) = (trace_green(closest_frame_before:closest_frame_after));
                 
                 %df/f

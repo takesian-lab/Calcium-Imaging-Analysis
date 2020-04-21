@@ -1,6 +1,19 @@
 function    [block]=align_to_stim(block);
 
-% Pull out the sound traces to each noiseburst
+if ismissing(block.setup.suite2p_path) || ismissing(block.setup.block_path)
+    disp('Skipping align to stim...');
+    return
+end
+
+disp('Aligning to stim...');
+
+%Needed from block:
+%Sound_Time - from define_sound
+%timestamp - from define_sound
+%F - from define_suite2p
+%Fneu - from define_suite2p
+
+%% Pull out the sound traces to each noiseburst
 %define sound window
 Sound_Time = block.Sound_Time;
 for time=1:length(Sound_Time)

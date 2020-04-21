@@ -9,7 +9,7 @@ disp('Pulling out Suite2p data...');
 
 %Needed from setup:
 %suite2p_path
-%imaging_set
+%block_name
 
 %% Go to Suite2p folder and load Fall.mat
 
@@ -20,9 +20,9 @@ Fall = load('Fall.mat'); %Must load like this because iscell is a matlab functio
 
 %% Get Frame_set using get_frames_from_Fall
 
-Imaging_Block = setup.imaging_set;
+block_name = setup.block_name;
 showTable = 1;
-Frame_set = get_frames_from_Fall(Fall.ops,Imaging_Block,showTable);
+[Frame_set,~] = get_frames_from_Fall(Fall.ops,block_name,showTable);
 setup.Frame_set = Frame_set;
 
 %Check that Frame_set matches timestamp from Bruker function

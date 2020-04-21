@@ -1,4 +1,4 @@
-function [Frame_set] = get_frames_from_Fall(ops, Imaging_Block, displayTable)
+function [Frame_set, Frame_set_range] = get_frames_from_Fall(ops, block_name, displayTable)
 %Get frame numbers for each recording block from the suite2p Fall.mat file
 %Handles only one Imaging_Block at a time
 %displayTable is 0 or 1 (default) depending on if you want to view a table of the
@@ -34,7 +34,7 @@ for i = 1:length(unique_lengths)
     currentFiles = filelist_lengths == L;
     frames(currentFiles,:) = double(string(filelist_char(currentFiles,L-13:L-8)));
     blocks(currentFiles,:) = double(string(filelist_char(currentFiles,L-32:L-30)));
-    paths(currentFiles,:) = string(filelist_char(currentFiles,1:L-34));
+    paths(currentFiles,:) = string(filelist_char(currentFiles,1:L-30));
     chans(currentFiles,:) = double(string(filelist_char(currentFiles,L-15)));
 end
 
@@ -72,18 +72,26 @@ isOneFrame = (blockFrames(:,2) - blockFrames(:,1)) == 0;
 blockNumbers(isOneFrame,:) = [];
 blockFrames(isOneFrame,:) = [];
 
-%Convert blockFrames into Frame_set based on Imaging_Block
+%Get block names by splitting filepaths based on both / and \
+blockNames_temp1 = split(uniquePaths, '/');
+blockNames_temp2 = split(blockNames_temp1(:,end), '\');
+blockNames = blockNames_temp2(:,end);
 
-if sum(blockNumbers == Imaging_Block) == 0
-    error('Imaging_Block is not contained in dataset')
-elseif sum(blockNumbers == Imaging_Block) > 1
-    warning('Multiple blocks with the same number');
+%Convert blockFrames into Frame_set based on block_name
+matching_blocks = strcmp(blockNames, block_name);
+
+if sum(matching_blocks) == 0
+    error('block_name is not contained in dataset')
+elseif sum(matching_blocks) > 1
+    error('Multiple blocks with the same block_name');
 end
-currentFrames = blockFrames(blockNumbers == Imaging_Block,:);
+currentFrames = blockFrames(matching_blocks,:);
 Frame_set = currentFrames(1,1):currentFrames(1,2);
+Frame_set_range = blockFrames(matching_blocks,:); %Use for troubleshooting
 
 %Display table of block numbers and frames to user
 if displayTable
     format long
-    display(table(blockNumbers, blockFrames))
+    disp(table(blockNames, blockNumbers, blockFrames))
+    disp(['Current frame set is:   ' num2str(Frame_set_range)])
 end

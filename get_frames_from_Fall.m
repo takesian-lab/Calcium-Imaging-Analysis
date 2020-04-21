@@ -71,6 +71,7 @@ end
 isOneFrame = (blockFrames(:,2) - blockFrames(:,1)) == 0;
 blockNumbers(isOneFrame,:) = [];
 blockFrames(isOneFrame,:) = [];
+uniquePaths(isOneFrame,:) = [];
 
 %Get block names by splitting filepaths based on both / and \
 blockNames_temp1 = split(uniquePaths, '/');

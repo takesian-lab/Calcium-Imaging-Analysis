@@ -177,6 +177,9 @@ for i = 1:size(currentInfo,1)
     %pull out block-specific data from Fall.mat
     [block] = define_suite2p_singleblock(block);
     
+    %find the stim-aligned traces
+    [block] = align_to_stim(block);
+    
     %Optionally visually check block
     if visualize == 1
         visualize_block(block);

@@ -1,5 +1,27 @@
-function [data]=isresponsive_all(data,setup,std_level)
+PC_name = getenv('computername');
 
+switch PC_name
+    case 'RD0366' %Maryse
+        info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
+        compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
+        info_filename = 'Info';
+    case 'RD0332' %Carolyn
+        info_path = 'D:\2P analysis\2P local data\Carolyn';
+        compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
+        info_filename = 'Info';
+    case 'RD0386' %Wisam
+        % INSERT PATHS HERE
+        info_filename = 'Info';
+    otherwise
+        disp('Computer does not match known users')
+end
+%%
+cd(info_path)
+Info = importfile(info_filename);
+block_path = compiled_blocks_path;
+cd(block_path)
+allfiles=dir('*Block*');
+%%
 for a=1:length(setup.mousename)
     mouseID=setup.mousename{(a)}
     
@@ -81,5 +103,4 @@ for a=1:length(setup.mousename)
     catch
         disp(['Skipping mouse ' mouseID ' graph, not enough cells?']);
     end
-end
 end

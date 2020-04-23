@@ -29,7 +29,7 @@ switch PC_name
         info_filename = 'Info';
     case 'RD0332' %Carolyn
         info_path = 'D:\2P analysis\2P local data\Carolyn';
-        save_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
+        save_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\VIP_Test';
         info_filename = 'Info';
     case 'RD0386' %Wisam
         % INSERT PATHS HERE

@@ -22,6 +22,32 @@ block_path = compiled_blocks_path;
 cd(block_path)
 allfiles=dir('*Block*');
 %%
+bl=0;
+b=0;
+for i = 1:size(allfiles,1)
+    b=b+1;
+    name = ({allfiles(b).name});
+    load(name{1});
+        bl=bl+1;
+        block_number = sprintf('%03d',bl);
+        allData.(['block' block_number]) = block; 
+end
+numBlocks = bl;
+
+%%
+for i = 1:numBlocks
+    block_number = sprintf('%03d',bl);
+    stim_type(i) = allData.(['block' block_number]).setup.stim_protocol;
+    FOV (i) = allData.(['block' block_number]).setup.FOV;
+    dates (i) = allData.(['block' block_number]).setup.expt_date;
+    Mousename (i) = allData.(['block' block_number]).setup.mousename;
+end
+a_mice = unique(Mousename);
+a_dates = unique(dates);
+a_FOV = unique(FOV);
+a_stim = unique(stim_type);
+
+%%
 for a=1:length(setup.mousename)
     mouseID=setup.mousename{(a)}
     

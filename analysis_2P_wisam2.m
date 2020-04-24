@@ -59,8 +59,8 @@ setup.stim_protocol = stim_protocol;
 setup.run_redcell = 0;
 % TODO: This is broken
 % [data, setup] = fillSetupFromInfoTable_v2(setup, Info, compiled_blocks_path);
-% % % [data, setup] = fillSetupFromInfoTable_wisam(setup, Info, compiled_blocks_path);
-% % % data.setup = setup; %Save this info
+[data, setup] = fillSetupFromInfoTable_wisam(setup, Info, compiled_blocks_path);
+data.setup = setup; %Save this info
 
 %% Now find processed suite2P data
 % TODO: why do we need to do this?
@@ -91,7 +91,7 @@ clear std_level
 std_level = 1.5;%set this here to change std 
 [data] = isresponsive_byStim(data,setup,std_level)
 clear std_level
-[data]= plotbystim(setup,data)
+% [data]= plotbystim(setup,data)
 
 
 

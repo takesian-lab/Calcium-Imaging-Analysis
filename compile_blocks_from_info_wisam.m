@@ -45,7 +45,8 @@ recompile = 1; % 1 to save over previously compiled blocks, 0 to skip
 % % % % % % end
 
 info_path = '/Users/wisamreid/Documents/School/Research (Harvard)/Takesian/2P/Thy1 Experiments/YD111219F3-2P-noisebursts';
-compiled_blocks_path = '/Users/wisamreid/Documents/School/Research (Harvard)/Takesian/2P/Thy1 Experiments/YD111219F3-2P-noisebursts/Compiled';
+% compiled_blocks_path 
+save_path = '/Users/wisamreid/Documents/School/Research (Harvard)/Takesian/2P/Thy1 Experiments/YD111219F3-2P-noisebursts/Compiled';
 info_filename = 'Info';
 
 cd(info_path)

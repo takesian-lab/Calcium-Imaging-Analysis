@@ -4,6 +4,15 @@ function [Frame_set, Frame_set_range] = get_frames_from_Fall(ops, block_name, di
 %displayTable is 0 or 1 (default) depending on if you want to view a table of the
 %complete block numbers and frames for the current Fall.mat
 
+returnFrameSet = 1;
+
+%If no block_name is specified, simply display table
+if nargin < 2
+    returnFrameSet = 0;
+    displayTable = 1;
+end
+
+%Default is to display block information in table format
 if nargin < 3
     displayTable = 1;
 end
@@ -74,25 +83,35 @@ blockFrames(isOneFrame,:) = [];
 uniquePaths(isOneFrame,:) = [];
 
 %Get block names by splitting filepaths based on both / and \
-blockNames_temp1 = split(uniquePaths, '/');
-blockNames_temp2 = split(blockNames_temp1(:,end), '\');
-blockNames = blockNames_temp2(:,end);
-
-%Convert blockFrames into Frame_set based on block_name
-matching_blocks = strcmp(blockNames, block_name);
-
-if sum(matching_blocks) == 0
-    error('block_name is not contained in dataset')
-elseif sum(matching_blocks) > 1
-    error('Multiple blocks with the same block_name');
+if size(uniquePaths,1) == 1
+    blockNames_temp1 = split(uniquePaths, '/');
+    blockNames_temp2 = split(blockNames_temp1(end), '\');
+    blockNames = blockNames_temp2(end);
+else
+    blockNames_temp1 = split(uniquePaths, '/');
+    blockNames_temp2 = split(blockNames_temp1(:,end), '\');
+    blockNames = blockNames_temp2(:,end);
 end
-currentFrames = blockFrames(matching_blocks,:);
-Frame_set = currentFrames(1,1):currentFrames(1,2);
-Frame_set_range = blockFrames(matching_blocks,:); %Use for troubleshooting
 
 %Display table of block numbers and frames to user
 if displayTable
     format long
     disp(table(blockNames, blockNumbers, blockFrames))
+end
+
+if returnFrameSet
+    %Convert blockFrames into Frame_set based on block_name
+    matching_blocks = strcmp(blockNames, block_name);
+
+    if sum(matching_blocks) == 0
+        error('block_name is not contained in dataset')
+    elseif sum(matching_blocks) > 1
+        error('Multiple blocks with the same block_name');
+    end
+    currentFrames = blockFrames(matching_blocks,:);
+    Frame_set = currentFrames(1,1):currentFrames(1,2);
+    Frame_set_range = blockFrames(matching_blocks,:); %Use for troubleshooting
     disp(['Current frame set is:   ' num2str(Frame_set_range)])
 end
+
+

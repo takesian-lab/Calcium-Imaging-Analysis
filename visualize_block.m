@@ -54,7 +54,6 @@ else
     cell = block.F; %all the cell fluorescence data
     cell_number = block.cell_number;
     Fneu = block.Fneu; %neuropil
-    iscell = block.iscell;
     redcell = block.redcell;
     F7 = cell-0.7*Fneu; %neuropil corrected traces
 
@@ -66,33 +65,29 @@ else
         timeUnit = 'Frames';
     end
     
-    %Identify cells
-    cell_id = find(iscell(:,1));
+    %Divide into red and green cells
+    %ones variable = row number
+    %number variable = suite2p cell labels
     redcell_ones = find(redcell(:,1));
 
-    redcells_exist = 0;
-
-    %NEED TO FIX NOW THAT NONCELLS ARE NOT SAVED - MT
     if ~isempty(redcell_ones) 
-        idx = find(ismember(redcell_ones,cell_id)); %identify active red cells within all cells
-        redcell_iscell = redcell_ones(idx); %which red cells are active
-        nonredcell = setdiff(cell_id, redcell_iscell); %what are the active non-red cells
-
-        %redcell_iscell = redcell_iscell - 1; %python to matlab correction
-        %nonredcell = nonredcell - 1; %python to matlab correction
-
+        redcell_number = cell_number(redcell_ones);
+        nonredcell_ones = setdiff(1:length(cell_number), redcell_ones); %what are the active non-red cells
+        nonredcell_number = cell_number(nonredcell_ones);
         redcells_exist = 1; %for plotting
     else
-        nonredcell = cell_id; % - 1;
+        nonredcell_number = cell_number;
+        nonredcell_ones = 1:length(cell_number);
+        redcells_exist = 0;
     end
 
     %Plot one figure for green cells and one for red cells
     for f = 1:2
         if f == 1
-            currentCells = nonredcell;
+            currentCells = nonredcell_ones;
             fig_title = 'Green cells';
         elseif f == 2 && redcells_exist
-            currentCells = redcell_iscell;
+            currentCells = redcell_ones;
             fig_title = 'Red cells';
         else
             continue
@@ -102,7 +97,7 @@ else
         Z = round(length(timestamp)*z);
         SF = 0.5; %Shrinking factor for traces to appear more spread out
 
-        B = floor(size(currentCells)/bin);
+        B = floor(length(currentCells)/bin);
         extraCells = mod(length(currentCells),bin);
         if extraCells <= 5
             lastBin = bin + extraCells;
@@ -112,8 +107,8 @@ else
 
         for b = 1:B %Plot one graph for each bin of cells
 
-            c1 = bin*(b-1) + 1;
-            c2 = bin*(b);
+            c1 = bin*(b-1) + 1; %first cell for this figure
+            c2 = bin*(b); %last cell for this figure
 
             if b == B
                 c2 = length(currentCells);
@@ -122,11 +117,12 @@ else
             figure('units','normalized','outerposition',[0 0 1 1])
 
             subplot(3,4,1:8) %one cell/row of the graph
-            count = 1;
-
-            for a=c1:c2 %for all of the cells
-                %row_num = currentCells(a);
-                cell_trace = F7(count,:);%pull out the total trace for each cell
+            
+            count = 1; %for staggering plot lines
+            
+            for a=c1:c2 %for all of the cells in the current bin
+                row_num = currentCells(a);
+                cell_trace = F7(row_num,:);%pull out the total trace for each cell
                 mean_gCAMP = mean(cell_trace);% average green for each cell
                 df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
                 A = smooth(df_f,10);
@@ -141,7 +137,7 @@ else
             xlim([0 timestamp(Z)])
             ylim([0 (count - 0.5)])
             set(gca, 'YTick', [1:1:count-1])
-            set(gca, 'YTickLabel', [c1:1:c2])
+            set(gca, 'YTickLabel', [currentCells(c1:c2)])
             ylabel('Cell number')
             xlabel(timeUnit)
             title(fig_title)

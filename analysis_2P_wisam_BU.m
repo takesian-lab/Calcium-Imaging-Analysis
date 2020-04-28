@@ -1,72 +1,51 @@
-clear all;
-close all 
-clc
-
 %% Noiseburst all cells from suite2p
-% Anne Takesian - 2/22/2019
-% Updated Carolyn, compatible with Python version of Suite2p. Also does Red vs Green cell 7/23/19
-% Updated Feb 2020, CGS - put most of the analysis into functions.
-% Updated April 2020, MET - V3 created to load compiled blocks
+%Anne Takesian - 2/22/2019
+%updated Carolyn, compatible with Python version of Suite2p. Also does Red vs Green cell 7/23/19
+%Updated Feb 2020, CGS - put most of the analysis into functions.
+%Updated April 2020, MET - V3 created to load compiled blocks
+
+%% Wisam's version: Adding notes and exploring the organization of the code 
+% Search "TODO" to find things that need to be done or looked at.
+
+%% CLEAR
+
+clear
+clc
+close all
 
 %% define what type of analysis you are doing
+%stim protocol code is:
+%noiseburst=1
+%ReceptiveField=2
+%FM sweep=3
+%SAM = 6
+%widefield=4
+%SAM freq = 6
 
-% stim protocol code is:
-% noiseburst=1
-% ReceptiveField=2
-% FM sweep=3
-% SAM = 6
-% widefield=4
-% SAM freq = 6
-
-% TODO: Why is this not directly extracted from the table?
-stim_protocol = 1;
+stim_protocol=1;
 
 %% Load Info.mat
 % Make setup and data structure out of all blocks that correspond to stim_protocol
 % Later we can also add other things like groups
 
-% % % % PC_name = getenv('computername');
-% % % % 
-% % % % switch PC_name
-% % % %     case 'RD0366' %Maryse
-% % % %         info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-% % % %         compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
-% % % %         info_filename = 'Info';
-% % % %     case 'RD0332' %Carolyn
-% % % %         info_path = 'D:\2P analysis\2P local data\Carolyn';
-% % % %         compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
-% % % %         info_filename = 'Info';
-% % % %     case 'RD0386' %Wisam
-% % % %         % INSERT PATHS HERE
-% % % %         info_filename = 'Info';
-% % % %     otherwise
-% % % %         disp('Computer does not match known users')
-% % % % end
-
-info_path = '/Users/wisamreid/Documents/School/Research (Harvard)/Takesian/2P/Thy1 Experiments/YD111219F3-2P-noisebursts';
-compiled_blocks_path = '/Users/wisamreid/Documents/School/Research (Harvard)/Takesian/2P/Thy1 Experiments/YD111219F3-2P-noisebursts/Compiled';
-info_filename = 'Info';
-
+info_path = '/Users/wisamreid/Documents/School/Research (Harvard)/Takesian/Code/MASTER/Example datasets for new 2p code/Example-widefield-dataset-Wisam';
+compiled_blocks_path = '/Users/wisamreid/Documents/School/Research (Harvard)/Takesian/Code/MASTER/Example datasets for new 2p code/Example-widefield-dataset-Wisam/Compiled';
+%save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study'; %To save figures later
 cd(info_path)
-Info = importfile(info_filename);
+Info = importfile('Info');
 
-%%
-
-% Create setup variable for files corresponding to stim_protocol
+%Create setup variable for files corresponding to stim_protocol
 setup = struct;
 setup.Info = Info;
 setup.stim_protocol = stim_protocol;
 setup.run_redcell = 0;
-% TODO: This is broken
-% [data, setup] = fillSetupFromInfoTable_v2(setup, Info, compiled_blocks_path);
-[data, setup] = fillSetupFromInfoTable_wisam(setup, Info, compiled_blocks_path);
-data.setup = setup; %Save this info
+[data, setup] = fillSetupFromInfoTable_v2(setup, Info, compiled_blocks_path);
 
 %% Now find processed suite2P data
-% TODO: why do we need to do this?
 if setup.run_redcell==0
-    [data] = Noiseburst_analysis_greenonly_v2(data,setup);
-    % Red cells need to be updated and checked to make sure that they work.
+    % TODO: Why is this for green only?
+    [data]=Noiseburst_analysis_greenonly_v2(data,setup);
+    % TODO: Red cells need to be updated and checked to make sure that they work.
 elseif setup.run_redcell==1
     [data,traces_R,traces_G]=Noiseburst_analysis(a,Frames,Frame_rate,Imaging_Block_String,Imaging_Num,mouseID,date,Sound_Time,...
         timestamp,i,analysis_folder,path_name,length_sound_trial_first,username,data);
@@ -77,21 +56,26 @@ end
 % in figure2, you get 3 images - magenta = mean of all cells, blue = mean
 % of responsive cells, and cyan = mean of negatively responsive cells
 
-%this only works for green data currently
-std_level = 1.5;%set this here to change std
+% TODO: Why is this for green only?
+% this only works for green data currently
+
+% TODO: how is the std_level used?
+std_level = 1.5; % set this here to change std
 [data] = isresponsive_all(data,setup,std_level)
 %
 clear std_level
 
 %% pull out responsive cells by stim type, plot
-%magenta = all cells
-%blue = positively responsive cells
-%cyan=negatively responsive cells - update this 
+% magenta = all cells
+% blue = positively responsive cells
+% cyan = negatively responsive cells - update this 
 
-std_level = 1.5;%set this here to change std 
+% TODO: why is there an extra figure generated?
+% Figure 1 is blank
+std_level = 1.5; % set this here to change std 
 [data] = isresponsive_byStim(data,setup,std_level)
 clear std_level
-% [data]= plotbystim(setup,data)
+[data]= plotbystim(setup,data)
 
 
 

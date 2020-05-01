@@ -1,6 +1,25 @@
 function [data, setup] = fillSetupFromInfoTable_wisam(setup, Info, compiled_blocks_path)
-%% Info.mat Table is a variable that stores all recording file information
+% [data, setup] = fillSetupFromInfoTable_wisam(setup, Info, compiled_blocks_path)
+%
+% THIS DOCUMENTATION IS A WORK IN PROGRESS:
+%
+%   This function...
+%
+% Details:
+%   More info...
+% 
+% Arguments: 
+%   setup (struct)
+%   Info (excel sheet)
+%   compiled_blocks_path (string)
+%
+% Returns:
+%   data (struct)
+%   setup (struct)
+%
+% Search 'TODO'
 
+%% Info.mat Table is a variable that stores all recording file information
 % TODO: Is all of this strong typing necessary?
 % TODO: Do we need to translate from numeric values?
 % Currently, the column order of Info is:

@@ -47,6 +47,9 @@ setup.stim_protocol = stim_protocol;
 setup.run_redcell = 0;
 % TODO: This is broken
 % [data, setup] = fillSetupFromInfoTable_v2(setup, Info, compiled_blocks_path);
+
+
+%%%%%% FINISH NOTES IN THIS FILE
 [data, setup] = fillSetupFromInfoTable_wisam(setup, Info, compiled_blocks_path);
 data.setup = setup; %Save this info
 
@@ -54,30 +57,30 @@ data.setup = setup; %Save this info
 
 % TODO: why do we need to do this with the red cells?
 if setup.run_redcell == 0
-    [data] = Noiseburst_analysis_greenonly_v2(data,setup);
+    
+    %%%%%% FINISH NOTES IN THIS FILE
+    % [data] = Noiseburst_analysis_greenonly_v2(data,setup);
+    [data] = Noiseburst_analysis_greenonly_wisam(data,setup);
     % Red cells need to be updated and checked to make sure that they work.
 elseif setup.run_redcell==1
-    [data,traces_R,traces_G] = Noiseburst_analysis(a,Frames,Frame_rate,Imaging_Block_String,Imaging_Num,mouseID,date,Sound_Time,...
-        timestamp,i,analysis_folder,path_name,length_sound_trial_first,username,data);
+% % % % % [data,traces_R,traces_G] = Noiseburst_analysis(a,Frames,Frame_rate,Imaging_Block_String,Imaging_Num,mouseID,date,Sound_Time,...
+% % % % %     timestamp,i,analysis_folder,path_name,length_sound_trial_first,username,data);
+    disp('Tried running red cells...')
 end
 
 %% sound responsive cells - all sounds averaged together, plot means
-% in figure1, you get a grid of mean activity per cell.
+% Figure 1, you get a grid of mean activity per cell.
 % Black = nonresponsive, blue = responsive, and cyan = negatively responsive
 % in figure2, you get 3 images - magenta = mean of all cells, blue = mean
 % of responsive cells, and cyan = mean of negatively responsive cells
 
-% % % % START HERE
-% % % % START HERE
-% % % % START HERE
-% % % % START HERE
-% % % % START HERE
-
 % TODO: 
-% this only works for green data currently
+% This only works for green data currently
 % TODO: Is there a better way to do this?
 % Perhaps we could calculate the noise floor and measure from there.
-std_level = 0; %1.5; % set this here to change std
+% i.e. a threshold on the probability of noise
+std_level = 0; % 1.5; % set this here to change std
+% TODO: do we need both data and setup?
 % [data] = isresponsive_all(data,setup,std_level)
 [data] = isresponsive_all_wisam(data,setup,std_level)
 clear std_level

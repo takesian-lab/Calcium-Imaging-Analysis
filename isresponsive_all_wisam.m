@@ -7,12 +7,17 @@ function [data] = isresponsive_all_wisam(data,setup,std_level)
 %   This function tests whether ROI (green cells) time series are responsive to a stimulus.
 %
 % Details:
-%   This is calculated by a threshold (in SDs) of the mean response (across trials) above baseline.
+%   This is calculated by a threshold (in SDs) of the mean responses above baseline (across trials).
 % 
 % Arguments: 
 %   data (struct)
 %   setup (struct)
 %   std_level (float)
+% 
+% Return:
+%   data (struct)
+% 
+% Search 'TODO'
 
 % For a given stimulus 
 % Loop through all the mice

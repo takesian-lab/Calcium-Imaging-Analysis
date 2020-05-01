@@ -18,7 +18,7 @@ function    [block]=align_to_stim_wisam(block)
 %   block (struct) 
 %
 % Returns:
-%   block (): size(block) =  [numROIs, numTrials/block, window size (frames)]
+%   block -  size(block) =  [numROIs, numTrials/block, window size (frames)]
 % 
 % Notes:
 %

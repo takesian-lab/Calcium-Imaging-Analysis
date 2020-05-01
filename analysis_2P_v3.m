@@ -83,10 +83,18 @@ clear std_level
 
 
 %% plot +/- locomotion
-for a=1:length(setup.mousename)
-    mouseID=setup.mousename{(a)};
-         Loc_trial=find(data.([mouseID]).parameters.loco);
-         noLoc_trial=find(data.([mouseID]).parameters.loco==0);
+for a=1:size(setup.mousename,1)
+    for b=1:size(setup.mousename,2)
+        
+        if isempty(setup.mousename{a,b})
+            continue;
+        end
+        
+        mouseID=setup.mousename{a,b};
+        FOV=setup.FOVs{a,b};
+        
+         Loc_trial=find(data.([mouseID]).loco);
+         noLoc_trial=find(data.([mouseID]).loco==0);
          a_green = squeeze(mean(mean(data.([mouseID]).traces_G(:,Loc_trial,:), 2),1)); %Active trials
          for i=1:size(data.([mouseID]).traces_G,1)
              a_sem = std(data.([mouseID]).traces_G(i,Loc_trial,:))./sqrt(size(data.([mouseID]).traces_G(i,Loc_trial,:),2));
@@ -102,7 +110,7 @@ for a=1:length(setup.mousename)
          figure
          
          subplot(2,1,1); hold on
-         title(mouseID)
+         title([mouseID ' FOV ' num2str(FOV)])
          shadedErrorBar(x,smooth(a_green,5),smooth(a_sem,5),'lineprops','-b','transparent',1);
          legend({'Active trials'})
          xlabel('Frames')
@@ -113,6 +121,7 @@ for a=1:length(setup.mousename)
          legend({'Inactive trials'})
          xlabel('Frames')
          ylabel('Delta F/F')
+end
 end
 
 

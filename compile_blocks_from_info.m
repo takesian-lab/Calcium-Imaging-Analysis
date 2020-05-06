@@ -1,21 +1,29 @@
 %% compile_blocks_from_info
 %
-%  Save one compiled 'block.mat' file for each block listed in info.mat
-%  A compiled block contains the 2p and Tosca data for that recording session
+%  This script saves a compiled 'block.mat' file for each row in Info.
+%  A compiled block contains Suite2p, Bruker, and Tosca data.
 %
-%  Info.mat is a variable that stores all recording file information
-%  where each row of Info corresponds to a single recording block
+%  The Info spreadsheet contains the information required to access the
+%  data by specifying the filepaths to each.
 %
-%  Goal: If data is missing, the script will still run in order to allow for the
-%  user to look at Tosca data separate from 2p data or vice versa.
+%  If data is missing, the script will still run in order to allow for the
+%  user to look at components of the data individually.
 %
-%  Uses the function compile_block and verify_block
+%  Uses the functions:
+%  - importfile
+%  - define_behavior_singleblock
+%  - FreqDisc_Behavior_singleblock
+%  - define_sound_singleblock
+%  - define_loco_singleblock
+%  - define_suite2p_singleblock
+%  - align_to_stim
+%  - visualize_block
+%    
+%  Use visualize_block to preview the block contents once they've been compiled.
 %
-%  Use visualize_block to preview the block contents prior to analysis
-%
-%  Maryse Thomas - March 2020
+%  TAKESIAN LAB - March 2020
 
-%% Load Info.mat
+%% Load Info.mat and change user-specific options
 
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
 recompile = 1; %1 to save over previously compiled blocks, 0 to skip
@@ -42,6 +50,7 @@ cd(info_path)
 Info = importfile(info_filename);
 
 %% Compile all blocks unless they are set to "Ignore"
+%  No need to change any variables below this point
 
 %Remove header from Info
 Info(1,:) = [];

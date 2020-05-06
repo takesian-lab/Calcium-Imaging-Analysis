@@ -82,6 +82,7 @@ for i = 1:size(currentInfo,1)
     setup.stim_name         =   [currentInfo{i,16}];    %type of stim presentation in plain text
     setup.stim_protocol     =   [currentInfo{i,17}];    %number corresponding to stim protocol
     setup.gcamp_type        =   [currentInfo{i,18}];    %f, m, or s depending on GCaMP type
+    setup.expt_group        =   [currentInfo{i,19}];    %name of experimental group or condition
 
     Block_number = sprintf('%03d',setup.imaging_set);
     

@@ -37,6 +37,7 @@ VN = 15; %full voltage recording name (if widefield only)
 SN = 16; %type of stim presentation in plain text
 SP = 17; %stim protocol (number corresponding to stim)
 GT = 18; %f, m, or s depending on GCaMP type
+EG = 19; %name of experimental group or condition
 
 %% We will be looking for files that match stim_protocol
 %Later we could update this to also look for other parameters
@@ -95,10 +96,24 @@ for i = 1:length(uniqueMice)
     for j = 1:length(uniqueFOVs)
         currentFOV = uniqueFOVs(j);
         currentInfo_R = currentInfo_M(FOVs == currentFOV,:); 
+        
+        try
+            gcamp_type = [currentInfo_R{:,GT}];
+        catch
+            gcamp_type = nan;
+        end
+        
+        try
+            expt_group = [currentInfo_R{:,EG}];
+        catch
+            expt_group = nan;
+        end
 
         %Fill setup with structure {Mouse, FOV}
         setup.mousename{i,j}         =   currentMouse;
         setup.FOVs{i,j}              =   currentFOV;
+        setup.gcamp_type{i,j}        =   gcamp_type;
+        setup.expt_group{i,j}        =   expt_group;
         setup.expt_date{i,j}         =   [currentInfo_R{:,D}];
         setup.Imaging_sets{i,j}      =   [currentInfo_R{:,IS}];
         setup.Session{i,j}           =   [currentInfo_R{:,TS}];

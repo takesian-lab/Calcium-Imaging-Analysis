@@ -1,4 +1,21 @@
-function [data, setup] = fillSetupFromInfoTable_v2(setup, Info, compiled_blocks_path)
+function [data] = fillSetupFromInfoTable_v2(Info, compiled_blocks_path, stim_protocol)
+% This function creates a data.mat file with all of the block data for 
+% a given experiment specified by Info
+% 
+% Argument(s): 
+%   Info - Info table loaded from Info excel spreadsheet
+%   compiled_blocks_path (string) - filepath where the compiled blocks are saved
+%   stim_protocol - number corresponding to stim type that will be analyzed
+%   
+% Returns:
+%   data(struct)
+% 
+% Notes:
+%
+%
+% TODO: allow stim_protocol to take a list of stims instead of just one
+% Search 'TODO'
+
 %% Info.mat Table is a variable that stores all recording file information
 
 %  Currently, the column order of Info is:
@@ -19,8 +36,9 @@ VR = 14; %voltage recording (0 for widefield, 1 for 2p)
 VN = 15; %full voltage recording name (if widefield only)
 SN = 16; %type of stim presentation in plain text
 SP = 17; %stim protocol (number corresponding to stim)
+GT = 18; %f, m, or s depending on GCaMP type
 
-%% Look for files that match stim_protocol
+%% We will be looking for files that match stim_protocol
 %Later we could update this to also look for other parameters
 
 %stim protocol code is:
@@ -31,12 +49,20 @@ SP = 17; %stim protocol (number corresponding to stim)
 %widefield=4
 %SAM freq = 6
 code = {'Noiseburst', 'Receptive Field', 'FM sweep', 'SAM', 'Widefield', 'SAM freq'};
-display(['Analyzing ' code{setup.stim_protocol} ' files'])
+disp(['Analyzing ' code{stim_protocol} ' files'])
 
-%Remove header from Info
-Info(1,:) = [];
+%% Create data structure
+
+Info(1,:) = []; %Remove header from Info
+
+data = struct;
+data.setup = struct;
+data.setup.stim_protocol = stim_protocol;
+data.setup.Info = Info;
+data.setup.compiled_blocks_path = compiled_blocks_path;
 
 %Find table rows that match stim_protocol
+setup = data.setup;
 stims = [Info{:,SP}]';
 matching_stims = stims == setup.stim_protocol;
 currentInfo = Info(matching_stims,:);
@@ -52,7 +78,6 @@ currentInfo = currentInfo(ignore == 0,:);
 %And: data.([mouseID]).parameters
 
 cd(compiled_blocks_path)
-data = struct;
 
 %Per each mouse, combine blocks that come from the same FOV
 mice = cellstr([currentInfo{:,M}])';
@@ -115,4 +140,5 @@ for i = 1:length(uniqueMice)
     end
 end
 
+data.setup = setup;
 end

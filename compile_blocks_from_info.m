@@ -29,7 +29,7 @@ switch PC_name
         info_filename = 'Info';
     case 'RD0332' %Carolyn
         info_path = 'D:\2P analysis\2P local data\Carolyn';
-        save_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\VIP_Test';
+        save_path = 'Z:\Carolyn\2P Imaging data\analyzed\Daily_Imaging';
         info_filename = 'Info';
     case 'RD0386' %Wisam
         % INSERT PATHS HERE
@@ -144,7 +144,8 @@ for i = 1:size(currentInfo,1)
     if ismissing(setup.analysis_name)
         setup.suite2p_path = nan;
     else
-        setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
+        setup.suite2p_path = strcat(setup.pathname, '/', setup.analysis_name);
+%         setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
         try
             cd(setup.suite2p_path)
         catch

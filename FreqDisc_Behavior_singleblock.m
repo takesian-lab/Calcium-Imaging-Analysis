@@ -1,4 +1,21 @@
 function [block] = FreqDisc_Behavior_singleblock(block)
+% DOCUMENTATION IN PROGRESS
+% 
+% What does this function do?
+% 
+% Argument(s): 
+%   block (struct)
+% 
+% Returns:
+%   block (struct)
+% 
+% Notes:
+%
+% TODO: Remove magic numbers 
+% Search 'TODO'
+
+%% Only run this function if this is a behavior block (i.e. stim_protocol == 7)
+
 % find prep trials
 if block.setup.stim_protocol==7
     findPrep = block.trialType;

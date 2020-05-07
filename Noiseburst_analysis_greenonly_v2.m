@@ -1,5 +1,22 @@
-function    [data]=Noiseburst_analysis_greenonly_v2(data,setup);
+function    [data]=Noiseburst_analysis_greenonly_v2(data);
+%
+% DOCUMENTATION IN PROGRESS
+%
+% What does this function do?
+% 
+% Argument(s): 
+%   data(struct)
+%   
+% Returns:
+%   data(struct)
+% 
+% Notes:
+%
+%
+% TODO: Magic numbers
+% Search 'TODO'
 
+setup = data.setup;
 
 for a=1:size(setup.mousename,1) %Mice
     for b=1:size(setup.mousename,2) %ROIs

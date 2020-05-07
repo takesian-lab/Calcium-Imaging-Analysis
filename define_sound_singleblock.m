@@ -1,4 +1,36 @@
 function [block] = define_sound_singleblock(block)
+% DOCUMENTATION IN PROGRESS
+% 
+% This function obtains the Bruker timestamp from the BOT and VR csv files,
+% aligns the timestamp with the Tosca data (if available), and stores all
+% of this in block
+% 
+% Argument(s): 
+%   block (struct)
+% 
+% Returns:
+%   block (struct)
+% 
+% Notes:
+%
+% Variables needed from block.setup:
+% -block_path
+% -VR_path
+% -voltage_recording
+% -stim_protocol
+%
+% Uses the function:
+% -locomotor_activity
+%
+% %If Tosca data is not available these variables won't be created:
+% -block.New_sound_times
+% -block.start_time
+% -block.loco_data
+%
+% TODO: Remove magic numbers 
+% Search 'TODO'
+
+%% Skip this function if Bruker data is not available
 
 if ismissing(block.setup.block_path) && ismissing(block.setup.VR_path)
     disp('Skipping Bruker data...');
@@ -6,17 +38,6 @@ if ismissing(block.setup.block_path) && ismissing(block.setup.VR_path)
 end
 
 disp('Pulling out Bruker data...');
-
-%Needed from setup:
-%block_path
-%VR_path
-%voltage_recording
-%stim_protocol
-
-%Dependent on Tosca data:
-%block.New_sound_times
-%block.start_time
-%block.loco_data
 
 setup = block.setup;
 

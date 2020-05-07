@@ -1,5 +1,22 @@
-function    [data]=Noiseburst_analysis_greenonly_v2(data,setup);
+function    [data]=Noiseburst_analysis_greenonly_v2(data);
+%
+% DOCUMENTATION IN PROGRESS
+%
+% What does this function do?
+% 
+% Argument(s): 
+%   data(struct)
+%   
+% Returns:
+%   data(struct)
+% 
+% Notes:
+%
+%
+% TODO: Magic numbers
+% Search 'TODO'
 
+setup = data.setup;
 
 for a=1:size(setup.mousename,1) %Mice
     for b=1:size(setup.mousename,2) %ROIs
@@ -20,6 +37,7 @@ for a=1:size(setup.mousename,1) %Mice
     raw_trace_G=[];
     std_baseline=[];
     response=[];
+    loco=[];
     
    for i=1:length(Imaging_Block)
        
@@ -35,6 +53,7 @@ for a=1:size(setup.mousename,1) %Mice
         
         timestamp =  block.timestamp;
         Sound_Time = block.Sound_Time;
+        isLoco = block.isLoco;
         
         %Frame_rate = setup.framerate{a,1}(i); %Not used in this script^
         Fneu = block.Fneu; % all the neuropil traces (should be one for each trace)
@@ -129,6 +148,7 @@ for a=1:size(setup.mousename,1) %Mice
         raw_trace_G=cat(2,raw_trace_G,raw_trace_around_sound_green);
         std_baseline=[std_baseline,std_baseline_green];
         response=[response,avg_sound_green];
+        loco = [loco, isLoco];
        
         block.raw_trace_around_sound_green = raw_trace_around_sound_green;
         block.mean_baseline_green = mean_baseline_green;
@@ -141,6 +161,7 @@ for a=1:size(setup.mousename,1) %Mice
         block.nonredcell = nonredcell;
         block.full_trace = F7;
         data.([mouseID]).([unique_block_name]) = block;
+        
     
         clear trace_around_sound_green peak_sound_green neg_avg_around_peak_green mean_baseline_green raw_trace_around_sound_green std_baseline_green avg_sound_green
     end
@@ -154,6 +175,7 @@ for a=1:size(setup.mousename,1) %Mice
         data.([mouseID]).raw_trace_G=raw_trace_G;
         data.([mouseID]).std_baseline=std_baseline;
         data.([mouseID]).response=response;
+        data.([mouseID]).loco = loco;
    
    
    

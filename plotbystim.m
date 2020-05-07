@@ -1,5 +1,23 @@
+function [data]=plotbystim(data)
+%
+% DOCUMENTATION IN PROGRESS
+%
+% What does this function do?
+% 
+% Argument(s): 
+%   data(struct)
+%   
+% Returns:
+%   data(struct)
+% 
+% Notes:
+%
+%
+% TODO: Magic numbers
+% Search 'TODO'
 
-function [data]=plotbystim(setup,data)
+setup = data.setup;
+
 for a=1:length(setup.mousename)
     mouseID=setup.mousename{(a)}
     x_green=1:size(data.([mouseID]).traces_G,3);

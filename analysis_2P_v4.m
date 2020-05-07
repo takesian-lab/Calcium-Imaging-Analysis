@@ -15,7 +15,7 @@ clear all;
 %widefield=4
 %SAM freq = 6
 
-stim_protocol=1;
+stim_protocol=2;
 
 %% Load Info.mat
 % Make setup and data structure out of all blocks that correspond to stim_protocol

@@ -1,4 +1,24 @@
-function [data] = isresponsive_byStim(data,setup,std_level)
+function [data] = isresponsive_byStim(data,std_level)
+%
+% DOCUMENTATION IN PROGRESS
+%
+% What does this function do?
+% 
+% Argument(s): 
+%   data(struct)
+%   
+% Returns:
+%   data(struct)
+% 
+% Notes:
+%
+%
+% TODO: Magic numbers
+% Search 'TODO'
+
+data.setup.std_level_byStim = std_level;
+setup = data.setup;
+
 for a=1:length(setup.mousename)
     mouseID=setup.mousename{(a)}
     

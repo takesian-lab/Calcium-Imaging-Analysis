@@ -1,4 +1,31 @@
 function [block] = define_suite2p_singleblock(block)
+% DOCUMENTATION IN PROGRESS
+% 
+% This function accesses the Fall.mat suite2p data and stores it in block
+% 
+% Argument(s): 
+%   block (struct)
+% 
+% Returns:
+%   block (struct)
+% 
+% Notes:
+%
+% Variables needed from block.setup:
+% -suite2p_path
+% -block_name
+%
+% Uses the function:
+% -get_frames_from_Fall
+%
+% TODO:
+% Search 'TODO'
+
+%% Options
+
+showTable = 1; % Option (0 or 1) to print table of blocks and frame numbers to command line
+
+%% Skip this function if Suite2p data is not available
 
 if ismissing(block.setup.suite2p_path)
     disp('Skipping Suite2p data...');
@@ -6,10 +33,6 @@ if ismissing(block.setup.suite2p_path)
 end
 
 disp('Pulling out Suite2p data...');
-
-%Needed from setup:
-%suite2p_path
-%block_name
 
 %% Go to Suite2p folder and load Fall.mat
 
@@ -20,9 +43,7 @@ Fall = load('Fall.mat'); %Must load like this because iscell is a matlab functio
 
 %% Get Frame_set using get_frames_from_Fall
 
-block_name = setup.block_name;
-showTable = 1;
-[Frame_set,~] = get_frames_from_Fall(Fall.ops,block_name,showTable);
+[Frame_set,~] = get_frames_from_Fall(Fall.ops, setup.block_name, showTable);
 setup.Frame_set = Frame_set;
 
 %Check that Frame_set matches timestamp from Bruker function
@@ -33,23 +54,20 @@ elseif length(Frame_set) ~= length(block.timestamp)
 end
 
 %% Pull out data from Fall
+% Fall is too big to keep in its entirety (a couple GB), so just keep the data we'll need
 
-% Only keep data that was flagged 'is cell' to keep the size down
-
-%block.ops = ops; %ops is too big...
-
-% This does not accommodate for the Python to Matlab off by one error yet.
-
+%Images for visualization
 block.img.meanImg = Fall.ops.meanImg;
 block.img.refImg = Fall.ops.refImg;
 block.img.max_proj = Fall.ops.max_proj;
 block.img.meanImgE = Fall.ops.meanImgE;
 block.img.Vcorr = Fall.ops.Vcorr;
-%block.img.sdmov = Fall.ops.sdmov; %Files saved with older versions of suite2p dont have this
 
+%Cell and neuropil data
+%Only keep data from 'is cells' within the block's frame set
 block.iscell = Fall.iscell;
-keep_ind = find(block.iscell(:,1)); %Only keep data from 'is cells'
-block.cell_number = keep_ind-1;
+keep_ind = find(block.iscell(:,1));
+block.cell_number = keep_ind-1; %Subtract 1 for the python to matlab correction of cell label
 block.stat = Fall.stat(1,keep_ind);
 block.F = Fall.F(keep_ind,Frame_set);
 block.Fneu = Fall.Fneu(keep_ind,Frame_set);

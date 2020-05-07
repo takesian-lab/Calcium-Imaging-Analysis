@@ -1,5 +1,26 @@
 function visualize_block(block)
-% Preview the data from a single block
+% DOCUMENTATION IN PROGRESS
+% 
+% This function allows you to preview the data from a single block by
+% plotting multiple types of figures
+% 
+% Argument(s): 
+%   block (struct)
+% 
+% Returns:
+%   
+% 
+% Notes:
+%
+%
+% TODO:
+% Search 'TODO'
+
+%% Magic numbers and setup
+
+bin = 10; %Number of cells to plot at a time (for visibility)
+neuCorrect = 0.7;
+SF = 0.5; %Shrinking factor for traces to appear more spread out
 
 setup = block.setup;
 
@@ -44,8 +65,6 @@ if ismissing(block.setup.suite2p_path)
 else
 
     %% Plot activity from cells (divided into red and green)
-
-    bin = 10; %Number of cells to plot at a time (for visibility)
     
     if isfield(block, 'Sound_Time')
         Sound_Time = block.Sound_Time;
@@ -55,7 +74,7 @@ else
     cell_number = block.cell_number;
     Fneu = block.Fneu; %neuropil
     redcell = block.redcell;
-    F7 = cell-0.7*Fneu; %neuropil corrected traces
+    F7 = cell-neuCorrect*Fneu; %neuropil corrected traces
 
     if isfield(block, 'timestamp')
         timestamp = block.timestamp;
@@ -85,9 +104,11 @@ else
     for f = 1:2
         if f == 1
             currentCells = nonredcell_ones;
+            currentNumbers = nonredcell_number;
             fig_title = 'Green cells';
         elseif f == 2 && redcells_exist
             currentCells = redcell_ones;
+            currentNumbers = redcell_number;
             fig_title = 'Red cells';
         else
             continue
@@ -95,7 +116,6 @@ else
 
         z = 1; %Portion of recording to plot e.g. 0.5, 0.33, 1
         Z = round(length(timestamp)*z);
-        SF = 0.5; %Shrinking factor for traces to appear more spread out
 
         B = floor(length(currentCells)/bin);
         extraCells = mod(length(currentCells),bin);
@@ -137,7 +157,7 @@ else
             xlim([0 timestamp(Z)])
             ylim([0 (count - 0.5)])
             set(gca, 'YTick', [1:1:count-1])
-            set(gca, 'YTickLabel', [currentCells(c1:c2)])
+            set(gca, 'YTickLabel', [currentNumbers(c1:c2)])
             ylabel('Cell number')
             xlabel(timeUnit)
             title(fig_title)
@@ -164,10 +184,14 @@ else
             plotROIs = 0;
         elseif f == 2
             plotROIs = 1;
-            currentCells = nonredcell;
+            currentCells = nonredcell_ones;
+            currentNumbers = nonredcell_number;
+            fig_title = 'Green cells';
         elseif f == 3 && redcells_exist
             plotROIs = 1;
-            currentCells = redcell_iscell;
+            currentCells = redcell_ones;
+            currentNumbers = redcell_number
+            fig_title = 'Red cells';
         else
             continue
         end
@@ -211,7 +235,7 @@ else
                 elseif f == 3
                     plot(xcirc,ycirc,'Linewidth', 1.5, 'Color', 'r');
                 end
-                text(max(xcirc),max(ycirc),num2str(a), 'Color', 'w');
+                text(max(xcirc),max(ycirc),num2str(currentNumbers(a)), 'Color', 'w');
 
                 subplot(1,2,2);
                 if f == 2

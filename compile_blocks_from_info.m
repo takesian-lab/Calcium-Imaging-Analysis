@@ -81,9 +81,20 @@ for i = 1:size(currentInfo,1)
     setup.VR_name           =   [currentInfo{i,15}];    %full voltage recording name (if widefield only)
     setup.stim_name         =   [currentInfo{i,16}];    %type of stim presentation in plain text
     setup.stim_protocol     =   [currentInfo{i,17}];    %number corresponding to stim protocol
-    setup.gcamp_type        =   [currentInfo{i,18}];    %f, m, or s depending on GCaMP type
-    setup.expt_group        =   [currentInfo{i,19}];    %name of experimental group or condition
-
+    
+    %New columns
+    try
+        setup.gcamp_type    =   [currentInfo{i,18}];    %f, m, or s depending on GCaMP type
+    catch
+        setup.gcamp_type    =   nan;
+    end
+    
+    try
+        setup.expt_group    =   [currentInfo{i,19}];    %name of experimental group or condition
+    catch
+        setup.expt_group    =   nan;
+    end
+    
     Block_number = sprintf('%03d',setup.imaging_set);
     
     if setup.voltage_recording == 0

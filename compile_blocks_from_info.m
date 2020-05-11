@@ -48,6 +48,12 @@ end
 
 cd(info_path)
 Info = importfile(info_filename);
+%% Analysis details (former magic numbers from functions)
+% define the stim trace:
+    m.baseline_length = 0.5; %how long is baseline prior to stim? (in seconds)
+    m.after = 2.5; %how long to look at stim-evoked trace, in seconds
+    m.response = 1; % how long is expected sound response (use same as 
+    m.start_window = Sound_Time(time)+1;
 
 %% Compile all blocks unless they are set to "Ignore"
 %  No need to change any variables below this point

@@ -111,7 +111,7 @@ for i = 1:size(currentInfo,1)
         usernameSlash = '';
     end
     
-    %Establish and test paths, allowing fo paths to be missing
+    %Establish and test paths, allowing for paths to be missing
     %TOSCA PATH
     if ismissing(setup.Tosca_session)
         setup.Tosca_path = nan;

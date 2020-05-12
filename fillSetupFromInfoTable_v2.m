@@ -145,7 +145,8 @@ for i = 1:length(uniqueMice)
                 data.([currentMouse]).parameters = block.parameters; %This will be written over every time
                 %This assumes that the block parameters are the same for every stim paradigm, but they might not be
                 %For example if some trials are lost. We'll have to fix this at some point.
-            else block.parameters = nan;
+            else
+                block.parameters = nan;
             end
             data.([currentMouse]).([unique_block_names{1,r}]) = block;
             clear('block');

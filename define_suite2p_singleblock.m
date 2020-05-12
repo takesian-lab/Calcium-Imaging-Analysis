@@ -1,10 +1,13 @@
-function [block] = define_suite2p_singleblock(block)
+function [block] = define_suite2p_singleblock(block, user_ops, displayTable)
 % DOCUMENTATION IN PROGRESS
 % 
 % This function accesses the Fall.mat suite2p data and stores it in block
 % 
 % Argument(s): 
 %   block (struct)
+%   ops (Optional struct) = user-specified ops to check against Fall.ops
+%   displayTable (Optional 0 or 1 to display table of blocks & frame numbers
+%   from the function get_frames_from_Fall)
 % 
 % Returns:
 %   block (struct)
@@ -23,7 +26,17 @@ function [block] = define_suite2p_singleblock(block)
 
 %% Options
 
-showTable = 1; % Option (0 or 1) to print table of blocks and frame numbers to command line
+%Option to check fall.ops against user-specified ops.mat file
+if nargin > 1
+    checkOps = user_ops.checkOps;
+elseif nargin < 2
+    checkOps = 0;
+end
+
+%Default is to display block information in table format in get_frames_from_Fall
+if nargin < 3
+    displayTable = 1;  % Option (0 or 1) to print table of blocks and frame numbers to command line
+end
 
 %% Skip this function if Suite2p data is not available
 
@@ -43,7 +56,7 @@ Fall = load('Fall.mat'); %Must load like this because iscell is a matlab functio
 
 %% Get Frame_set using get_frames_from_Fall
 
-[Frame_set,~] = get_frames_from_Fall(Fall.ops, setup.block_name, showTable);
+[Frame_set,~] = get_frames_from_Fall(Fall.ops, setup.block_name, displayTable);
 setup.Frame_set = Frame_set;
 
 %Check that Frame_set matches timestamp from Bruker function
@@ -51,6 +64,36 @@ if ismissing(block.setup.block_path) && ismissing(block.setup.VR_path)
     warning('Frame_set could not be checked against timestamp')
 elseif length(Frame_set) ~= length(block.timestamp)
     error('Frame_set does not match timestamp')
+end
+
+%% Check ops
+
+block.ops = get_abridged_ops(Fall.ops);
+
+if checkOps
+    unmatchingOps = [];
+    fields = fieldnames(user_ops);
+    for f = 1:numel(fields)
+        currentField = fields{f};
+        if strcmp(currentField, 'checkOps')
+            continue
+        elseif isfield(Fall.ops, currentField)
+            if user_ops.(currentField) ~= block.ops.(currentField)
+                temp = [];
+                temp{1,1} = currentField;
+                temp{1,2} = user_ops.(currentField);
+                temp{1,3} = block.ops.(currentField);
+                unmatchingOps = [unmatchingOps; temp];
+            end
+        end
+    end
+    
+    if ~isempty(unmatchingOps)
+        warning('Some ops do not match the user file.')
+        table(unmatchingOps)
+    else
+        disp('Ops match the user file.')
+    end
 end
 
 %% Pull out data from Fall

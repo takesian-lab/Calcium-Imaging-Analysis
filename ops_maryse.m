@@ -1,0 +1,81 @@
+%List of ops to check
+%Suite2p version = GitHub April-May 2020
+
+%Save filepath
+filepath = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
+filename = 'Maryse_ops.mat';
+
+%% File paths
+%ops.look_one_level_down
+%ops.save_path0
+%ops.fast_dis
+ops.bruker = 0;
+
+%% Main settings
+ops.nplanes = 1;
+ops.nchannels = 1;
+ops.functional_chan = 1;
+ops.tau = 0.5;
+ops.fs = 30;
+ops.do_bidiphase = 1;
+ops.bidiphase = 0;
+
+%% Output settings
+ops.preclassify = 0;
+%ops.save_mat = 1;
+ops.combined = 1;
+%ops.reg_tif
+%ops.reg_tif_chan2
+ops.aspect = 1;
+%ops.delete_bin
+%ops.move_bin
+
+%% Registration
+ops.do_registration = 1;
+ops.align_by_chan = 1;
+ops.nimg_init = 300;
+ops.batch_size = 500;
+ops.smooth_sigma = 1.15;
+ops.smooth_sigma_time = 0;
+ops.maxregshift = 0.1;
+ops.th_badframes = 1;
+%ops.keep_movie_raw
+%ops.two_step_registration
+
+%% Nonrigid
+ops.nonrigid = 1;
+ops.block_size = [128, 128];
+ops.snr_thresh = 1.2;
+ops.maxregshiftNR = 5.0;
+
+%% 1P
+ops.spatial_hp = 50;
+ops.pre_smooth = 2;
+ops.spatial_taper = 50;
+
+%% ROI detection
+ops.roidetect = 1;
+ops.sparse_mode = 0;
+%ops.diameter = 10;
+ops.spatial_scale = 0;
+ops.connected = 1;
+ops.threshold_scaling = 1;
+ops.max_overlap = 0.75;
+ops.max_iterations = 20;
+ops.high_pass = 100;
+
+%% Extraction\Neuropil
+ops.allow_overlap = 0;
+ops.inner_neuropil_radius = 3;
+ops.min_neuropil_pixels = 350;
+
+%% Deconvolution
+ops.spikedetect = 1;
+ops.win_baseline = 60;
+ops.sig_baseline = 10;
+ops.neucoeff = 0.7;
+
+%% Save ops
+cd(filepath)
+save(filename, 'ops', '-mat');
+

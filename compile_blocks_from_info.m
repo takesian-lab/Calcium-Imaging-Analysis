@@ -27,14 +27,16 @@
 
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
 recompile = 1; %1 to save over previously compiled blocks, 0 to skip
+checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
 PC_name = getenv('computername');
 
 switch PC_name
     case 'RD0366' %Maryse
         info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-        save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
+        save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocksDeleteLater';
         info_filename = 'Info';
+        ops_filename = 'Maryse_ops.mat';
     case 'RD0332' %Carolyn
         info_path = 'D:\2P analysis\2P local data\Carolyn';
         save_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
@@ -49,6 +51,14 @@ end
 cd(info_path)
 Info = importfile(info_filename);
 
+if checkOps
+    load(ops_filename);
+    user_ops = ops;
+    user_ops.checkOps = 1;
+else
+    user_ops.checkOps = 0;
+end
+
 %% Compile all blocks unless they are set to "Ignore"
 %  No need to change any variables below this point
 
@@ -60,7 +70,7 @@ ignore = [Info{:,1}]';
 currentInfo = Info(ignore == 0,:);
 
 %Loop through all remaining rows
-for i = 1:size(currentInfo,1)
+for i = 1%:size(currentInfo,1)
 
     %Create setup variable that will contain all the necessary information about the block
     setup = struct;
@@ -197,7 +207,7 @@ for i = 1:size(currentInfo,1)
     [block] = define_loco_singleblock(block);
 
     %pull out block-specific data from Fall.mat
-    [block] = define_suite2p_singleblock(block);
+    [block] = define_suite2p_singleblock(block, user_ops);
     
     %find the stim-aligned traces
     [block] = align_to_stim(block);

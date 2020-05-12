@@ -50,10 +50,21 @@ cd(info_path)
 Info = importfile(info_filename);
 %% Analysis details (former magic numbers from functions)
 % define the stim trace:
-    m.baseline_length = 0.5; %how long is baseline prior to stim? (in seconds)
-    m.after = 2.5; %how long to look at stim-evoked trace, in seconds
-    m.response = 1; % how long is expected sound response (use same as 
-    m.start_window = Sound_Time(time)+1;
+%These values are used in align_to_stim
+    %how long is baseline prior to stim? (in seconds)
+    m.baseline_length = 0.5;
+    %how long to look at stim-evoked trace, in seconds
+    m.after_stim = 2.5;
+    % how long is expected stim-evoked response (in seconds)
+    m.response_window = 1;
+    %neuropil coefficient (should match suite2p setting) Suite2p defaults
+ 
+% neuropil correction for deconvolved spikes and correcting fluorescent
+% traces, this value should match what was used in suite2p (only for
+% deconvolved spikes)
+    %to 0.7 based upon Chen et al., Nature 2013
+    m.neucoeff = 0.7;
+   
 
 %% Compile all blocks unless they are set to "Ignore"
 %  No need to change any variables below this point
@@ -207,7 +218,7 @@ for i = 1:size(currentInfo,1)
     [block] = define_suite2p_singleblock(block);
     
     %find the stim-aligned traces
-    [block] = align_to_stim(block);
+    [block] = align_to_stim(block,m);
     
     %Optionally visually check block
     if visualize == 1

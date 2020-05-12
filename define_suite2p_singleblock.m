@@ -77,7 +77,7 @@ if checkOps
         currentField = fields{f};
         if strcmp(currentField, 'checkOps')
             continue
-        elseif isfield(Fall.ops, currentField)
+        elseif isfield(block.ops, currentField)
             if user_ops.(currentField) ~= block.ops.(currentField)
                 temp = [];
                 temp{1,1} = currentField;

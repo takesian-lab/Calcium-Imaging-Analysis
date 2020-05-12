@@ -24,6 +24,8 @@ function [combined_block, filename] = combine_blocks(block1, block2)
 %% Create new block struct
 combined_block = struct;
 combined_block.files = {block1.setup.block_filename, block2.setup.block_filename};
+combined_block.setup = block1.setup;
+combined_block.setup2 = block2.setup;
 filename = strcat('Combined_', block1.setup.block_filename, '.mat');
 
 %% Combine Tosca data

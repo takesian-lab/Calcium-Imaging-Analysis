@@ -27,15 +27,15 @@
 
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
 recompile = 1; %1 to save over previously compiled blocks, 0 to skip
-checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
+checkOps = 1; %1 to check Fall.ops against user-specified ops.mat file
 
 PC_name = getenv('computername');
 
 switch PC_name
     case 'RD0366' %Maryse
         info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-        save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocksDeleteLater';
-        info_filename = 'Info';
+        save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
+        info_filename = 'Info_VxDB100819F1';
         ops_filename = 'Maryse_ops.mat';
     case 'RD0332' %Carolyn
         info_path = 'D:\2P analysis\2P local data\Carolyn';
@@ -54,6 +54,7 @@ Info = importfile(info_filename);
 if checkOps
     load(ops_filename);
     user_ops = ops;
+    clear('ops');
     user_ops.checkOps = 1;
 else
     user_ops.checkOps = 0;
@@ -70,7 +71,7 @@ ignore = [Info{:,1}]';
 currentInfo = Info(ignore == 0,:);
 
 %Loop through all remaining rows
-for i = 1%:size(currentInfo,1)
+for i = 1:size(currentInfo,1)
 
     %Create setup variable that will contain all the necessary information about the block
     setup = struct;

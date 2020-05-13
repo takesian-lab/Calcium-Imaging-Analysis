@@ -72,6 +72,8 @@ block.ops = get_abridged_ops(Fall.ops);
 
 if checkOps
     unmatchingOps = [];
+    userOps = [];
+    blockOps = [];
     fields = fieldnames(user_ops);
     for f = 1:numel(fields)
         currentField = fields{f};
@@ -79,18 +81,17 @@ if checkOps
             continue
         elseif isfield(block.ops, currentField)
             if user_ops.(currentField) ~= block.ops.(currentField)
-                temp = [];
-                temp{1,1} = currentField;
-                temp{1,2} = user_ops.(currentField);
-                temp{1,3} = block.ops.(currentField);
-                unmatchingOps = [unmatchingOps; temp];
+                unmatchingOps = [unmatchingOps; string(currentField)];
+                userOps = [userOps; user_ops.(currentField)];
+                blockOps = [blockOps; block.ops.(currentField)];
             end
         end
     end
     
     if ~isempty(unmatchingOps)
         warning('Some ops do not match the user file.')
-        table(unmatchingOps)
+        format long
+        disp(table(unmatchingOps, userOps, blockOps))
     else
         disp('Ops match the user file.')
     end

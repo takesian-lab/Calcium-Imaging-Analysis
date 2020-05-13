@@ -52,7 +52,7 @@ Info = importfile(info_filename);
 % define the stim trace:
 %These values are used in align_to_stim
     %how long is baseline prior to stim? (in seconds)
-    m.baseline_length = 0.5;
+    m.baseline_length = 0.75;
     %how long to look at stim-evoked trace, in seconds
     m.after_stim = 2.5;
     % how long is expected stim-evoked response (in seconds)

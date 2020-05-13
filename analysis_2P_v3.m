@@ -63,13 +63,14 @@ else
 end
 
 %% Now find processed suite2P data
-if data.setup.run_redcell==0
-    [data]=Noiseburst_analysis_greenonly_v2(data);
-    %red cells need to be updated and checked to make sure that they work.
-elseif data.setup.run_redcell==1 
-    [data,traces_R,traces_G]=Noiseburst_analysis(a,Frames,Frame_rate,Imaging_Block_String,Imaging_Num,mouseID,date,Sound_Time,...
-        timestamp,i,analysis_folder,path_name,length_sound_trial_first,username,data);
-end
+[data]=stim_analysis(data);
+% if data.setup.run_redcell==0
+%     [data]=Noiseburst_analysis_greenonly_v2(data);
+%     %red cells need to be updated and checked to make sure that they work.
+% elseif data.setup.run_redcell==1 
+%     [data,traces_R,traces_G]=Noiseburst_analysis(a,Frames,Frame_rate,Imaging_Block_String,Imaging_Num,mouseID,date,Sound_Time,...
+%         timestamp,i,analysis_folder,path_name,length_sound_trial_first,username,data);
+% end
 %% sound responsive cells - all sounds averaged together, plot means
 % in figure1, you get a grid of mean activity per cell.
 % Black=nonresponsive, blue=responsive, and cyan=negatively responsive

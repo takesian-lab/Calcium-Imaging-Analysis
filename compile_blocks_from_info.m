@@ -35,7 +35,7 @@ switch PC_name
     case 'RD0366' %Maryse
         info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
         save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
-        info_filename = 'Info_VxDB100819F1';
+        info_filename = 'Info';
         ops_filename = 'Maryse_ops.mat';
     case 'RD0332' %Carolyn
         info_path = 'D:\2P analysis\2P local data\Carolyn';
@@ -63,12 +63,22 @@ end
 %% Compile all blocks unless they are set to "Ignore"
 %  No need to change any variables below this point
 
+%Add extra empty columns when updates might be ahead of people's Info sheets
+%Replaces previous try catch statements
+lastColumn = 19; %WARNING: Magic number
+if size(Info,2) < lastColumn
+    for i = (size(Info,2) + 1):lastColumn
+        Info{1,i} = 'Expand Columns';
+    end
+end
+        
 %Remove header from Info
 Info(1,:) = [];
 
 %Remove rows that are set to "Ignore"
 ignore = [Info{:,1}]';
 currentInfo = Info(ignore == 0,:);
+    
 
 %Loop through all remaining rows
 for i = 1:size(currentInfo,1)
@@ -92,19 +102,8 @@ for i = 1:size(currentInfo,1)
     setup.VR_name           =   [currentInfo{i,15}];    %full voltage recording name (if widefield only)
     setup.stim_name         =   [currentInfo{i,16}];    %type of stim presentation in plain text
     setup.stim_protocol     =   [currentInfo{i,17}];    %number corresponding to stim protocol
-    
-    %New columns
-    try
-        setup.gcamp_type    =   [currentInfo{i,18}];    %f, m, or s depending on GCaMP type
-    catch
-        setup.gcamp_type    =   nan;
-    end
-    
-    try
-        setup.expt_group    =   [currentInfo{i,19}];    %name of experimental group or condition
-    catch
-        setup.expt_group    =   nan;
-    end
+    setup.gcamp_type        =   [currentInfo{i,20}];    %f, m, or s depending on GCaMP type
+    setup.expt_group        =   [currentInfo{i,19}];    %name of experimental group or condition
     
     Block_number = sprintf('%03d',setup.imaging_set);
     

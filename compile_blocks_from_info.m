@@ -80,7 +80,7 @@ ignore = [Info{:,1}]';
 currentInfo = Info(ignore == 0,:);
 
 %Loop through all remaining rows
-for i = 1:size(currentInfo,1)
+for i = 10:size(currentInfo,1)
 
     %Create setup variable that will contain all the necessary information about the block
     setup = struct;
@@ -137,9 +137,7 @@ for i = 1:size(currentInfo,1)
         setup.Tosca_path = nan;
     else
         setup.Tosca_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
-        try
-            cd(setup.Tosca_path)
-        catch
+        if ~isfolder(setup.Tosca_path)
             disp(setup.block_filename)
             error('Your Tosca path is incorrect.')
         end
@@ -150,9 +148,7 @@ for i = 1:size(currentInfo,1)
         setup.block_path = nan;
     else
         setup.block_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.block_name);
-        try
-            cd(setup.block_path)
-        catch
+        if ~isfolder(setup.block_path)
             disp(setup.block_filename)
             error('Your block path is incorrect.')
         end
@@ -163,9 +159,7 @@ for i = 1:size(currentInfo,1)
         setup.VR_path = nan;
     else
         setup.VR_path  = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.VR_name);
-        try
-            cd(setup.VR_path)
-        catch
+        if ~isfolder(setup.VR_path)
             disp(setup.block_filename)
             error('Your voltage recording path is incorrect.')
         end
@@ -176,9 +170,7 @@ for i = 1:size(currentInfo,1)
         setup.suite2p_path = nan;
     else
         setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
-        try
-            cd(setup.suite2p_path)
-        catch
+        if ~isfolder(setup.suite2p_path)
             disp(setup.block_filename)
             error('Your Suite2p analysis path is incorrect.')
         end

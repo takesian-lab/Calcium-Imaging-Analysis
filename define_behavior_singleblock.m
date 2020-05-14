@@ -170,7 +170,8 @@ for m = 1:length(Data)
     elseif setup.stim_protocol == 8 %?
         V1(1,m)  = Data{m}.cue.CurrentSource.Level.dB_re_1_Vrms;
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
-    end
+    else %stim_protocol doeesn't match any of the above
+        warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])
 end
 
 %% Check for tosca trials that are errors, and remove them from the data

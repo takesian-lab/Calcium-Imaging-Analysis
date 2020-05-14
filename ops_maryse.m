@@ -1,21 +1,35 @@
-%List of ops to check
-%Suite2p version = GitHub April-May 2020
+% List of ops to check
 
-%Save filepath
+% This script saves an ops.mat file with a list of Suite2p ops that the 
+% user would like to check against their compiled blocks. This check will
+% happen during define_suite2p_singleblock.
+
+% Each user should set their own ops file and save it in the same folder as Info
+
+% Steps:
+% 1. Save script as ops_user
+% 2. Modify filepath and filename
+% 3. Modify list of ops [comment those you don't want to check]
+% 4. Run script
+
+% The list of ops is based on the Suite2p GitHub version from May 2020
+
+%% Save filepath
+
 filepath = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-filename = 'Maryse_ops.mat';
+filename = 'Maryse_ops2.mat';
 
 %% File paths
 %ops.look_one_level_down
 %ops.save_path0
-%ops.fast_dis
+%ops.fast_disk
 ops.bruker = 0;
 
 %% Main settings
 ops.nplanes = 1;
 ops.nchannels = 1;
 ops.functional_chan = 1;
-ops.tau = 0.5;
+ops.tau = 0.7;
 ops.fs = 30;
 ops.do_bidiphase = 1;
 ops.bidiphase = 0;
@@ -55,7 +69,7 @@ ops.spatial_taper = 50;
 
 %% ROI detection
 ops.roidetect = 1;
-ops.sparse_mode = 0;
+ops.sparse_mode = 1;
 %ops.diameter = 10;
 ops.spatial_scale = 0;
 ops.connected = 1;

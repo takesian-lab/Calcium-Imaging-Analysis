@@ -172,8 +172,9 @@ for m = 1:length(Data)
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
     else %stim_protocol doeesn't match any of the above
         warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])
-end
 
+    end
+end
 %% Check for tosca trials that are errors, and remove them from the data
 
 error_trials = {};
@@ -188,7 +189,7 @@ error_trials=cell2mat(error_trials);
 ~isnan(error_trials);
 k = find(error_trials>0);
 if ~isempty(k)
-    warning('Error trials found in Tosca data')
+    warning(['Found ' num2str(length(k)) ' error(s) out of ' num2str(length(error_trials)) ' Tosca trials'])
 end
 
 New_sound_times(:,k)=[];

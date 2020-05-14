@@ -80,7 +80,7 @@ ignore = [Info{:,1}]';
 currentInfo = Info(ignore == 0,:);
 
 %Loop through all remaining rows
-for i = 10:size(currentInfo,1)
+for i = 1:size(currentInfo,1)
 
     %Create setup variable that will contain all the necessary information about the block
     setup = struct;

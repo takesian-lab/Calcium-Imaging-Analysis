@@ -78,7 +78,6 @@ Info(1,:) = [];
 %Remove rows that are set to "Ignore"
 ignore = [Info{:,1}]';
 currentInfo = Info(ignore == 0,:);
-    
 
 %Loop through all remaining rows
 for i = 1:size(currentInfo,1)

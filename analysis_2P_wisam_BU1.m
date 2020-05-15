@@ -1,44 +1,38 @@
-%% CLEAN AND CLEAR
-
-clear 
-close all 
-clc
-
 %% Noiseburst all cells from suite2p
-%
-% Anne Takesian - 2/22/2019
-% Updated Carolyn, compatible with Python version of Suite2p. Also does Red vs Green cell 7/23/19
-% Updated Feb 2020, CGS - put most of the analysis into functions.
-% Updated April 2020, MET - V3 created to load compiled blocks
-% Updated April 2020, by Wisam Reid
+%Anne Takesian - 2/22/2019
+%updated Carolyn, compatible with Python version of Suite2p. Also does Red vs Green cell 7/23/19
+%Updated Feb 2020, CGS - put most of the analysis into functions.
+%Updated April 2020, MET - V3 created to load compiled blocks
 
-%% Define what type of analysis you are doing
+%% Wisam's version: Adding notes and exploring the organization of the code 
+% Search "TODO" to find things that need to be done or looked at.
 
-% stim protocol code is:
-% noiseburst=1
-% ReceptiveField=2
-% FM sweep=3
-% SAM = 6
-% widefield=4
-% SAM freq = 6
+%% CLEAR
 
-% TODO: Why is this not directly extracted from the table?
-% I think this meant to selective on a larger table with potentially
-% multiple stim protocols to choose from.
-stim_protocol = 1;
+clear
+clc
+close all
 
-%% Set Data Paths and Load Info.mat
+%% define what type of analysis you are doing
+%stim protocol code is:
+%noiseburst=1
+%ReceptiveField=2
+%FM sweep=3
+%SAM = 6
+%widefield=4
+%SAM freq = 6
+
+stim_protocol=1;
+
+%% Load Info.mat
 % Make setup and data structure out of all blocks that correspond to stim_protocol
+% Later we can also add other things like groups
 
-info_path = '/Users/wisamreid/Documents/School/Research (Harvard)/Takesian/2P/Thy1 Experiments/YD111219F3-2P-noisebursts';
-compiled_blocks_path = '/Users/wisamreid/Documents/School/Research (Harvard)/Takesian/2P/Thy1 Experiments/YD111219F3-2P-noisebursts/Compiled';
-info_filename = 'Info';
-
-% TODO: Do we need to cd into a different directory?
+info_path = '/Users/wisamreid/Documents/School/Research (Harvard)/Takesian/Code/MASTER/Example datasets for new 2p code/Example-widefield-dataset-Wisam';
+compiled_blocks_path = '/Users/wisamreid/Documents/School/Research (Harvard)/Takesian/Code/MASTER/Example datasets for new 2p code/Example-widefield-dataset-Wisam/Compiled';
+%save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study'; %To save figures later
 cd(info_path)
-Info = importfile(info_filename);
-
-%%
+Info = importfile('Info');
 
 %Create setup variable for files corresponding to stim_protocol
 setup = struct;
@@ -46,12 +40,12 @@ setup.Info = Info;
 setup.stim_protocol = stim_protocol;
 setup.run_redcell = 0;
 [data, setup] = fillSetupFromInfoTable_v2(setup, Info, compiled_blocks_path);
-data.setup = setup; %Save this info
 
 %% Now find processed suite2P data
 if setup.run_redcell==0
+    % TODO: Why is this for green only?
     [data]=Noiseburst_analysis_greenonly_v2(data,setup);
-    %red cells need to be updated and checked to make sure that they work.
+    % TODO: Red cells need to be updated and checked to make sure that they work.
 elseif setup.run_redcell==1
     [data,traces_R,traces_G]=Noiseburst_analysis(a,Frames,Frame_rate,Imaging_Block_String,Imaging_Num,mouseID,date,Sound_Time,...
         timestamp,i,analysis_folder,path_name,length_sound_trial_first,username,data);
@@ -62,18 +56,23 @@ end
 % in figure2, you get 3 images - magenta = mean of all cells, blue = mean
 % of responsive cells, and cyan = mean of negatively responsive cells
 
-%this only works for green data currently
-std_level = 0;%1.5;%set this here to change std
+% TODO: Why is this for green only?
+% this only works for green data currently
+
+% TODO: how is the std_level used?
+std_level = 1.5; % set this here to change std
 [data] = isresponsive_all(data,setup,std_level)
 %
 clear std_level
 
 %% pull out responsive cells by stim type, plot
-%magenta = all cells
-%blue = positively responsive cells
-%cyan=negatively responsive cells - update this 
+% magenta = all cells
+% blue = positively responsive cells
+% cyan = negatively responsive cells - update this 
 
-std_level = 0;%1.5;%set this here to change std 
+% TODO: why is there an extra figure generated?
+% Figure 1 is blank
+std_level = 1.5; % set this here to change std 
 [data] = isresponsive_byStim(data,setup,std_level)
 clear std_level
 [data]= plotbystim(setup,data)
@@ -81,18 +80,10 @@ clear std_level
 
 
 %% plot +/- locomotion
-for a=1:size(setup.mousename,1)
-    for b=1:size(setup.mousename,2)
-        
-        if isempty(setup.mousename{a,b})
-            continue;
-        end
-        
-        mouseID=setup.mousename{a,b};
-        FOV=setup.FOVs{a,b};
-        
-         Loc_trial=find(data.([mouseID]).loco);
-         noLoc_trial=find(data.([mouseID]).loco==0);
+for a=1:length(setup.mousename)
+    mouseID=setup.mousename{(a)};
+         Loc_trial=find(data.([mouseID]).parameters.loco);
+         noLoc_trial=find(data.([mouseID]).parameters.loco==0);
          a_green = squeeze(mean(mean(data.([mouseID]).traces_G(:,Loc_trial,:), 2),1)); %Active trials
          for i=1:size(data.([mouseID]).traces_G,1)
              a_sem = std(data.([mouseID]).traces_G(i,Loc_trial,:))./sqrt(size(data.([mouseID]).traces_G(i,Loc_trial,:),2));
@@ -108,7 +99,7 @@ for a=1:size(setup.mousename,1)
          figure
          
          subplot(2,1,1); hold on
-         title([mouseID ' FOV ' num2str(FOV)])
+         title(mouseID)
          shadedErrorBar(x,smooth(a_green,5),smooth(a_sem,5),'lineprops','-b','transparent',1);
          legend({'Active trials'})
          xlabel('Frames')
@@ -119,7 +110,6 @@ for a=1:size(setup.mousename,1)
          legend({'Inactive trials'})
          xlabel('Frames')
          ylabel('Delta F/F')
-end
 end
 
 

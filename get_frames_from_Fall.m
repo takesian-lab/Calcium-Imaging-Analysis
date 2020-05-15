@@ -1,12 +1,29 @@
-function [Frame_set, Frame_set_range] = get_frames_from_Fall(ops, block_name, displayTable)
-%Get frame numbers for each recording block from the suite2p Fall.mat file
-%Handles only one Imaging_Block at a time
-%displayTable is 0 or 1 (default) depending on if you want to view a table of the
-%complete block numbers and frames for the current Fall.mat
+function [Frame_set, Frame_set_range] = get_frames_from_Fall(ops, block_name, displayTable) 
+% This function gets frame numbers for each recording block from the Suite2p Fall.mat file
+% Returns Frame_set and Frame_set_range for the block specified by block_name
+% Optionally displays a complete table of block names and frame numbers for the current Fall.mat
+%
+% Argument(s): 
+%   ops (struct from Fall.mat)
+%   block_name (optional string) - if no block_name is included, function will
+%   display table  without returning anything
+%   displayTable (optional 0 or 1) - option to display table
+% 
+% Returns:
+%   Frame_set (double) - full list of frames in current set
+%   Frame_set_range (double) - first and last frame in each set
+% 
+% Notes:
+%
+%
+% TODO: Allow the code accommodate instances where different blocks in
+% Fall.mat have the same block_name (i.e. use full filepath to distinguish them)
+% Search 'TODO'
 
-returnFrameSet = 1;
+%% Define function options
 
 %If no block_name is specified, simply display table
+returnFrameSet = 1;
 if nargin < 2
     returnFrameSet = 0;
     displayTable = 1;
@@ -17,11 +34,22 @@ if nargin < 3
     displayTable = 1;
 end
 
-%Get filelist from Fall.mat:
+%% Magic numbers
+
+redChannel = 1; %Number of the red channel, i.e. Ch1 or Ch2
+
+%Filepath access
+frameA = 13; %number of chars to start of frame number
+frameB = 8;  %number of chars to end of frame number
+blockA = 32; %number of chars to start of block umber
+blockB = 30; %number of chars to end of block number
+chanA  = 15; %number of chars to channel number
+
+%% Extract frame and block numbers from the filenames in ops
+
+% Get filelist from Fall.mat:
 filelist_char = ops.filelist;
 filelist_str = string(ops.filelist);
-
-%Extract frame and block numbers from the filenames:
 
 %The filelist format should be as follows:
 %D:/FILEPATH/BOT_MOUSEID_DETAILS-###/BOT_MOUSEID_DETAILS-###_Cycle#####_Ch2_######.ome.tif
@@ -41,21 +69,20 @@ unique_lengths = unique(filelist_lengths); %How many unique lengths are there
 for i = 1:length(unique_lengths)
     L = unique_lengths(i);
     currentFiles = filelist_lengths == L;
-    frames(currentFiles,:) = double(string(filelist_char(currentFiles,L-13:L-8)));
-    blocks(currentFiles,:) = double(string(filelist_char(currentFiles,L-32:L-30)));
-    paths(currentFiles,:) = string(filelist_char(currentFiles,1:L-30));
-    chans(currentFiles,:) = double(string(filelist_char(currentFiles,L-15)));
+    frames(currentFiles,:) = double(string(filelist_char(currentFiles,L-frameA:L-frameB)));
+    blocks(currentFiles,:) = double(string(filelist_char(currentFiles,L-blockA:L-blockB)));
+    paths(currentFiles,:) = string(filelist_char(currentFiles,1:L-blockB));
+    chans(currentFiles,:) = double(string(filelist_char(currentFiles,L-chanA)));
 end
 
 %If data has both red and green channels, delete channel 1
-if sum(chans == 1) > 0
-    frames(chans == 1,:) = [];
-    blocks(chans == 1,:) = [];
-    paths(chans == 1,:) = [];
+if sum(chans == redChannel) > 0
+    frames(chans == redChannel,:) = [];
+    blocks(chans == redChannel,:) = [];
+    paths(chans == redChannel,:) = [];
 end
 
-%Get first and last frame of each block:
-%Find unique filepaths to avoid combining blocks with the same block number
+%Get first and last frame of each block by finding unique filepaths:
 uniquePaths = unique(paths);
 blockNumbers = nan(length(uniquePaths),1); %Prep variable
 blockFrames = nan(length(uniquePaths),2); %Prep variable

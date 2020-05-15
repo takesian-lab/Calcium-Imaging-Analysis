@@ -1,4 +1,28 @@
-function    [block]=align_to_stim(block);
+function [block] = align_to_stim(block)
+% DOCUMENTATION IN PROGRESS
+% 
+% This function pulls out the trial windows for each sound presentation
+% and stores in block
+% 
+% Argument(s): 
+%   block (struct)
+% 
+% Returns:
+%   block (struct)
+% 
+% Notes:
+%
+% Variables needed from block.setup:
+% -Sound_Time - from define_sound
+% -timestamp - from define_sound
+% -F - from define_suite2p
+% -Fneu - from define_suite2p
+%
+%
+% TODO: Magic numbers, also pull out neuropil and spike traces
+% Search 'TODO'
+
+%%  Skip this function if Suite2p and Bruker data are not available
 
 if ismissing(block.setup.suite2p_path) || ismissing(block.setup.block_path)
     disp('Skipping align to stim...');
@@ -6,12 +30,6 @@ if ismissing(block.setup.suite2p_path) || ismissing(block.setup.block_path)
 end
 
 disp('Aligning to stim...');
-
-%Needed from block:
-%Sound_Time - from define_sound
-%timestamp - from define_sound
-%F - from define_suite2p
-%Fneu - from define_suite2p
 
 %% Pull out the sound traces to each noiseburst
 %define sound window

@@ -1,6 +1,27 @@
 function [block] = define_loco_singleblock(block)
+% DOCUMENTATION IN PROGRESS
+% 
+% This function defines trials when the animal is active or not.
+% This requires both Tosca and Bruker data.
+% 
+% Argument(s): 
+%   block (struct)
+% 
+% Returns:
+%   block (struct)
+% 
+% Notes:
+%
+% Variables needed from block.setup:
+% -block.Sound_Time
+% -block.locomotion_data
+% -block.active_timef
+%
+% TODO: Remove magic numbers 
+% Search 'TODO'
 
-%Requires both Tosca and Bruker data
+%% Skip this function if both Tosca and Bruker data are not available
+
 if ismissing(block.setup.Tosca_path)
     disp('Skipping define_loco...');
     return
@@ -10,11 +31,6 @@ elseif ismissing(block.setup.block_path) && ismissing(block.setup.VR_path)
 end
 
 disp('Finding active trials')
-
-%Needed from block:
-%block.Sound_Time - define_sound_singleblock
-%block.locomotion_data - define_sound_singleblock
-%block.active_time - define_sound_singleblock
 
 setup = block.setup;
 Sound_Time = block.Sound_Time;

@@ -6,55 +6,67 @@ clear all;
 %Updated Feb 2020, CGS - put most of the analysis into functions.
 %Updated April 2020, MET - V3 created to load compiled blocks
 
-%% define what type of analysis you are doing
-%stim protocol code is:
-%noiseburst=1
-%ReceptiveField=2
-%FM sweep=3
-%SAM = 6
-%widefield=4
-%SAM freq = 6
+%% Load Data if it already exists, otherwise create new Data struct
 
-stim_protocol=1;
+loadPreviousData = 0;
 
-%% Load Info.mat
-% Make setup and data structure out of all blocks that correspond to stim_protocol
-% Later we can also add other things like groups
+if loadPreviousData
+    %Load data
+    [FileName,PathName] = uigetfile('.mat');
+    load([PathName '/' FileName])
+else
 
-PC_name = getenv('computername');
+    %% Magic numbers and define what type of analysis you are doing
+    %stim protocol code is:
+    %noiseburst = 1
+    %ReceptiveField = 2
+    %FM sweep = 3
+    %SAM = 6
+    %widefield = 4
+    %SAM freq = 6
 
-switch PC_name
-    case 'RD0366' %Maryse
-        info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-        compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
-        info_filename = 'Info';
-    case 'RD0332' %Carolyn
-        info_path = 'D:\2P analysis\2P local data\Carolyn';
-        compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
-        info_filename = 'Info';
-    case 'RD0386' %Wisam
-        % INSERT PATHS HERE
-        info_filename = 'Info';
-    otherwise
-        disp('Computer does not match known users')
+    stim_protocol = 1;
+    run_redcell = 0;
+    std_level = 1.5;
+    std_level_byStim = 1.5;
+
+    %% Load Info.mat
+    % Make setup and data structure out of all blocks that correspond to stim_protocol
+    % Later we can also add other things like groups
+
+    PC_name = getenv('computername');
+
+    switch PC_name
+        case 'RD0366' %Maryse
+            info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
+            compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
+            save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
+            info_filename = 'Info';
+        case 'RD0332' %Carolyn
+            info_path = 'D:\2P analysis\2P local data\Carolyn';
+            compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
+            save_path = 'D:\2P analysis\2P local data\Carolyn';
+            info_filename = 'Info';
+        case 'RD0386' %Wisam
+            % INSERT PATHS HERE
+            info_filename = 'Info';
+        otherwise
+            disp('Computer does not match known users')
+    end
+
+    cd(info_path)
+    Info = importfile(info_filename);
+
+    %Create data structure for files corresponding to stim_protocol
+    [data] = fillSetupFromInfoTable_v2(Info, compiled_blocks_path, stim_protocol);
+    data.setup.run_redcell = run_redcell;
 end
 
-cd(info_path)
-Info = importfile(info_filename);
-
-%Create setup variable for files corresponding to stim_protocol
-setup = struct;
-setup.Info = Info;
-setup.stim_protocol = stim_protocol;
-setup.run_redcell = 0;
-[data, setup] = fillSetupFromInfoTable_v2(setup, Info, compiled_blocks_path);
-data.setup = setup; %Save this info
-
 %% Now find processed suite2P data
-if setup.run_redcell==0
-    [data]=Noiseburst_analysis_greenonly_v2(data,setup);
+if data.setup.run_redcell==0
+    [data]=Noiseburst_analysis_greenonly_v2(data);
     %red cells need to be updated and checked to make sure that they work.
-elseif setup.run_redcell==1
+elseif data.setup.run_redcell==1 
     [data,traces_R,traces_G]=Noiseburst_analysis(a,Frames,Frame_rate,Imaging_Block_String,Imaging_Num,mouseID,date,Sound_Time,...
         timestamp,i,analysis_folder,path_name,length_sound_trial_first,username,data);
 end
@@ -65,24 +77,21 @@ end
 % of responsive cells, and cyan = mean of negatively responsive cells
 
 %this only works for green data currently
-std_level = 1.5;%set this here to change std
-[data] = isresponsive_all(data,setup,std_level)
-%
-clear std_level
+[data] = isresponsive_all(data,std_level);
 
 %% pull out responsive cells by stim type, plot
 %magenta = all cells
 %blue = positively responsive cells
 %cyan=negatively responsive cells - update this 
 
-std_level = 1.5;%set this here to change std 
-[data] = isresponsive_byStim(data,setup,std_level)
-clear std_level
-[data]= plotbystim(setup,data)
-
+[data] = isresponsive_byStim(data,std_level_byStim);
+[data] = plotbystim(data);
 
 
 %% plot +/- locomotion
+
+setup = data.setup;
+
 for a=1:size(setup.mousename,1)
     for b=1:size(setup.mousename,2)
         
@@ -124,10 +133,13 @@ for a=1:size(setup.mousename,1)
 end
 end
 
+%% Save data
 
-
-%% save data
-% folder = 'Z:\Carolyn\Figures for SfN 2019';
-% addpath(folder);
-% save('noiseburst_analysis.mat', 'data');
-
+if loadPreviousData
+    cd(PathName) %Save in the same place you loaded data from
+    save([FileName(1:end-4) '_reload'])
+else
+    cd(save_path)
+    d = datestr(now,'yyyymmdd-HHMMSS');
+    save(['Data_' d '.mat'], 'data');
+end

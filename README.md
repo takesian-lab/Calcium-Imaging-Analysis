@@ -10,7 +10,7 @@ The stim_protocol code is:
 - ReceptiveField  = 2
 - FM sweep        = 3
 - widefield       = 4
-- SAM             = 6
+- SAM             = 5
 - SAM freq        = 6
 - behavior        = 7
 

@@ -1,18 +1,36 @@
 function [block] = define_behavior_singleblock(block)
 
+% DOCUMENTATION IN PROGRESS
+% 
+% This function accesses the stim and locomotor data from the Tosca folder
+% and stores it in block
+% 
+% Argument(s): 
+%   block (struct)
+% 
+% Returns:
+%   block (struct)
+% 
+% Notes:
+%
+% Variables needed from block.setup:
+% -Tosca_path
+% -Tosca_session
+% -Tosca_run
+% -mousename
+% -stim_protocol
+%
+% TODO: Remove magic numbers 
+% Search 'TODO'
+
+%% Skip this function if Tosca data is not available
+
 if ismissing(block.setup.Tosca_path)
     disp('Skipping Tosca data...');
     return
 end
 
 disp('Pulling out Tosca data...');
-
-%Needed from setup:
-%Tosca_path
-%Tosca_session
-%Tosca_run
-%mousename
-%stim_protocol
 
 %% Go to Tosca folder and pull out files related to setup.Tosca_run
 
@@ -130,31 +148,33 @@ V1 = [];
 V2 = [];
 
 for m = 1:length(Data)
-    if setup.stim_protocol==1
+    if setup.stim_protocol==1 %noiseburst
         V1 = 0;
         V2 = 0;
         break
-    elseif setup.stim_protocol == 2
+    elseif setup.stim_protocol == 2 %Receptive field
         V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
-    elseif setup.stim_protocol == 5
+    elseif setup.stim_protocol == 5 %SAM 
         V1(1,m)  = Data{m}.Sound.Signal.SAM.Rate_Hz;
         V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
     elseif setup.stim_protocol == 3 %FM sweep
         V1(1,m)  = Data{m}.Sound.Signal.FMSweep.Rate_oct_s;
         V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
-    elseif setup.stim_protocol == 6
+    elseif setup.stim_protocol == 6 %SAM freq
         V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
-    elseif setup.stim_protocol == 7
+    elseif setup.stim_protocol == 7 %Behavior
         V1(1,m)  = Data{m}.cue.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
-    elseif setup.stim_protocol == 8
+    elseif setup.stim_protocol == 8 %?
         V1(1,m)  = Data{m}.cue.CurrentSource.Level.dB_re_1_Vrms;
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
+    else %stim_protocol doeesn't match any of the above
+        warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])
+
     end
 end
-
 %% Check for tosca trials that are errors, and remove them from the data
 
 error_trials = {};
@@ -169,7 +189,7 @@ error_trials=cell2mat(error_trials);
 ~isnan(error_trials);
 k = find(error_trials>0);
 if ~isempty(k)
-    warning('Error trials found in Tosca data')
+    warning(['Found ' num2str(length(k)) ' error(s) out of ' num2str(length(error_trials)) ' Tosca trials'])
 end
 
 New_sound_times(:,k)=[];

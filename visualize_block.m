@@ -1,5 +1,27 @@
 function visualize_block(block)
-% Preview the data from a single block
+% DOCUMENTATION IN PROGRESS
+% 
+% This function allows you to preview the data from a single block by
+% plotting multiple types of figures
+% 
+% Argument(s): 
+%   block (struct)
+% 
+% Returns:
+%   
+% 
+% Notes:
+%
+%
+% TODO:
+% Search 'TODO'
+
+%% Magic numbers and setup
+
+neuCorrect = 0.7; %Neuropil correction coefficient
+bin = 10; %Number of cells to plot at a time (for visibility)
+SF = 0.5; %Shrinking factor for traces to appear more spread out
+z = 1; %Portion of recording to plot e.g. 0.5, 0.33, 1
 
 setup = block.setup;
 
@@ -42,20 +64,16 @@ end %Skip if Tosca data is missing
 if ismissing(block.setup.suite2p_path)
     disp('Skipping Suite2p data plots...');
 else
-
-    %% Plot activity from cells (divided into red and green)
-
-    bin = 10; %Number of cells to plot at a time (for visibility)
     
     if isfield(block, 'Sound_Time')
         Sound_Time = block.Sound_Time;
     end
-
-    cell = block.F; %all the cell fluorescence data
+    
     cell_number = block.cell_number;
-    Fneu = block.Fneu; %neuropil
     redcell = block.redcell;
-    F7 = cell-0.7*Fneu; %neuropil corrected traces
+    F = block.F; %all the cell fluorescence data
+    Fneu = block.Fneu; %neuropil
+    F7 = F-neuCorrect*Fneu; %neuropil corrected traces
 
     if isfield(block, 'timestamp')
         timestamp = block.timestamp;
@@ -65,6 +83,8 @@ else
         timeUnit = 'Frames';
     end
     
+    Z = round(length(timestamp)*z);
+        
     %Divide into red and green cells
     %ones variable = row number
     %number variable = suite2p cell labels
@@ -81,23 +101,66 @@ else
         redcells_exist = 0;
     end
 
-    %Plot one figure for green cells and one for red cells
+    
+    %% Plot raster from spikes (divided into red and green)
+   
+    spikes = block.spks;
+    
     for f = 1:2
         if f == 1
             currentCells = nonredcell_ones;
             currentNumbers = nonredcell_number;
-            fig_title = 'Green cells';
+            currentSpikes = spikes(currentCells,:);
+            fig_title = 'Green cells raster';
         elseif f == 2 && redcells_exist
             currentCells = redcell_ones;
             currentNumbers = redcell_number;
-            fig_title = 'Red cells';
+            currentSpikes = spikes(currentCells,:);
+            fig_title = 'Red cells raster';
         else
             continue
         end
-
-        z = 1; %Portion of recording to plot e.g. 0.5, 0.33, 1
-        Z = round(length(timestamp)*z);
-        SF = 0.5; %Shrinking factor for traces to appear more spread out
+        
+        figure('units','normalized','outerposition',[0 0 1 1])
+        subplot(2,1,1);
+        %colormap('bone')
+        imagesc(currentSpikes);
+        xlim([0 timestamp(Z)])
+        set(gca, 'YTick', [1:1:length(currentNumbers)])
+        set(gca, 'YTickLabel', currentNumbers)
+        ylabel('Cell number')
+        xlabel(timeUnit)
+        title(fig_title)
+        h = colorbar;
+        set(get(h,'label'),'string','Deconvolved');
+        
+        subplot(2,1,2);
+        normSpikes = bsxfun(@rdivide, currentSpikes, max(currentSpikes,[],2));
+        imagesc(normSpikes);
+        xlim([0 timestamp(Z)])
+        set(gca, 'YTick', [1:1:length(currentNumbers)])
+        set(gca, 'YTickLabel', currentNumbers)
+        ylabel('Cell number')
+        xlabel(timeUnit)
+        title(fig_title)
+        h = colorbar;
+        set(get(h,'label'),'string','Deconvolved normalized');
+    end
+    
+    
+    %% Plot DF over F from cells (divided into red and green)
+    for f = 1:2
+        if f == 1
+            currentCells = nonredcell_ones;
+            currentNumbers = nonredcell_number;
+            fig_title = 'Green cells - DF over F neuropil corrected';
+        elseif f == 2 && redcells_exist
+            currentCells = redcell_ones;
+            currentNumbers = redcell_number;
+            fig_title = 'Red cells - DF over F neuropil corrected';
+        else
+            continue
+        end
 
         B = floor(length(currentCells)/bin);
         extraCells = mod(length(currentCells),bin);
@@ -125,9 +188,11 @@ else
             for a=c1:c2 %for all of the cells in the current bin
                 row_num = currentCells(a);
                 cell_trace = F7(row_num,:);%pull out the total trace for each cell
+                
                 mean_gCAMP = mean(cell_trace);% average green for each cell
                 df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
                 A = smooth(df_f,10);
+
                 plot(timestamp, A*SF + count,'LineWidth',1);
                 hold on;
 

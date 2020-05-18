@@ -1,4 +1,4 @@
-function visualize_block(block)
+function visualize_block(block,m)
 % DOCUMENTATION IN PROGRESS
 % 
 % This function allows you to preview the data from a single block by
@@ -18,7 +18,7 @@ function visualize_block(block)
 
 %% Magic numbers and setup
 
-neuCorrect = 0.7; %Neuropil correction coefficient
+% neuCorrect = 0.7; %Neuropil correction coefficient
 bin = 10; %Number of cells to plot at a time (for visibility)
 SF = 0.5; %Shrinking factor for traces to appear more spread out
 z = 1; %Portion of recording to plot e.g. 0.5, 0.33, 1
@@ -42,7 +42,7 @@ else
         active_time = block.active_time;
     end
 
-    figure;
+    figure; 
 
     subplot(2,1,1); hold on
     title('Locomotor activity')
@@ -56,6 +56,8 @@ else
     if isfield(block, 'active_time') 
         plot(loco_data(:,1), active_time > 0); hold on;
     end
+    suptitle(block.setup.block_supname)
+   
 
 end %Skip if Tosca data is missing
 
@@ -73,7 +75,7 @@ else
     redcell = block.redcell;
     F = block.F; %all the cell fluorescence data
     Fneu = block.Fneu; %neuropil
-    F7 = F-neuCorrect*Fneu; %neuropil corrected traces
+    F7 = F-m.neucoeff*Fneu; %neuropil corrected traces
 
     if isfield(block, 'timestamp')
         timestamp = block.timestamp;
@@ -145,6 +147,7 @@ else
         title(fig_title)
         h = colorbar;
         set(get(h,'label'),'string','Deconvolved normalized');
+        suptitle(block.setup.block_supname)
     end
     
     
@@ -217,6 +220,7 @@ else
                 plot(loco_data(:,1), loco_data(:,3));
             end
         end
+        suptitle(block.setup.block_supname)
     end
 
     %% Plot mean image from suite2p with ROIs outlined and labelled
@@ -299,6 +303,7 @@ else
             set(gca,'YDir','reverse')
         end
     end 
+    suptitle(block.setup.block_supname)
 
 end %Skip if Suite2p data is missing
 

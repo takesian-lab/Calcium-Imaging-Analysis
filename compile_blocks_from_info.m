@@ -64,7 +64,10 @@ Info = importfile(info_filename);
 % deconvolved spikes)
     %to 0.7 based upon Chen et al., Nature 2013
     m.neucoeff = 0.7;
-   
+     %% Save analysis details
+    disp('Saving...');
+    cd(save_path)
+    save(m, 'm');
 
 %% Compile all blocks unless they are set to "Ignore"
 %  No need to change any variables below this point

@@ -63,7 +63,7 @@ else
 end
 
 %% Now find processed suite2P data
-[data]=stim_analysis(data);
+[data]=df_F(data);
 % if data.setup.run_redcell==0
 %     [data]=Noiseburst_analysis_greenonly_v2(data);
 %     %red cells need to be updated and checked to make sure that they work.

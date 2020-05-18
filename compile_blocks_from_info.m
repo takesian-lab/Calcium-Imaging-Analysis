@@ -27,6 +27,7 @@
 
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
 recompile = 1; %1 to save over previously compiled blocks, 0 to skip
+checkOps = 1; %1 to check Fall.ops against user-specified ops.mat file
 
 PC_name = getenv('computername');
 
@@ -34,10 +35,11 @@ switch PC_name
     case 'RD0366' %Maryse
         info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
         save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
-        info_filename = 'Info';
+        info_filename = 'Info_VxDB100819F1';
+        ops_filename = 'Maryse_ops.mat';
     case 'RD0332' %Carolyn
         info_path = 'D:\2P analysis\2P local data\Carolyn';
-        save_path = 'Z:\Carolyn\2P Imaging data\analyzed\Daily_Imaging';
+        save_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
         info_filename = 'Info';
     case 'RD0386' %Wisam
         % INSERT PATHS HERE
@@ -48,30 +50,28 @@ end
 
 cd(info_path)
 Info = importfile(info_filename);
-%% Analysis details (former magic numbers from functions)
-% define the stim trace:
-%These values are used in align_to_stim
-    %how long is baseline prior to stim? (in seconds)
-    m.baseline_length = 0.75;
-    %how long to look at stim-evoked trace, in seconds
-    m.after_stim = 2.5;
-    % how long is expected stim-evoked response (in seconds)
-    m.response_window = 1;
-    %neuropil coefficient (should match suite2p setting) Suite2p defaults
- 
-% neuropil correction for deconvolved spikes and correcting fluorescent
-% traces, this value should match what was used in suite2p (only for
-% deconvolved spikes)
-    %to 0.7 based upon Chen et al., Nature 2013
-    m.neucoeff = 0.7;
-     %% Save analysis details
-    disp('Saving...');
-    cd(save_path)
-    save(m, 'm');
+
+if checkOps
+    load(ops_filename);
+    user_ops = ops;
+    clear('ops');
+    user_ops.checkOps = 1;
+else
+    user_ops.checkOps = 0;
+end
 
 %% Compile all blocks unless they are set to "Ignore"
 %  No need to change any variables below this point
 
+%Add extra empty columns when updates might be ahead of people's Info sheets
+%Replaces previous try catch statements
+lastColumn = 19; %WARNING: Magic number
+if size(Info,2) < lastColumn
+    for i = (size(Info,2) + 1):lastColumn
+        Info{1,i} = 'Expand Columns';
+    end
+end
+        
 %Remove header from Info
 Info(1,:) = [];
 
@@ -101,19 +101,8 @@ for i = 1:size(currentInfo,1)
     setup.VR_name           =   [currentInfo{i,15}];    %full voltage recording name (if widefield only)
     setup.stim_name         =   [currentInfo{i,16}];    %type of stim presentation in plain text
     setup.stim_protocol     =   [currentInfo{i,17}];    %number corresponding to stim protocol
-    
-    %New columns
-    try
-        setup.gcamp_type    =   [currentInfo{i,18}];    %f, m, or s depending on GCaMP type
-    catch
-        setup.gcamp_type    =   nan;
-    end
-    
-    try
-        setup.expt_group    =   [currentInfo{i,19}];    %name of experimental group or condition
-    catch
-        setup.expt_group    =   nan;
-    end
+    setup.gcamp_type        =   [currentInfo{i,18}];    %f, m, or s depending on GCaMP type
+    setup.expt_group        =   [currentInfo{i,19}];    %name of experimental group or condition
     
     Block_number = sprintf('%03d',setup.imaging_set);
     
@@ -142,15 +131,13 @@ for i = 1:size(currentInfo,1)
         usernameSlash = '';
     end
     
-    %Establish and test paths, allowing fo paths to be missing
+    %Establish and test paths, allowing for paths to be missing
     %TOSCA PATH
     if ismissing(setup.Tosca_session)
         setup.Tosca_path = nan;
     else
         setup.Tosca_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
-        try
-            cd(setup.Tosca_path)
-        catch
+        if ~isfolder(setup.Tosca_path)
             disp(setup.block_filename)
             error('Your Tosca path is incorrect.')
         end
@@ -161,9 +148,7 @@ for i = 1:size(currentInfo,1)
         setup.block_path = nan;
     else
         setup.block_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.block_name);
-        try
-            cd(setup.block_path)
-        catch
+        if ~isfolder(setup.block_path)
             disp(setup.block_filename)
             error('Your block path is incorrect.')
         end
@@ -174,9 +159,7 @@ for i = 1:size(currentInfo,1)
         setup.VR_path = nan;
     else
         setup.VR_path  = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.VR_name);
-        try
-            cd(setup.VR_path)
-        catch
+        if ~isfolder(setup.VR_path)
             disp(setup.block_filename)
             error('Your voltage recording path is incorrect.')
         end
@@ -186,11 +169,8 @@ for i = 1:size(currentInfo,1)
     if ismissing(setup.analysis_name)
         setup.suite2p_path = nan;
     else
-        setup.suite2p_path = strcat(setup.pathname, '/', setup.analysis_name);
-%         setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
-        try
-            cd(setup.suite2p_path)
-        catch
+        setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
+        if ~isfolder(setup.suite2p_path)
             disp(setup.block_filename)
             error('Your Suite2p analysis path is incorrect.')
         end
@@ -218,10 +198,10 @@ for i = 1:size(currentInfo,1)
     [block] = define_loco_singleblock(block);
 
     %pull out block-specific data from Fall.mat
-    [block] = define_suite2p_singleblock(block);
+    [block] = define_suite2p_singleblock(block, user_ops);
     
     %find the stim-aligned traces
-    [block] = align_to_stim(block,m);
+    [block] = align_to_stim(block);
     
     %Optionally visually check block
     if visualize == 1

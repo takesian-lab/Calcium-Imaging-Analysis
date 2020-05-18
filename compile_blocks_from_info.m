@@ -25,9 +25,24 @@
 
 %% Load Info.mat and change user-specific options
 
-visualize = 0; %1 to plot figures of the block immediately, 0 to skip
+visualize = 1; %1 to plot figures of the block immediately, 0 to skip
 recompile = 1; %1 to save over previously compiled blocks, 0 to skip
-checkOps = 1; %1 to check Fall.ops against user-specified ops.mat file
+checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
+%% set up values for 'align to stim'
+
+% How many seconds of baseline?
+m.baseline_length = 0.5;
+
+% How many seconds after stim should we look at?
+m.after_stim = 2.5;
+
+% Define (in seconds) where to look for the response peak?
+m.response_window = 1;
+
+% Define the neuropil coefficient
+% TODO: automatically grab this from Suite2p
+m.neucoeff = 0.7;
+%% 
 
 PC_name = getenv('computername');
 
@@ -115,6 +130,8 @@ for i = 1:size(currentInfo,1)
     setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
         '_Block_', Block_number, '_Session_', num2str(setup.Tosca_session), ...
         '_Run_', num2str(setup.Tosca_run), '_', widefieldTag, setup.stim_name);
+    setup.block_supname = strcat(setup.mousename, ' ', setup.expt_date, ...
+        ' ', setup.stim_name, ' ', Block_number);
     
     %Skip files that have previously been compiled
     if ~recompile
@@ -169,7 +186,7 @@ for i = 1:size(currentInfo,1)
     if ismissing(setup.analysis_name)
         setup.suite2p_path = nan;
     else
-        setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
+        setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, '/', setup.analysis_name);
         if ~isfolder(setup.suite2p_path)
             disp(setup.block_filename)
             error('Your Suite2p analysis path is incorrect.')
@@ -201,11 +218,11 @@ for i = 1:size(currentInfo,1)
     [block] = define_suite2p_singleblock(block, user_ops);
     
     %find the stim-aligned traces
-    [block] = align_to_stim(block);
+    [block] = align_to_stim(block,m);
     
     %Optionally visually check block
     if visualize == 1
-        visualize_block(block);
+        visualize_block(block,m);
     end
     
     %% Save block

@@ -6,6 +6,7 @@ function visualize_block(block,m)
 % 
 % Argument(s): 
 %   block (struct)
+%   m (struct)
 % 
 % Returns:
 %   
@@ -13,7 +14,8 @@ function visualize_block(block,m)
 % Notes:
 %
 %
-% TODO:
+% TODO: determine best way to measuer df/F. Currently, using mean trace as
+% Fo; however, there are other (better?) ways to do this.
 % Search 'TODO'
 
 %% Magic numbers and setup
@@ -46,7 +48,7 @@ else
 
     subplot(2,1,1); hold on
     title('Locomotor activity')
-    ylabel('Activity')
+    ylabel('Activity (cm/s)')
     plot(loco_data(:,1), loco_data(:,3));
 
     subplot(2,1,2); hold on
@@ -90,7 +92,7 @@ else
     %Divide into red and green cells
     %ones variable = row number
     %number variable = suite2p cell labels
-    redcell_ones = find(redcell(:,1));
+    redcell_ones = find(redcell);
 
     if ~isempty(redcell_ones) 
         redcell_number = cell_number(redcell_ones);

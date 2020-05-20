@@ -221,8 +221,9 @@ else
             if ~ismissing(block.setup.Tosca_path)
                 plot(loco_data(:,1), loco_data(:,3));
             end
+            suptitle(block.setup.block_supname)
         end
-        suptitle(block.setup.block_supname)
+        
     end
 
     %% Plot mean image from suite2p with ROIs outlined and labelled
@@ -303,9 +304,10 @@ else
 
             subplot(1,2,2);
             set(gca,'YDir','reverse')
+            suptitle(block.setup.block_supname)
         end
     end 
-    suptitle(block.setup.block_supname)
+    
 
 end %Skip if Suite2p data is missing
 

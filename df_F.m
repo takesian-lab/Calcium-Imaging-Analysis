@@ -13,7 +13,8 @@ function    [data]=df_F(data);
 % Notes:
 %
 %
-% TODO: Magic numbers
+% TODO: Magic numbers, does this work with multiple ROIs?
+?
 % Search 'TODO'
 
 setup = data.setup;

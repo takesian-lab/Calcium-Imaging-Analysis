@@ -172,7 +172,7 @@ for m = 1:length(Data)
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
     else %stim_protocol doeesn't match any of the above
         warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])
-
+        break;
     end
 end
 %% Check for tosca trials that are errors, and remove them from the data

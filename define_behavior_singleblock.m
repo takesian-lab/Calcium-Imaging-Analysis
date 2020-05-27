@@ -49,39 +49,7 @@ for n=1:length(allfiles)
         counttrials=counttrials+1;
     end
 end
-
-
-
-%The above method of indexing files does not work if Run # >9
-%This is because MATLAB alphabetizes: Run 1, Run 10, Run 11, Run 2, etc.
-%Block name should be format: MouseID-Session##-Run#.txt
-%Find Run #, which could be an arbitrary number of digits:
-TrialString = '.txt';
-N = length(TrialString); %N characters to remove from end of block name
-runs = nan(size(behaveblock));
-for f = 1:length(behaveblock)
-    tempRun = '';
-    isNumber = 1;
-    A = 0;
-
-    while isNumber == 1 %Check each character at the end of the 
-
-        possibleNum = behaveblock{f}(end-N-A);
-        if ~isnan(str2double(possibleNum))
-            tempRun = strcat(possibleNum, tempRun); %combine digits in the number
-            A = A+1;
-        else
-            if A == 0
-                error('No run number found.')
-            end
-            isNumber = 0;
-        end
-    end
-    runs(f) = str2double(tempRun);
-end
-%Reorder behaveblock based on Run #
-[~,sortedIndex] = sort(runs);
-behaveblock = behaveblock(sortedIndex);
+behaveblock = sort_nat(behaveblock); %Replaced previous code that sorted behaveblock
 
 %% Read data from the run
 Var1=[]; Var2=[];

@@ -20,6 +20,8 @@ function [block] = define_behavior_singleblock(block)
 % -mousename
 % -stim_protocol
 %
+% Dependencies: sort_nat
+%
 % TODO: Remove magic numbers 
 % Search 'TODO'
 
@@ -49,39 +51,7 @@ for n=1:length(allfiles)
         counttrials=counttrials+1;
     end
 end
-
-
-
-%The above method of indexing files does not work if Run # >9
-%This is because MATLAB alphabetizes: Run 1, Run 10, Run 11, Run 2, etc.
-%Block name should be format: MouseID-Session##-Run#.txt
-%Find Run #, which could be an arbitrary number of digits:
-TrialString = '.txt';
-N = length(TrialString); %N characters to remove from end of block name
-runs = nan(size(behaveblock));
-for f = 1:length(behaveblock)
-    tempRun = '';
-    isNumber = 1;
-    A = 0;
-
-    while isNumber == 1 %Check each character at the end of the 
-
-        possibleNum = behaveblock{f}(end-N-A);
-        if ~isnan(str2double(possibleNum))
-            tempRun = strcat(possibleNum, tempRun); %combine digits in the number
-            A = A+1;
-        else
-            if A == 0
-                error('No run number found.')
-            end
-            isNumber = 0;
-        end
-    end
-    runs(f) = str2double(tempRun);
-end
-%Reorder behaveblock based on Run #
-[~,sortedIndex] = sort(runs);
-behaveblock = behaveblock(sortedIndex);
+behaveblock = sort_nat(behaveblock); %Replaced previous code that sorted behaveblock
 
 %% Read data from the run
 Var1=[]; Var2=[];
@@ -129,7 +99,7 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
             trialType{t}=0;
         elseif isequal(Data{t}.Result,'False Alarm')
             b_Outcome{t}=4;
-            trialType{t}=0;;
+            trialType{t}=0;
         else
             b_Outcome{t}=NaN;
             trialType{t}=NaN;
@@ -167,14 +137,32 @@ for m = 1:length(Data)
     elseif setup.stim_protocol == 7 %Behavior
         V1(1,m)  = Data{m}.cue.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
-    elseif setup.stim_protocol == 8 %?
+    elseif setup.stim_protocol == 8 %Behavior
         V1(1,m)  = Data{m}.cue.CurrentSource.Level.dB_re_1_Vrms;
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
+    elseif setup.stim_protocol == 9 || setup.stim_protocol == 11 %Random H20 or Air Puffs
+        if strcmp(Data{m}.Type, 'CS+')
+            type = 1;
+        elseif strcmp(Data{m}.Type, 'CS-')
+            type = 0;
+        else
+            type = nan;
+        end
+        V1(1,m)  = type;
+        V2 = 0;
+    elseif setup.stim_protocol == 10 %Noiseburst_ITI
+        V1(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL; %0dB for no stim, 70dB for stim
+        if m == 1 %Stim interval
+            V2(1,m)  = New_sound_times(m) - start_time;
+        else
+            V2(1,m)  = New_sound_times(m) - New_sound_times(m-1);
+        end
     else %stim_protocol doeesn't match any of the above
         warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])
-
+        break;
     end
 end
+
 %% Check for tosca trials that are errors, and remove them from the data
 
 error_trials = {};

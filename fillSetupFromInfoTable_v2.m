@@ -43,13 +43,18 @@ EG = 19; %name of experimental group or condition
 %Later we could update this to also look for other parameters
 
 %stim protocol code is:
-%noiseburst=1
-%ReceptiveField=2
-%FM sweep=3
-%SAM = 5
-%widefield=4
+%noiseburst = 1
+%ReceptiveField = 2
+%FM sweep = 3
+%SAM = 6
+%widefield = 4
 %SAM freq = 6
-code = {'Noiseburst', 'Receptive Field', 'FM sweep', 'SAM', 'Widefield', 'SAM freq'};
+%Behavior = 7 and 8
+%Random H20 = 9
+%Noiseburst_ITI = 10
+%Random air puff = 11
+
+code = {'Noiseburst', 'Receptive Field', 'FM sweep', 'Widefield', 'SAM', 'SAM freq' , 'Behavior', 'Behavior', 'Random H20', 'Noiseburst ITI', 'Random Air'};
 disp(['Analyzing ' code{stim_protocol} ' files'])
 
 %% Create data structure

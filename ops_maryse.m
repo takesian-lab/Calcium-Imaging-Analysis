@@ -19,6 +19,8 @@
 filepath = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
 filename = 'Maryse_ops2.mat';
 
+ops = struct;
+
 %% File paths
 %ops.look_one_level_down
 %ops.save_path0
@@ -63,13 +65,15 @@ ops.snr_thresh = 1.2;
 ops.maxregshiftNR = 5.0;
 
 %% 1P
-ops.spatial_hp = 50;
-ops.pre_smooth = 2;
-ops.spatial_taper = 50;
+%There is no ops record of 1Preg yet (or at least not if it is set to 0)
+%Keep an eye on this and make it's not 1 when setting ops.
+%ops.spatial_hp = 50;
+%ops.pre_smooth = 2;
+%ops.spatial_taper = 50;
 
 %% ROI detection
 ops.roidetect = 1;
-ops.sparse_mode = 1;
+%ops.sparse_mode = 0;
 %ops.diameter = 10;
 ops.spatial_scale = 0;
 ops.connected = 1;

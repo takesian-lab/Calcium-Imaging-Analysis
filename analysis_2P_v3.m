@@ -24,8 +24,12 @@ else
     %SAM = 6
     %widefield = 4
     %SAM freq = 6
+    %Behavior = 7 and 8
+    %Random H20 = 9
+    %Noiseburst_ITI = 10
+    %Random air puff = 11
 
-    stim_protocol = 1;
+    stim_protocol = 11;
     run_redcell = 0;
     std_level = 1.5;
     std_level_byStim = 1.5;
@@ -41,7 +45,7 @@ else
             info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
             compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
             save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-            info_filename = 'Info';
+            info_filename = 'Info_NxDB092719M2';
         case 'RD0332' %Carolyn
             info_path = 'D:\2P analysis\2P local data\Carolyn';
             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';

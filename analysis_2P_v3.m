@@ -25,7 +25,7 @@ else
     %widefield = 4
     %SAM freq = 6
 
-    stim_protocol = 1;
+    stim_protocol = 2;
     run_redcell = 1;
     std_level = 1.5;
     std_level_byStim = 1.5;
@@ -63,14 +63,9 @@ else
 end
 
 %% Now find processed suite2P data
-[data]=df_F(data);
-% if data.setup.run_redcell==0
-%     [data]=Noiseburst_analysis_greenonly_v2(data);
-%     %red cells need to be updated and checked to make sure that they work.
-% elseif data.setup.run_redcell==1 
-%     [data,traces_R,traces_G]=Noiseburst_analysis(a,Frames,Frame_rate,Imaging_Block_String,Imaging_Num,mouseID,date,Sound_Time,...
-%         timestamp,i,analysis_folder,path_name,length_sound_trial_first,username,data);
-% end
+    [data]=concatBlocks_aligned(data);
+    [data]=df_F(data);
+
 %% sound responsive cells - all sounds averaged together, plot means
 % in figure1, you get a grid of mean activity per cell.
 % Black=nonresponsive, blue=responsive, and cyan=negatively responsive
@@ -78,7 +73,7 @@ end
 % of responsive cells, and cyan = mean of negatively responsive cells
 
 %this only works for green data currently
-[data] = isresponsive_all(data,std_level);
+[data] = isresponsive_all(data,std_level,run_redcell);
 
 %% pull out responsive cells by stim type, plot
 %magenta = all cells
@@ -86,7 +81,7 @@ end
 %cyan=negatively responsive cells - update this 
 
 [data] = isresponsive_byStim(data,std_level_byStim);
-[data] = plotbystim(data);
+[data] = plotbystim(data,run_redcell); 
 
 
 %% plot +/- locomotion

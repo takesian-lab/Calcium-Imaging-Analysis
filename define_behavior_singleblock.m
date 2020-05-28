@@ -20,6 +20,8 @@ function [block] = define_behavior_singleblock(block)
 % -mousename
 % -stim_protocol
 %
+% Dependencies: sort_nat
+%
 % TODO: Remove magic numbers 
 % Search 'TODO'
 

@@ -1,19 +1,5 @@
-% Which sessions/animal are we looking at? 
-% username = 'Carolyn';
-% mouseID='VxAC031419M1';
-%     Filenumber=[1];
-%     Tosca_Session='1';
-%     Tosca_Run_number = '1';
-%     date='2018-11-07';
-%     Imaging_Block = [1];
-%     Tosca_folder_name = ['Tosca_' mouseID]; %name of the Tosca folder 
-%     folder = (['D:/2P analysis/2P local data/' username '/' mouseID '/' Tosca_folder_name '/Session ' Tosca_Session]); %direct to specific Tosca folder within a 
-%      %addpath (folder); %navigate to this folder
 
-%function [loco_data,active_time] = locomotor_activity(loco_data,M,read_loco,setup,mouseID,date,Imaging_Block_String,Imaging_Block,filename);
-
-
-function [loco_data,active_time] = locomotor_activity(loco_data,filename)
+function [loco_data,active_time] = locomotor_activity(loco_data,filename,setup)
 % read_loco= [mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt'];
 %loco_data = dlmread(read_loco);%locomotor data
 r=loco_data(:,1);% I am only looking at column 1
@@ -59,7 +45,7 @@ loco_data(:,3)=(abs(loco_data(:,3))); %take absolute value of data
 %% when is the animal moving?
 active_time=zeros(i,1);
 for i=1:length(loco_data)
-    if loco_data(i,3)>0.8
+    if loco_data(i,3)>setup.constant.locoThresh
         active_time(i) = loco_data(i,1);
     end
 end

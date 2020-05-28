@@ -29,6 +29,9 @@ for a=1:length(setup.mousename)
         end
         
     end
+    behaveblock=sort_nat(behaveblock);
+    trials=sort_nat(trials);
+
     bl=0;
     for b=setup.Tosca_Runs%Loop through blocks of interest and extract trial data + run data, boi was defined above
         bl=bl+1;

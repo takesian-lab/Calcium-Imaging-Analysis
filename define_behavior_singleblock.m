@@ -49,7 +49,8 @@ for n=1:length(allfiles)
         counttrials=counttrials+1;
     end
 end
-
+behaveblock=sort_nat(behaveblock);
+trials=sort_nat(trials);
 
 
 %The above method of indexing files does not work if Run # >9
@@ -82,7 +83,7 @@ end
 %Reorder behaveblock based on Run #
 [~,sortedIndex] = sort(runs);
 behaveblock = behaveblock(sortedIndex);
-
+% 
 %% Read data from the run
 Var1=[]; Var2=[];
 b=setup.Tosca_run;

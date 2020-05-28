@@ -118,6 +118,7 @@ for i = 1:length(uniqueMice)
         setup.Imaging_sets{i,j}      =   [currentInfo_R{:,IS}];
         setup.Session{i,j}           =   [currentInfo_R{:,TS}];
         setup.Tosca_Runs{i,j}        =   [currentInfo_R{:,TR}];
+        setup.FrameRate{i,j}         =   [currentInfo_R{:,FR}] 
                 
         block_filenames = cell(1,size(currentInfo_R,1));
         unique_block_names = cell(1,size(currentInfo_R,1));

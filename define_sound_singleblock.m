@@ -78,7 +78,7 @@ if ~ismissing(block.setup.Tosca_path) %Skip if Tosca info is missing
     locTime2 = start + loco_times;
     
     %Moved this part from define_loco:
-    [loco_data,active_time] = locomotor_activity(loco_data,VR_filename);
+    [loco_data,active_time] = locomotor_activity(loco_data,VR_filename,setup);
     block.locomotion_data = loco_data; %TRANSFORMED LOCO DATA
     block.active_time = active_time;
 

@@ -1,4 +1,4 @@
-function [block] = align_to_stim(block,m)
+function [block] = align_to_stim(block)
 % DOCUMENTATION IN PROGRESS
 % 
 % This function pulls out the trial windows for each sound presentation
@@ -38,6 +38,7 @@ disp('Aligning to stim...');
 
 %% Pull out the traces to each stim
 %define sound window
+setup = block.setup;
 Sound_Time = block.Sound_Time;
 
 % loop through each stim-presenation
@@ -45,14 +46,14 @@ for time=1:length(Sound_Time)
     sound = Sound_Time(time);
     
     % define when baseline starts
-    before = Sound_Time(time)-m.baseline_length;
+    before = Sound_Time(time)-setup.constant.baseline_length;
     
     % define the end time of the trace
-    after = Sound_Time(time)+m.after_stim;
+    after = Sound_Time(time)+setup.constant.after_stim;
     
     %define the "response window" (stim presentation to end of expected
     %trace)
-    window = Sound_Time(time)+m.response_window; 
+    window = Sound_Time(time)+setup.constant.response_window; 
 
     
     % find the frames that correspond to the above times. This will give
@@ -88,7 +89,7 @@ for time=1:length(Sound_Time)
         %generate a neuropil corrected trace 
         % neuropil corrected trace = raw F - (neuropil
         % coefficient)*neuropil signal
-        F7 = block.F(k,:) - m.neucoeff*block.Fneu(k,:);
+        F7 = block.F(k,:) - setup.constant.neucoeff*block.Fneu(k,:);
         
         % pull out the frames aligned to a stim (defined in frames)
         F7_stim(k,time,:) = (F7(closest_frame_before:closest_frame_after));

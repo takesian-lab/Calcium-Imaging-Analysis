@@ -31,17 +31,23 @@ checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 %% set up values for 'align to stim'
 
 % How many seconds of baseline?
-m.baseline_length = 0.5;
+constant.baseline_length = 0.5;
 
 % How many seconds after stim should we look at?
-m.after_stim = 2.5;
+constant.after_stim = 2.5;
 
 % Define (in seconds) where to look for the response peak?
-m.response_window = 1;
+constant.response_window = 1;
+
+% define where to look for locomotor responses, in sec?
+constant.locowindow = 2.5;
+
+%minimum amout of time (sec) that mouse is moving to be considered active
+constant.locoThresh = 1;
 
 % Define the neuropil coefficient
 % TODO: automatically grab this from Suite2p
-m.neucoeff = 0.7;
+constant.neucoeff = 0.7;
 %% 
 
 PC_name = getenv('computername');
@@ -56,6 +62,7 @@ switch PC_name
         info_path = 'D:\2P analysis\2P local data\Carolyn';
         save_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
         info_filename = 'Info';
+        
     case 'RD0386' %Wisam
         % INSERT PATHS HERE
         info_filename = 'Info';
@@ -99,6 +106,7 @@ for i = 1:size(currentInfo,1)
 
     %Create setup variable that will contain all the necessary information about the block
     setup = struct;
+    setup.constant = constant;
     setup.Info              =   Info;                   %Record Info for records only
     setup.pathname          =   [currentInfo{i,2}];     %first part of the path
     setup.username          =   [currentInfo{i,3}];     %part of the path, not every user will have this, okay to leave empty
@@ -218,11 +226,11 @@ for i = 1:size(currentInfo,1)
     [block] = define_suite2p_singleblock(block, user_ops);
     
     %find the stim-aligned traces
-    [block] = align_to_stim(block,m);
+    [block] = align_to_stim(block);
     
     %Optionally visually check block
     if visualize == 1
-        visualize_block(block,m);
+        visualize_block(block);
     end
     
     %% Save block

@@ -205,8 +205,22 @@ else
 
                 count = count + 1;
             end
-            if Z < 10000 && isfield(block, 'Sound_Time') %Don't plot red lines if there is too much data, otherwise its messy
-                line = vline(Sound_Time, 'r');
+            if Z < 15000 && isfield(block, 'Sound_Time') %Don't plot red lines if there is too much data, otherwise its messy
+                %plot multicolored lines if less than 8 stim, else plot red lines
+                if isfield(block.parameters, 'variable1')
+                        var1 = unique(block.parameters.variable1);
+                        variable1 = block.parameters.variable1;
+                    if length(variable1) > 1 && length(var1) < 8
+                        for i = 1:length(var1)
+                            colours = {'r', 'g', 'k', 'b', 'y', 'm', 'c'};
+                            vline(Sound_Time(variable1 == var1(i)), colours{i})
+                        end
+                    else
+                        vline(Sound_Time, 'r');
+                    end
+                else
+                    vline(Sound_Time, 'r');
+                end
             end
             xlim([0 timestamp(Z)])
             ylim([0 (count - 0.5)])
@@ -220,6 +234,7 @@ else
             title('Locomotor activity')
             ylabel('Activity')
             xlabel(timeUnit)
+            xlim([0 timestamp(Z)])
             if ~ismissing(block.setup.Tosca_path)
                 plot(loco_data(:,1), loco_data(:,3));
             end
@@ -299,6 +314,7 @@ else
                 elseif f == 3
                     plot(xcirc,ycirc,'Linewidth', 1.5, 'Color', 'r');
                 end
+                text(max(xcirc),max(ycirc),num2str(currentNumbers(a)), 'Color', 'c');
             end
 
             subplot(1,2,1);

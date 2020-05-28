@@ -1,4 +1,4 @@
-function visualize_block(block,m)
+function visualize_block(block)
 % DOCUMENTATION IN PROGRESS
 % 
 % This function allows you to preview the data from a single block by
@@ -33,6 +33,7 @@ if ismissing(block.setup.Tosca_path)
 else
 
     %% Plot locomotor activity
+   
 
     if isfield(block, 'locomotion_data')
         loco_data = block.locomotion_data;
@@ -49,7 +50,8 @@ else
     subplot(2,1,1); hold on
     title('Locomotor activity')
     ylabel('Activity (cm/s)')
-    plot(loco_data(:,1), loco_data(:,3));
+    plot(loco_data(:,1), loco_data(:,3)); hold on
+    hline(0.7);
 
     subplot(2,1,2); hold on
     ylabel('Considered active')
@@ -77,7 +79,7 @@ else
     redcell = block.redcell;
     F = block.F; %all the cell fluorescence data
     Fneu = block.Fneu; %neuropil
-    F7 = F-m.neucoeff*Fneu; %neuropil corrected traces
+    F7 = F-setup.constant.neucoeff*Fneu; %neuropil corrected traces
 
     if isfield(block, 'timestamp')
         timestamp = block.timestamp;

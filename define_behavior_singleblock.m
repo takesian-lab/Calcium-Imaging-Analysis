@@ -140,7 +140,7 @@ for m = 1:length(Data)
     elseif setup.stim_protocol == 8 %Behavior
         V1(1,m)  = Data{m}.cue.CurrentSource.Level.dB_re_1_Vrms;
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
-    elseif setup.stim_protocol == 9 %Random H20 or Air Puffs
+    elseif setup.stim_protocol == 9 || setup.stim_protocol == 11 %Random H20 or Air Puffs
         if strcmp(Data{m}.Type, 'CS+')
             type = 1;
         elseif strcmp(Data{m}.Type, 'CS-')

@@ -27,7 +27,7 @@
 
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
 recompile = 0; %1 to save over previously compiled blocks, 0 to skip
-checkOps = 1; %1 to check Fall.ops against user-specified ops.mat file
+checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
 PC_name = getenv('computername');
 
@@ -35,7 +35,7 @@ switch PC_name
     case 'RD0366' %Maryse
         info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
         save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
-        info_filename = 'Info_VxDB100819F1';
+        info_filename = 'Info_NxDB092719M2';
         ops_filename = 'Maryse_ops.mat';
     case 'RD0332' %Carolyn
         info_path = 'D:\2P analysis\2P local data\Carolyn';

@@ -14,8 +14,9 @@ The stim_protocol code is:
 - SAM freq        = 6
 - behavior        = 7
 - behavior        = 8
-- H20\Air         = 9
+- random h20      = 9
 - noiseburst_ITI  = 10
+- random air      = 11
 
 -----
 

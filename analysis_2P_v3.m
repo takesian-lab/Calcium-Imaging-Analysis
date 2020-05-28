@@ -24,6 +24,9 @@ else
     %SAM = 6
     %widefield = 4
     %SAM freq = 6
+    %Behavior = 7 and 8
+    %Random H20 and air puff = 9
+    %Noiseburst_ITI = 10
 
     stim_protocol = 1;
     run_redcell = 0;

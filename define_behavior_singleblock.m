@@ -99,7 +99,7 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
             trialType{t}=0;
         elseif isequal(Data{t}.Result,'False Alarm')
             b_Outcome{t}=4;
-            trialType{t}=0;;
+            trialType{t}=0;
         else
             b_Outcome{t}=NaN;
             trialType{t}=NaN;
@@ -137,14 +137,32 @@ for m = 1:length(Data)
     elseif setup.stim_protocol == 7 %Behavior
         V1(1,m)  = Data{m}.cue.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
-    elseif setup.stim_protocol == 8 %?
+    elseif setup.stim_protocol == 8 %Behavior
         V1(1,m)  = Data{m}.cue.CurrentSource.Level.dB_re_1_Vrms;
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
+    elseif setup.stim_protocol == 9 %Random H20 or Air Puffs
+        if strcmp(Data{m}.Type, 'CS+')
+            type = 1;
+        elseif strcmp(Data{m}.Type, 'CS-')
+            type = 0;
+        else
+            type = nan;
+        end
+        V1(1,m)  = type;
+        V2 = 0;
+    elseif setup.stim_protocol == 10 %Noiseburst_ITI
+        V1(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL; %0dB for no stim, 70dB for stim
+        if m == 1 %Stim interval
+            V2(1,m)  = New_sound_times(m) - start_time;
+        else
+            V2(1,m)  = New_sound_times(m) - New_sound_times(m-1);
+        end
     else %stim_protocol doeesn't match any of the above
         warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])
         break;
     end
 end
+
 %% Check for tosca trials that are errors, and remove them from the data
 
 error_trials = {};

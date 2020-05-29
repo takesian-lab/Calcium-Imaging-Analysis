@@ -40,7 +40,7 @@ active_time = block.active_time;
 %% Find sound times when animal is active
 for time=1:length(Sound_Time)
     sound = Sound_Time(time);% when is the sound?
-    window = setup.constant.locowindow; 
+    window = Sound_Time(time)+setup.constant.locowindow; 
 
     [c closest_frame_sound] = min(abs(loco_data(:,1)-sound));
     [c closest_frame_window] = min(abs(loco_data(:,1)-window));

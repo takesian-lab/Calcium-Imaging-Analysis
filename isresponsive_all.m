@@ -25,14 +25,6 @@ for a=1:length(setup.mousename)
     mouseID=setup.mousename{(a)};
     stimdata = data.([mouseID]).stim_df_f;
     
-    
-    %     trace = [];
-    %     SEM_a_green = [];
-    %     b_green = [];
-    %     c_green = [];
-    %     d_green = [];
-    %     e_green = [];
-    
     %go through all of the cells
     for i=1:size(stimdata.F7_df_f,1);
         all_average(i,:) = squeeze(mean(stimdata.F7_df_f(i,:,:), 2)); %mean of all trials for each cell
@@ -47,13 +39,13 @@ for a=1:length(setup.mousename)
         %more than defined STDS above baseline)
         base_mean(i,:) = mean(stimdata.baseline(i,:,:),3);
         base_std(i) = std(base_mean(i),2);
-        %         f = mean(data.([mouseID]).std_baseline(i,:), 2); %average baseline STD across trials for each cell
+       
         data.([mouseID]).response.isRespPos(i) = maxpeak_avg(i,:) > std_level*mean(base_std(i)) & window_avg(i,:)>0; %will be 0 or 1
         data.([mouseID]).response.isRespNeg(i) = minpeak_avg(i,:) < -std_level*mean(base_std(i)) & window_avg(i,:)<0;
     end
     
     
-    if run_redcell ==0
+    
         first_cell = 1;
         last_cell = size(all_average,1);
         num_cells = last_cell-first_cell+1;
@@ -81,7 +73,7 @@ for a=1:length(setup.mousename)
             plot(minpeak_avg(i),'o');
         end
         
-        %   clear a_green b_green c_green d_green e_green
+     
         all_average = squeeze(mean(mean(stimdata.F7_df_f(:,:,:),2),1));%mean across all cells
         isresponsive_avg= squeeze(mean(mean(stimdata.F7_df_f((data.([mouseID]).response.isRespPos),:,:),2),1));%mean across isRespPos cells
         isresponsiveneg_avg= squeeze(mean(mean(stimdata.F7_df_f((data.([mouseID]).response.isRespNeg),:,:),2),1));%mean across isRespNeg cells
@@ -109,9 +101,9 @@ for a=1:length(setup.mousename)
         catch
             disp(['Skipping mouse ' mouseID ' graph, not enough cells?']);
         end
-    else run_redcell == 0
         
+        
+    
         
     end
-end
 end

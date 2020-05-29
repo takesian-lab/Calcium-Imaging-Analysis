@@ -34,28 +34,28 @@ for a=1:length(setup.mousename)
             % graph all cells (responsive and non-responsive by stim
             if run_redcell == 0;
                 meanAllbyStim=squeeze(mean(mean(stimdata.F7_df_f(:,stim_list,:),2),1));%avg response of positive responsive cells by stim
-                std_resp=squeeze(std(mean(stimdata.F7_df_f(:,stim_list,:),2),1));
+                SEM_resp=squeeze(std(mean(stimdata.F7_df_f(:,stim_list,:),2),1))./sqrt(size(stimdata.F7_df_f(:,stim_list,:),2));
                 subplotSpot=V1+(length(data.([mouseID]).parameters.Var1List)*(length(data.([mouseID]).parameters.Var2List)-V2))
                 subplot(length(data.([mouseID]).parameters.Var2List),length(data.([mouseID]).parameters.Var1List),subplotSpot),
-                shadedErrorBar(x_green,smooth(meanAllbyStim,10),smooth(std_resp,10),'lineprops','m')
+                shadedErrorBar(x_green,smooth(meanAllbyStim,10),smooth(SEM_resp,10),'lineprops','m')
                 stim1=num2str(data.([mouseID]).parameters.Var1List(V1));
                 stim2=num2str(data.([mouseID]).parameters.Var2List(V2));
                 if setup.stim_protocol==2
                     title({sprintf('%s dB',stim2);sprintf('%s kHz',stim1)});
                 end
                 %             axis([0 length(x_green) 0 70])
-            else
-                meanAllbyStim_g=squeeze(mean(mean(stimdata.F7_df_f(greenIDX,stim_list,:),2),1));%avg response of positive responsive cells by stim
-                meanAllbyStim_r=squeeze(mean(mean(stimdata.F7_df_f(redIDX,stim_list,:),2),1));%avg response of positive responsive cells by stim
+            else % plot red and green cells
+                meanAllbyStim_g=squeeze(mean(mean(stimdata.F7_df_f(greenIDX,stim_list,:),2),1));%avg response of all cellsresponsive cells by stim
+                meanAllbyStim_r=squeeze(mean(mean(stimdata.F7_df_f(redIDX,stim_list,:),2),1));%avg response of all cells by stim
                 
-                std_resp_g=squeeze(std(mean(stimdata.F7_df_f(greenIDX,stim_list,:),2),1));
-                std_resp_r=squeeze(std(mean(stimdata.F7_df_f(redIDX,stim_list,:),2),1));
+                sem_resp_g=squeeze(std(mean(stimdata.F7_df_f(greenIDX,stim_list,:),2),1))./sqrt(size(stimdata.F7_df_f(greenIDX,stim_list,:),2));
+                sem_resp_r=squeeze(std(mean(stimdata.F7_df_f(redIDX,stim_list,:),2),1))./sqrt(size(stimdata.F7_df_f(redIDX,stim_list,:),2));
                 
                 subplotSpot=V1+(length(data.([mouseID]).parameters.Var1List)*(length(data.([mouseID]).parameters.Var2List)-V2));
                 subplot(length(data.([mouseID]).parameters.Var2List),length(data.([mouseID]).parameters.Var1List),subplotSpot);
                 
-                shadedErrorBar(x_green,smooth(meanAllbyStim_g,10),smooth(std_resp_g,10),'lineprops','g'), hold on
-                shadedErrorBar(x_green,smooth(meanAllbyStim_r,10),smooth(std_resp_r,10),'lineprops','m')
+                shadedErrorBar(x_green,smooth(meanAllbyStim_g,10),smooth(sem_resp_g,10),'lineprops','g'), hold on
+                shadedErrorBar(x_green,smooth(meanAllbyStim_r,10),smooth(sem_resp_r,10),'lineprops','m')
                 
                 stim1=num2str(data.([mouseID]).parameters.Var1List(V1));
                 stim2=num2str(data.([mouseID]).parameters.Var2List(V2));
@@ -104,16 +104,16 @@ for a=1:length(setup.mousename)
                 meanPosResp_g=squeeze(mean(mean(stimdata.F7_df_f(g_pos,stim_list,:),2),1));%avg response of positive responsive cells by stim
                 meanPosResp_r=squeeze(mean(mean(stimdata.F7_df_f(r_pos,stim_list,:),2),1));%avg response of positive responsive cells by stim
                 
-                std_resp_g=squeeze(std(mean(stimdata.F7_df_f(g_pos,stim_list,:),2),1));
-                std_resp_r=squeeze(std(mean(stimdata.F7_df_f(r_pos,stim_list,:),2),1));
+                sem_resp_g=squeeze(std(mean(stimdata.F7_df_f(g_pos,stim_list,:),2),1))./sqrt(size(stimdata.F7_df_f(g_pos,stim_list,:),2));
+                sem_resp_r=squeeze(std(mean(stimdata.F7_df_f(r_pos,stim_list,:),2),1))./sqrt(size(stimdata.F7_df_f(r_pos,stim_list,:),2));
                 
                 
                 subplotSpot=V1+(length(data.([mouseID]).parameters.Var1List)*(length(data.([mouseID]).parameters.Var2List)-V2));
                 subplot(length(data.([mouseID]).parameters.Var2List),length(data.([mouseID]).parameters.Var1List),subplotSpot);
                 
                 
-                shadedErrorBar(x_green,smooth(meanPosResp_g,10),smooth(std_resp_g,10),'lineprops','b'), hold on
-                shadedErrorBar(x_green,smooth(meanPosResp_r,10),smooth(std_resp_r,10),'lineprops','k')
+                shadedErrorBar(x_green,smooth(meanPosResp_g,10),smooth(sem_resp_g,10),'lineprops','b'), hold on
+                shadedErrorBar(x_green,smooth(meanPosResp_r,10),smooth(sem_resp_r,10),'lineprops','k')
                 
                 stim1=num2str(data.([mouseID]).parameters.Var1List(V1));
                 stim2=num2str(data.([mouseID]).parameters.Var2List(V2));
@@ -126,17 +126,6 @@ for a=1:length(setup.mousename)
     end
     %plot negatively responsive cells by stim
     
-    
-    
-    %     x_green=size(data.([mouseID]).traces_G,3);
-    %     %             subplot_loc=m+(length(m)*(length(q)-q));
-    %     subplot(length(Var2List),length(Var1List),m*q);
-    %     meanPosResp=squeeze(mean(mean(data.([mouseID]).traces_G(stimIDXpos,:,:),2),1));
-    %     plot(x_green,meanPosResp,'m');
-    
-    
-    
-    
-    
+
 end
 end

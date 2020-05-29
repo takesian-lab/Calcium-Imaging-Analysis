@@ -4,13 +4,13 @@ function [data] = isresponsive_byStim(data,std_level)
 %
 % What does this function do?
 % This function determines if a cell is responsive to a particular stimulus
-% Argument(s): 
+% Argument(s):
 %   data(struct)
 %   std_level
-%   
+%
 % Returns:
 %   data(struct)
-% 
+%
 % Notes:
 %
 %
@@ -37,28 +37,28 @@ for a=1:length(setup.mousename)
             [s]=intersect(p,r); %find specific stim types (i.e. 4khz, 60dB)
             data.([mouseID]).parameters.stimIDX(m,q)={s};%stim index (Var#1xVar#2, i.e. freq x level)
             
-           for i=1:size(stimdata.F7_df_f,1);
-        all_average(i,:) = squeeze(mean(stimdata.F7_df_f(i,s,:), 2)); %mean of all trials for each cell
-        SEM_trace(i,:) = std(stimdata.F7_df_f(i,s,:))./sqrt(size(stimdata.F7_df_f(i,s,:),2));
-        
-        window_avg(i,:) = mean(stimdata.window_trace(i,s), 2); %average means responses (sound to 2s post sound) across trials for each cell
-        peak_avg(i,:) = mean(stimdata.peak_val(i,s), 2); %average peak response
-        maxpeak_avg(i,:) = mean(stimdata.max_peak(i,s), 2);%average around max peak
-        minpeak_avg(i,:) = mean(stimdata.min_peak(i,s), 2); %average around negative peak
-        
-        %determine whether each cell is responsive (defined as average response
-        %more than defined STDS above baseline)
-        base_mean(i,:) = mean(stimdata.baseline(i,s,:),3);
-        base_std(i) = std(base_mean(i));
-%         f = mean(data.([mouseID]).std_baseline(i,:), 2); %average baseline STD across trials for each cell
-         data.([mouseID]).response.isRespPosStim(m,q,i) = maxpeak_avg(i,:) > std_level*mean(base_std(i)) & window_avg(i,:)>0; %will be 0 or 1
-         data.([mouseID]).response.isRespNegStim(m,q,i) = minpeak_avg(i,:) < -std_level*mean(base_std(i)) & window_avg(i,:)<0;
-    end
+            for i=1:size(stimdata.F7_df_f,1);
+                all_average(i,:) = squeeze(mean(stimdata.F7_df_f(i,s,:), 2)); %mean of all trials for each cell
+                SEM_trace(i,:) = std(stimdata.F7_df_f(i,s,:))./sqrt(size(stimdata.F7_df_f(i,s,:),2));
+                
+                window_avg(i,:) = mean(stimdata.window_trace(i,s), 2); %average means responses (sound to 2s post sound) across trials for each cell
+                peak_avg(i,:) = mean(stimdata.peak_val(i,s), 2); %average peak response
+                maxpeak_avg(i,:) = mean(stimdata.max_peak(i,s), 2);%average around max peak
+                minpeak_avg(i,:) = mean(stimdata.min_peak(i,s), 2); %average around negative peak
+                
+                %determine whether each cell is responsive (defined as average response
+                %more than defined STDS above baseline)
+                base_mean(i,:) = mean(stimdata.baseline(i,s,:),3);
+                base_std(i) = std(base_mean(i));
+                %         f = mean(data.([mouseID]).std_baseline(i,:), 2); %average baseline STD across trials for each cell
+                data.([mouseID]).response.isRespPosStim(m,q,i) = maxpeak_avg(i,:) > std_level*mean(base_std(i)) & window_avg(i,:)>0; %will be 0 or 1
+                data.([mouseID]).response.isRespNegStim(m,q,i) = minpeak_avg(i,:) < -std_level*mean(base_std(i)) & window_avg(i,:)<0;
+            end
             
-
-          end
- 
+            
         end
         
     end
+    
+end
 end

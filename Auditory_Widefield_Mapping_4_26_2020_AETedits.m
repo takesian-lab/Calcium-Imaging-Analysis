@@ -38,8 +38,8 @@
 
 %% SETUP
 % set up your files in folders in D drive using the following
-setup.username = 'Anne'
-setup.mousename={'YD111219F3'};
+setup.username = 'Carolyn'
+setup.mousename={'CnJ'};
 setup.expt_date={'2020-03-06'};
 
 setup.Session ={'2'};

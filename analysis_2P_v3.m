@@ -29,8 +29,9 @@ else
     %Noiseburst_ITI = 10
     %Random air puff = 11
 
-    stim_protocol = 11;
-    run_redcell = 0;
+
+    stim_protocol = 2;
+    run_redcell = 1;
     std_level = 1.5;
     std_level_byStim = 1.5;
 
@@ -67,13 +68,9 @@ else
 end
 
 %% Now find processed suite2P data
-if data.setup.run_redcell==0
-    [data]=Noiseburst_analysis_greenonly_v2(data);
-    %red cells need to be updated and checked to make sure that they work.
-elseif data.setup.run_redcell==1 
-    [data,traces_R,traces_G]=Noiseburst_analysis(a,Frames,Frame_rate,Imaging_Block_String,Imaging_Num,mouseID,date,Sound_Time,...
-        timestamp,i,analysis_folder,path_name,length_sound_trial_first,username,data);
-end
+    [data]=concatBlocks_aligned(data);
+    [data]=df_F(data);
+
 %% sound responsive cells - all sounds averaged together, plot means
 % in figure1, you get a grid of mean activity per cell.
 % Black=nonresponsive, blue=responsive, and cyan=negatively responsive
@@ -84,58 +81,14 @@ end
 [data] = isresponsive_all(data,std_level);
 
 %% pull out responsive cells by stim type, plot
-%magenta = all cells
-%blue = positively responsive cells
-%cyan=negatively responsive cells - update this 
+
 
 [data] = isresponsive_byStim(data,std_level_byStim);
-[data] = plotbystim(data);
+[data] = plotbystim(data,run_redcell); 
 
 
 %% plot +/- locomotion
-
-setup = data.setup;
-
-for a=1:size(setup.mousename,1)
-    for b=1:size(setup.mousename,2)
-        
-        if isempty(setup.mousename{a,b})
-            continue;
-        end
-        
-        mouseID=setup.mousename{a,b};
-        FOV=setup.FOVs{a,b};
-        
-         Loc_trial=find(data.([mouseID]).loco);
-         noLoc_trial=find(data.([mouseID]).loco==0);
-         a_green = squeeze(mean(mean(data.([mouseID]).traces_G(:,Loc_trial,:), 2),1)); %Active trials
-         for i=1:size(data.([mouseID]).traces_G,1)
-             a_sem = std(data.([mouseID]).traces_G(i,Loc_trial,:))./sqrt(size(data.([mouseID]).traces_G(i,Loc_trial,:),2));
-         end
-         
-         
-         b_green = squeeze(mean(mean(data.([mouseID]).traces_G(:,noLoc_trial,:), 2),1)); %Non-active trials
-        for i=1:size(data.([mouseID]).traces_G,1)
-             b_sem = std(data.([mouseID]).traces_G(i,noLoc_trial,:))./sqrt(size(data.([mouseID]).traces_G(i,noLoc_trial,:),2));
-         end
-         x=1:length(a_green);
-         
-         figure
-         
-         subplot(2,1,1); hold on
-         title([mouseID ' FOV ' num2str(FOV)])
-         shadedErrorBar(x,smooth(a_green,5),smooth(a_sem,5),'lineprops','-b','transparent',1);
-         legend({'Active trials'})
-         xlabel('Frames')
-         ylabel('Delta F/F')
-         
-         subplot(2,1,2); hold on
-         shadedErrorBar(x,smooth(b_green,5),smooth(b_sem,5),'lineprops','-k','transparent',1);
-         legend({'Inactive trials'})
-         xlabel('Frames')
-         ylabel('Delta F/F')
-end
-end
+[data] = plot_loco_by_stim(data);
 
 %% Save data
 

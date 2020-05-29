@@ -51,7 +51,10 @@ for n=1:length(allfiles)
         counttrials=counttrials+1;
     end
 end
+
+
 behaveblock = sort_nat(behaveblock); %Replaced previous code that sorted behaveblock
+trials=sort_nat(trials);
 
 %% Read data from the run
 Var1=[]; Var2=[];

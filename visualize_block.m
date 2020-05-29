@@ -6,6 +6,7 @@ function visualize_block(block)
 % 
 % Argument(s): 
 %   block (struct)
+%   m (struct)
 % 
 % Returns:
 %   
@@ -13,12 +14,13 @@ function visualize_block(block)
 % Notes:
 %
 %
-% TODO:
+% TODO: determine best way to measuer df/F. Currently, using mean trace as
+% Fo; however, there are other (better?) ways to do this.
 % Search 'TODO'
 
 %% Magic numbers and setup
 
-neuCorrect = 0.7; %Neuropil correction coefficient
+% neuCorrect = 0.7; %Neuropil correction coefficient
 bin = 10; %Number of cells to plot at a time (for visibility)
 SF = 0.5; %Shrinking factor for traces to appear more spread out
 z = 1; %Portion of recording to plot e.g. 0.5, 0.33, 1
@@ -31,6 +33,7 @@ if ismissing(block.setup.Tosca_path)
 else
 
     %% Plot locomotor activity
+   
 
     if isfield(block, 'locomotion_data')
         loco_data = block.locomotion_data;
@@ -42,12 +45,13 @@ else
         active_time = block.active_time;
     end
 
-    figure;
+    figure; 
 
     subplot(2,1,1); hold on
     title('Locomotor activity')
-    ylabel('Activity')
-    plot(loco_data(:,1), loco_data(:,3));
+    ylabel('Activity (cm/s)')
+    plot(loco_data(:,1), loco_data(:,3)); hold on
+    hline(0.7);
 
     subplot(2,1,2); hold on
     ylabel('Considered active')
@@ -56,6 +60,8 @@ else
     if isfield(block, 'active_time') 
         plot(loco_data(:,1), active_time > 0); hold on;
     end
+    suptitle(block.setup.block_supname)
+   
 
 end %Skip if Tosca data is missing
 
@@ -73,7 +79,7 @@ else
     redcell = block.redcell;
     F = block.F; %all the cell fluorescence data
     Fneu = block.Fneu; %neuropil
-    F7 = F-neuCorrect*Fneu; %neuropil corrected traces
+    F7 = F-setup.constant.neucoeff*Fneu; %neuropil corrected traces
 
     if isfield(block, 'timestamp')
         timestamp = block.timestamp;
@@ -88,7 +94,7 @@ else
     %Divide into red and green cells
     %ones variable = row number
     %number variable = suite2p cell labels
-    redcell_ones = find(redcell(:,1));
+    redcell_ones = find(redcell);
 
     if ~isempty(redcell_ones) 
         redcell_number = cell_number(redcell_ones);
@@ -145,6 +151,7 @@ else
         title(fig_title)
         h = colorbar;
         set(get(h,'label'),'string','Deconvolved normalized');
+        suptitle(block.setup.block_supname)
     end
     
     
@@ -231,7 +238,9 @@ else
             if ~ismissing(block.setup.Tosca_path)
                 plot(loco_data(:,1), loco_data(:,3));
             end
+            suptitle(block.setup.block_supname)
         end
+        
     end
 
     %% Plot mean image from suite2p with ROIs outlined and labelled
@@ -313,8 +322,10 @@ else
 
             subplot(1,2,2);
             set(gca,'YDir','reverse')
+            suptitle(block.setup.block_supname)
         end
     end 
+    
 
 end %Skip if Suite2p data is missing
 

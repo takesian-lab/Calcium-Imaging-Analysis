@@ -25,10 +25,31 @@
 
 %% Load Info.mat and change user-specific options
 
-visualize = 0; %1 to plot figures of the block immediately, 0 to skip
-recompile = 0; %1 to save over previously compiled blocks, 0 to skip
-checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
+visualize = 1; %1 to plot figures of the block immediately, 0 to skip
+recompile = 1; %1 to save over previously compiled blocks, 0 to skip
+checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
+%% set up values for 'align to stim'
+
+% How many seconds of baseline?
+constant.baseline_length = 0.5;
+
+% How many seconds after stim should we look at?
+constant.after_stim = 2.5;
+
+% Define (in seconds) where to look for the response peak?
+constant.response_window = 1;
+
+% define where to look for locomotor responses, in sec?
+constant.locowindow = 2.5;
+
+%minimum amout of time (sec) that mouse is moving to be considered active
+constant.locoThresh = 0.8;
+
+% Define the neuropil coefficient
+% TODO: automatically grab this from Suite2p
+constant.neucoeff = 0.7;
+%% 
 PC_name = getenv('computername');
 
 switch PC_name
@@ -41,6 +62,7 @@ switch PC_name
         info_path = 'D:\2P analysis\2P local data\Carolyn';
         save_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
         info_filename = 'Info';
+        
     case 'RD0386' %Wisam
         % INSERT PATHS HERE
         info_filename = 'Info';
@@ -84,6 +106,7 @@ for i = 1:size(currentInfo,1)
 
     %Create setup variable that will contain all the necessary information about the block
     setup = struct;
+    setup.constant = constant;
     setup.Info              =   Info;                   %Record Info for records only
     setup.pathname          =   [currentInfo{i,2}];     %first part of the path
     setup.username          =   [currentInfo{i,3}];     %part of the path, not every user will have this, okay to leave empty
@@ -115,6 +138,8 @@ for i = 1:size(currentInfo,1)
     setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
         '_Block_', Block_number, '_Session_', num2str(setup.Tosca_session), ...
         '_Run_', num2str(setup.Tosca_run), '_', widefieldTag, setup.stim_name);
+    setup.block_supname = strcat(setup.mousename, ' ', setup.expt_date, ...
+        ' ', setup.stim_name, ' ', Block_number);
     
     %Skip files that have previously been compiled
     if ~recompile
@@ -171,7 +196,7 @@ for i = 1:size(currentInfo,1)
     if ismissing(setup.analysis_name)
         setup.suite2p_path = nan;
     else
-        setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.analysis_name);
+        setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, '/', setup.analysis_name);
         if ~isfolder(setup.suite2p_path)
             disp(setup.block_filename)
             error('Your Suite2p analysis path is incorrect.')

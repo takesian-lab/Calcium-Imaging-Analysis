@@ -39,8 +39,8 @@ active_time = block.active_time;
 
 %% Find sound times when animal is active
 for time=1:length(Sound_Time)
-    sound = Sound_Time(time);
-    window = Sound_Time(time)+2; % when is the sound?
+    sound = Sound_Time(time);% when is the sound?
+    window = Sound_Time(time)+setup.constant.locowindow; 
 
     [c closest_frame_sound] = min(abs(loco_data(:,1)-sound));
     [c closest_frame_window] = min(abs(loco_data(:,1)-window));
@@ -56,7 +56,7 @@ for time=1:length(Sound_Time)
      closest_frame_window_all(time) = closest_frame_window;
 
 
-   %  isLocoSound(time) = sum(loco_data(closest_frame_sound:closest_frame_window,3))>0;
+    % if any times are active, it will count as loco time
      Loco_1(time) = sum(active_time(closest_frame_sound:closest_frame_window))>1;
 end
 

@@ -42,11 +42,11 @@ ops2.align_by_chan = ops.align_by_chan;
 ops2.nimg_init = ops.nimg_init;
 ops2.batch_size = ops.batch_size;
 ops2.smooth_sigma = ops.smooth_sigma;
-ops2.smooth_sigma_time = ops.smooth_sigma_time;
+% ops2.smooth_sigma_time = ops.smooth_sigma_time;
 ops2.maxregshift = ops.maxregshift;
 ops2.th_badframes = ops.th_badframes;
 ops2.keep_movie_raw = ops.keep_movie_raw;
-ops2.two_step_registration = ops.two_step_registration;
+% ops2.two_step_registration = ops.two_step_registration;
 
 %% Nonrigid
 ops2.nonrigid = ops.nonrigid;

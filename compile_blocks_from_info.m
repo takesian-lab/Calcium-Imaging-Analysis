@@ -44,17 +44,12 @@ constant.response_window = 1;
 constant.locowindow = 2.5;
 
 %minimum amout of time (sec) that mouse is moving to be considered active
-constant.locoThresh = 1;
+constant.locoThresh = 0.8;
 
 % Define the neuropil coefficient
 % TODO: automatically grab this from Suite2p
 constant.neucoeff = 0.7;
 %% 
-visualize = 0; %1 to plot figures of the block immediately, 0 to skip
-recompile = 0; %1 to save over previously compiled blocks, 0 to skip
-checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
-
-
 PC_name = getenv('computername');
 
 switch PC_name

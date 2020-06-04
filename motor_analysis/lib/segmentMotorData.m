@@ -4,7 +4,7 @@ function [motorData] = segmentMotorData(timeStamps,velocityTimeSeries,samplingFr
 % segmentMotorData extracts motor activity bouts and onsets and the associated time stamps 
 % from velocity time series data.
 % 
-% TODO: Documentation in progress
+% NOTE: Documentation in progress
 % 
 % Written by Wisam Reid - June 2020 - wisam@g.harvard.edu
 %
@@ -67,10 +67,21 @@ function [motorData] = segmentMotorData(timeStamps,velocityTimeSeries,samplingFr
 % We will be using two thresholds (A and B) to define our transients
 % in time.  See the methods section from the above reference for the meaning of these thresholds.
 % 
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% TODO:
+% 
+% Make sure to modify unit documentation when this function is adapted to other 
+% types of data
+% 
+% Return nonmotor bout data and time stamps
+% 
+% Finish documentation
 % 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
-% Example Use:
+% EXAMPLE USE:
 % 
 % % Create synthetic transient
 % noiseStd = 0; % cm/s
@@ -118,7 +129,7 @@ function [motorData] = segmentMotorData(timeStamps,velocityTimeSeries,samplingFr
 %% DEBUGGING FLAGS
 
 % Plot the results from the threshold detection
-debug_transient_detection = 0;
+debug_transient_detection = 1;
 
 %% parse arguments
 
@@ -127,13 +138,19 @@ debug_transient_detection = 0;
 motorData.velocity = velocityTimeSeries;
 motorData.velocityTimeStamps = timeStamps;
 
+% Calculate the standard deviation of the original velocity trace
+velocityStd = std(motorData.velocity);
+
 %% Design filters for the velocity and filter the original signal
 
-% Velocity filter cutoff frequency
+% filter order (chosen arbitrarily)
+filterOrder = 12;
+% filter type (chosen for remove noise)
+filterType = 'lowpass';
+% Velocity filter cutoff frequency (chosen for remove noise)
 velocityCutoffFrequency = 2; % Hz
-
-% Lowpass filter order (chosen arbitrarily)
-LPFilterOrder = 12;
+% filter design (chosen for pass and stop band characteristics)
+filterDesign = 'Butterworth';
 
 % We will now compute the filter coefficients for velocity filtering.
 % We will use a butterworth filter since they are maximally flat in the passband 
@@ -141,14 +158,14 @@ LPFilterOrder = 12;
 % NOTE: According to matlab conventions:
 % [b, a] are the coefficients in the denominater and numerator of our filter's 
 % transfer function, respectively.
-[bVelocity, aVelocity] = butter(LPFilterOrder,velocityCutoffFrequency/(samplingFrequency/2));
+[bVelocity, aVelocity] = butter(filterOrder,velocityCutoffFrequency/(samplingFrequency/2));
 
 % This is the filtered velocity signal
 % NOTE: filtfilt() gives us a zero phase filter that is double the order of our
 % butterworth filter (designed above).
 transientFiltered = filtfilt(bVelocity,aVelocity,velocityTimeSeries);
 
-%% Threshold Detection Parameters 
+%% Threshold Detection Parameters (Now defined as arguments above)
 
 % % Threshold A is always larger than Threshold B (See Beaulieu-Laroche & Harnett (2019) for details)
 % thresholdA = 10.0;
@@ -187,32 +204,32 @@ thresholdATimeStamps = timeStamps([thresholdACrossingIndices]);
 % calculate acceleration. Nor did they segment motor bouts in the same
 % way they did calcium transients.
 % 
-% In contrast, here we compute the acceleration on the original velocity signal, 
-% then use the same cutoff frequency for filtering both the velocity and acceleration (2 Hz).
+% In contrast, here we compute the acceleration on the filtered signal (LPF @ 2 Hz) 
+% velocity signal.
 % 
 % Differences in filter cutoff frequencies are likely due to differences in sampling 
 % frequency.  The sampling rate for running speed used by Beaulieu-Laroche et al. is unknown.
 
-% Acceleration filter cutoff frequency
-accelerationCutoffFrequency = velocityCutoffFrequency; % Hz
+% % Acceleration filter cutoff frequency
+% accelerationCutoffFrequency = velocityCutoffFrequency; % Hz
 
-% We will now compute the filter coefficients for acceleration filtering.
-% We will use a butterworth filter since they are maximally flat in the passband 
-% and stopband for a given filter order.
-% NOTE: According to matlab conventions:
-% [b, a] are the coefficients in the denominater and numerator of our filter's 
-% transfer function, respectively.
-[bAcceleration, aAcceleration] = butter(LPFilterOrder,accelerationCutoffFrequency/(samplingFrequency/2));
+% % We will now compute the filter coefficients for acceleration filtering.
+% % We will use a butterworth filter since they are maximally flat in the passband 
+% % and stopband for a given filter order.
+% % NOTE: According to matlab conventions:
+% % [b, a] are the coefficients in the denominater and numerator of our filter's 
+% % transfer function, respectively.
+% [bAcceleration, aAcceleration] = butter(LPFilterOrder,accelerationCutoffFrequency/(samplingFrequency/2));
 
 % Compute the derivative of the velocity, the acceleration.
-accelerationZeroTSs = gradient(transientFiltered); % Alternatively: gradient(transient);
-% Then we filter the acceleration
-transientFilteredAcceleration = filtfilt(bAcceleration,aAcceleration,accelerationZeroTSs); % Alternatively: acceleration;
+accelerationFiltered = gradient(transientFiltered); % Alternatively: gradient(transient);
+% % Then we filter the acceleration
+% accelerationFiltered = filtfilt(bAcceleration,aAcceleration,accelerationFiltered); % Alternatively: acceleration;
 
 %% Calculate acceleration zero crossing time stamps
 
 % These are zero crossing indices
-[accelerationZeroCrossingIndices] = detectThreshold(transientFilteredAcceleration, thresholdType, 0);
+[accelerationZeroCrossingIndices] = detectThreshold(accelerationFiltered, 'Fixed', 0);
 % reshape zero crossings indices (flatten)
 accelerationZeroCrossingIndices = reshape(accelerationZeroCrossingIndices,1,[]);
 % Translate indices into time stamps
@@ -269,18 +286,39 @@ for ithMotorBout = 1:numberOfCandidateMotorBouts
     end
 end
     
-%% RETURN
+%% Document processing
+
+% Thresholds
+motorData.thresholds.thresholdType = thresholdType;
+motorData.thresholds.thresholdUnits = 'cm/s';
+motorData.thresholds.thresholdA = thresholdA;
+motorData.thresholds.thresholdB = thresholdB;
+
+% Filter documentation
+motorData.filterParams.filterOrder = filterOrder;
+motorData.filterParams.filterType = filterType;
+motorData.filterParams.velocityCutoffFrequency = velocityCutoffFrequency;
+motorData.filterParams.filterDesign = filterDesign;
+
+% acceleration
+motorData.accelerationFiltered = accelerationFiltered;
+motorData.velocityFiltered = transientFiltered;
+
+% The standard deviation of the original velocity trace
+motorData.velocityStd = velocityStd;
+
+% Sampling Frequency
+motorData.samplingFrequency = samplingFrequency;
+motorData.samplingFrequencyUnits = 'Hz';
 
 %% VISUALIZE/DEBUG
 
 if debug_transient_detection
     
+    % Only store these if we are debugging threshold detection
     motorData.thresholdATimeStamps = thresholdATimeStamps;
     motorData.thresholdBTimeStamps = thresholdBTimeStamps;
     motorData.accelerationZeroCrossingTimeStamps = accelerationZeroCrossingTimeStamps;
-    
-    % Calculate the standard deviation of the original velocity trace
-    velocityStd = std(motorData.velocity);
     
     % Plot the original, noisy synthetic velocity transient
     figure;
@@ -303,12 +341,17 @@ if debug_transient_detection
     for ithTransient = 1:size(motorData.thresholdBTimeStamps,1)
         % For a given transient loop over the time stamps (threshold crossings)
         for ithTS = motorData.thresholdBTimeStamps(ithTransient,:)
+            % This is the index for the velocity data at the current time stamp 
+            idx = find(motorData.velocityTimeStamps==ithTS);
             xline(ithTS,'-k');
+            % TODO: remove this check
             % Before plotting check which threshold type we are using
             if strcmp(thresholdType,'STD')
-                plot(ithTS,thresholdB*velocityStd,'ko','MarkerFaceColor','Black')
+                % plot(ithTS,thresholdB*velocityStd,'ko','MarkerFaceColor','Black')
+                plot(ithTS,motorData.velocityFiltered(idx),'ko','MarkerFaceColor','Black')
             elseif strcmp(thresholdType,'Fixed')
-                plot(ithTS,thresholdB,'ko','MarkerFaceColor','Black')
+                % plot(ithTS,thresholdB,'ko','MarkerFaceColor','Black')
+                plot(ithTS,motorData.velocityFiltered(idx),'ko','MarkerFaceColor','Black')
             end
         end
     end
@@ -322,16 +365,21 @@ if debug_transient_detection
     % Plot vertical threshold crossings and crossing points
     % Loop over time stamps (threshold crossings)
     for ithTS = motorData.thresholdATimeStamps
+        % This is the index for the velocity data at the current time stamp 
+        idx = find(motorData.velocityTimeStamps==ithTS);
         xline(ithTS,'-r');
+        % TODO: remove this check
         % Before plotting check which threshold type we are using
         if strcmp(thresholdType,'STD')
-            plot(ithTS,thresholdA*velocityStd,'ro','MarkerFaceColor','Red')
+            % plot(ithTS,thresholdA*velocityStd,'ro','MarkerFaceColor','Red')
+            plot(ithTS,motorData.velocityFiltered(idx),'ro','MarkerFaceColor','Red')
         elseif strcmp(thresholdType,'Fixed')
-            plot(ithTS,thresholdA,'ro','MarkerFaceColor','Red')
+            % plot(ithTS,thresholdA,'ro','MarkerFaceColor','Red')
+            plot(ithTS,motorData.velocityFiltered(idx),'ro','MarkerFaceColor','Red')
         end
     end
     % Plot the acceleration
-    plot(motorData.velocityTimeStamps,transientFilteredAcceleration,'LineWidth',2,'Color','Green')
+    plot(motorData.velocityTimeStamps,accelerationFiltered,'LineWidth',2,'Color','Green')
     % Plot vertical threshold crossings and crossing points
     % Loop over time stamps (zero crossings)
     for ithTS = accelerationZeroCrossingTimeStamps

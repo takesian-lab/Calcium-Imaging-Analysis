@@ -2,12 +2,17 @@ function visualize_cell(block, cellnum)
 
 % DOCUMENTATION IN PROGRESS
 % 
-% This function allows you to preview the data from a single block by
-% plotting multiple types of figures
-% 
+% This function allows you to preview the data from a single cell (neuron) or
+% selection of cells from a block
+%
+% cellnum is a 1-D array of cell numbers or labels, matching the Suite2p GUI
+% If the array is horizontal, the results from all cells will be averaged
+% and plotted together. If the array is vertical, each cell will be plotted
+% independently
+%
 % Argument(s): 
 %   block (struct)
-%   m (struct)
+%   cellnum (1-D array of cell numbers)
 % 
 % Returns:
 %   
@@ -15,80 +20,103 @@ function visualize_cell(block, cellnum)
 % Notes:
 %
 %
-% TODO: determine best way to measuer df/F. Currently, using mean trace as
-% Fo; however, there are other (better?) ways to do this.
+% TODO: 
 % Search 'TODO'
 
-%% Magic numbers and setup
+%% Magic numbers
 
-% neuCorrect = 0.7; %Neuropil correction coefficient
-bin = 10; %Number of cells to plot at a time (for visibility)
 SF = 0.5; %Shrinking factor for traces to appear more spread out
 z = 1; %Portion of recording to plot e.g. 0.5, 0.33, 1
 
+
+%% Setup
+
+if ~isfield(block,'aligned_stim')
+    error('No stim-aligned data to plot');
+end    
+
+if size(cellnum,1) > 1 && size(cellnum,2) > 1
+    error('cellnum should be a 1-D array')
+end
+
 setup = block.setup;
+stim_protocol = setup.stim_protocol;
+code = {'Noiseburst', 'Receptive Field', 'FM sweep', 'Widefield', 'SAM', 'SAM freq' , 'Behavior', 'Behavior', 'Random H20', 'Noiseburst ITI', 'Random Air'};
+currentStim = code{stim_protocol};
+disp(['Plotting figures for ' currentStim '...'])
 
-%% Suite2p Section - SKIP if Fall.mat wasn't present
+%% Plot raw activity of cell(s) for duration of block
 
-if ismissing(block.setup.suite2p_path)
-    disp('Skipping Suite2p data plots...');
-else
+Sound_Time = block.Sound_Time;
+all_cell_numbers = block.cell_number;    
+F = block.F; %all the cell fluorescence data
+Fneu = block.Fneu; %neuropil
+F7 = F-setup.constant.neucoeff*Fneu; %neuropil corrected traces
+timestamp = block.timestamp;
+timeUnit = 'Timestamp';
+Z = round(length(timestamp)*z);
     
-    if isfield(block, 'Sound_Time')
-        Sound_Time = block.Sound_Time;
+for p = 1:2 %Two plots
+    if p == 2 && length(cellnum) == 1
+        continue
     end
-    
-    cell_number = block.cell_number;
-    redcell = block.redcell;
-    F = block.F; %all the cell fluorescence data
-    Fneu = block.Fneu; %neuropil
-    F7 = F-setup.constant.neucoeff*Fneu; %neuropil corrected traces
-
-    if isfield(block, 'timestamp')
-        timestamp = block.timestamp;
-        timeUnit = 'Timestamp';
-    else
-        timestamp = 1:size(F7,2);
-        timeUnit = 'Frames';
-    end
-    
-    Z = round(length(timestamp)*z);
         
-    %Divide into red and green cells
-    %ones variable = row number
-    %number variable = suite2p cell labels
-    redcell_ones = find(redcell);
+    figure('units','normalized','outerposition',[0 0 1 1])
+    count = 1; %for staggering plot lines
 
-    if ~isempty(redcell_ones) 
-        redcell_number = cell_number(redcell_ones);
-        nonredcell_ones = setdiff(1:length(cell_number), redcell_ones); %what are the active non-red cells
-        nonredcell_number = cell_number(nonredcell_ones);
-        redcells_exist = 1; %for plotting
-    else
-        nonredcell_number = cell_number;
-        nonredcell_ones = 1:length(cell_number);
-        redcells_exist = 0;
+    if p == 1
+        %PLOT 1 - Raw activity of each cell vs. time with locomoter activity beneath
+        %For this graph only, plot one figure with each cell as a separate trace
+        for c = 1:length(cellnum) %Cells to average together
+            current_cellnum = cellnum(c);
+
+            subplot(3,4,1:8); hold on
+
+            row_num = find(all_cell_numbers == current_cellnum);
+            if isempty(row_num)
+                error(['Cell ' num2str(current_cellnum) ' was not found']);
+            end
+
+            cell_trace = F7(row_num,:);%pull out the full trace for each cell
+
+            mean_gCAMP = mean(cell_trace);% average green for each cell
+            df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
+            A = smooth(df_f,10);
+
+            plot(timestamp, A*SF + count,'LineWidth',1);
+            count = count + 1;
+        end
+        
+            if length(cellnum) == 1
+                ylabel('DF/F')
+            else
+                set(gca, 'YTick', [1:1:count-1])
+                set(gca, 'YTickLabel', [cellnum(1:count-1)])
+            end
+            suptitle(block.setup.block_supname)
+
+    elseif p == 2
+        %PLOT 2 - Averaged raw activity of each cell vs. time with locomoter activity beneath
+            subplot(3,4,1:8); hold on
+            
+            a = nan(length(cellnum),size(F7,2));
+            for c = 1:length(cellnum)
+                row_num = find(all_cell_numbers == cellnum(c));
+                cell_trace = F7(row_num,:);%pull out the full trace for each cell
+                mean_gCAMP = mean(cell_trace);% average green for each cell
+                df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean]
+                a(c,:) = smooth(df_f,10);
+            end
+            
+            A = mean(a,1);
+            plot(timestamp, A*SF,'LineWidth',1);
+            ylabel('DF/F')
+            suptitle(strcat(block.setup.block_supname, ' - Average of ', num2str(length(cellnum)), ' cells'))
     end
-
-     %% Plot DF over F from cells (divided into red and green)
-    for f = 1:length(cellnum)
-        current_cellnum = cellnum(f);
-
-        figure('units','normalized','outerposition',[0 0 1 1])
-
-        subplot(3,4,1:8) %one cell/row of the graph
-
-        row_num = find(cell_number == current_cellnum);
-        count = 1; %for staggering plot lines
-
-        cell_trace = F7(row_num,:);%pull out the total trace for each cell
-
-        mean_gCAMP = mean(cell_trace);% average green for each cell
-        df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
-        A = smooth(df_f,10);
-
-        plot(timestamp, A*SF + count,'LineWidth',1);
-
+    
+    xlim([0 timestamp(Z)])
+    xlabel(timeUnit)
+    %Vertical lines for sound times
     if Z < 15000 && isfield(block, 'Sound_Time') %Don't plot red lines if there is too much data, otherwise its messy
         %plot multicolored lines if less than 8 stim, else plot red lines
         if isfield(block.parameters, 'variable1')
@@ -106,10 +134,6 @@ else
             vline(Sound_Time, 'r');
         end
     end
-    xlim([0 timestamp(Z)])
-    ylabel('DF/F')
-    xlabel(timeUnit)
-
 
     subplot(3,4,9:12); hold on %loco
     title('Locomotor activity')
@@ -117,7 +141,6 @@ else
     xlabel(timeUnit)
     xlim([0 timestamp(Z)])
     if ~ismissing(block.setup.Tosca_path)
-        
         if isfield(block, 'locomotion_data')
             loco_data = block.locomotion_data;
         else
@@ -125,38 +148,70 @@ else
         end
         plot(loco_data(:,1), loco_data(:,3));
     end
-    suptitle(block.setup.block_supname)
-    end
-        
-end
+end   
+    
+%% Plot graphs according to stim presentation
 
 F7_stim = block.aligned_stim.F7_stim;
 
-for f = 1:length(cellnum)
-        current_cellnum = cellnum(f);
-        row_num = find(cell_number == current_cellnum);
-        F7_cell = squeeze(F7_stim(row_num,:,:));
+% Plot 1 - average response to all stim
+for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
+        current_cells = cellnum(f,:);
+        
+        row_nums = nan(length(current_cells),1);
+        for c = 1:length(current_cells)
+            row_nums(c) = find(all_cell_numbers == current_cells(c));
+        end
+    
+        if length(current_cells) == 1
+            F7_cell = squeeze(F7_stim(row_nums,:,:));
+            ebar = std(F7_cell,1);
+        elseif length(current_cells) > 1
+            F7_cell = squeeze(mean(F7_stim(row_nums,:,:),1));
+            ebar = std(F7_cell,1)/sqrt(length(current_cells)-1);
+        end
 
         figure; hold on
         subplot(1,2,1)
         imagesc(F7_cell)
-        ylabel('DF/F')
+        ylabel('Trials')
         xlabel('Frames')
         
         subplot(1,2,2)
         total_mean = mean(F7_cell);
-        plot(total_mean);
+        shadedErrorBar(1:length(total_mean),total_mean,ebar);
+        ylabel('DF/F')
+        xlabel('Frames')
+        xlim([0 length(total_mean)])
+        
+        if length(current_cells) == 1
+            suptitle([block.setup.block_supname...
+                strcat(' Cell #', num2str(cellnum(f)))])
+        else
+            suptitle([block.setup.block_supname...
+                strcat('Average of ', num2str(length(cellnum)), ' cells')])
+        end
+        
 end
 
-%% Air puff
+%% Plot 2 - average response separated by stim type
 
+if stim_protocol == 9 %Random H20
+    var1 = 'H20';
+    var0 = 'No H20';
+elseif stim_protocol == 11 %Random Air
+    var1 = 'Air';
+    var0 = 'No Air';   
+else
+    continue
+end
 
 F7_stim = block.aligned_stim.F7_stim;
 V1 = block.parameters.variable1;
 
 for f = 1:length(cellnum)
         current_cellnum = cellnum(f);
-        row_num = find(cell_number == current_cellnum);
+        row_num = find(all_cell_numbers == current_cellnum);
         F7_cell = squeeze(F7_stim(row_num,:,:));
 
         figure; hold on
@@ -198,7 +253,7 @@ for f = 1:length(cellnum)
     RF = nan(length(ints),length(freqs));
     
         current_cellnum = cellnum(f);
-        row_num = find(cell_number == current_cellnum);
+        row_num = find(all_cell_numbers == current_cellnum);
         F7_cell = squeeze(F7_stim(row_num,:,:));
    
         figure; hold on

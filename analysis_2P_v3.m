@@ -30,7 +30,7 @@ else
     %Random air puff = 11
 
 
-    stim_protocol = 2;
+    stim_protocol = 1;
     run_redcell = 1;
     std_level = 1.5;
     std_level_byStim = 1.5;

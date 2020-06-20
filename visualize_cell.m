@@ -1,9 +1,6 @@
-function visualize_cell(block, cellnum)
-
-% DOCUMENTATION IN PROGRESS
-% 
-% This function allows you to preview the data from a single cell (neuron) or
-% selection of cells from a block
+function visualize_cell(block, cellnum) 
+% This function allows you to preview the stimulus-evoked responses from
+% a single cell (neuron) or selection of cells from a block
 %
 % cellnum is a 1-D array of cell numbers matching the Suite2p GUI
 % If the array is horizontal, the results from all cells will be averaged
@@ -18,7 +15,7 @@ function visualize_cell(block, cellnum)
 %   cellnum (1-D array of cell numbers)
 % 
 % Returns:
-%   
+% 
 % 
 % Notes:
 %
@@ -338,6 +335,21 @@ if stim_protocol == 2 %Receptive Field
     V1_label = 'Frequency (kHz)';
     V2_label = 'Intensity (dB)';
     plotReceptiveField = 1;
+elseif stim_protocol == 3 %FM sweep
+    stim_units = {'', 'dB'};
+    V1_label = 'Frequency (kHz)';
+    V2_label = 'Speed';
+    plotReceptiveField = 1;
+elseif stim_protocol == 5 %SAM
+    stim_units = {'Hz', ''};
+    V1_label = 'Rate (Hz)';
+    V2_label = 'Modulation Depth';
+    plotReceptiveField = 1; 
+elseif stim_protocol == 6 %SAM freq
+    stim_units = {'kHz', ''};
+    V1_label = 'Frequency (kHz)';
+    V2_label = 'Modulation Depth';
+    plotReceptiveField = 1; 
 end
 
 if plotReceptiveField
@@ -421,8 +433,13 @@ if plotReceptiveField
             max_spks = 0;
             for p = 1:length(V_stim)
                 mat_rows = V_list == V_stim(p);
-                df_f_std = mean(F7_df_f_mat(mat_rows,:)) + std(F7_df_f_mat(mat_rows,:));
-                spks_mean = mean(spks_mat(mat_rows,:));
+                if sum(mat_rows) == 1
+                    df_f_std = F7_df_f_mat(mat_rows,:) + ebar_mat(mat_rows,:);
+                    spks_mean = spks_mat(mat_rows,:);
+                else
+                    df_f_std = mean(F7_df_f_mat(mat_rows,:)) + std(F7_df_f_mat(mat_rows,:));
+                    spks_mean = mean(spks_mat(mat_rows,:));
+                end
                 if max(df_f_std) > max_df_f
                     max_df_f = max(df_f_std);
                 end
@@ -437,8 +454,13 @@ if plotReceptiveField
                 
                 %DF_F average
                 subplot(length(V_stim),2,p*2-1)
-                total_mean = mean(F7_df_f_mat(mat_rows,:));
-                ebar = std(F7_df_f_mat,1); %recompute error bar for this part - not sure the best way to do this
+                if sum(mat_rows) == 1
+                    total_mean = F7_df_f_mat(mat_rows,:);
+                    ebar = ebar_mat(mat_rows,:);
+                else
+                    total_mean = mean(F7_df_f_mat(mat_rows,:));
+                    ebar = std(F7_df_f_mat,1); %recompute error bar for this part - not sure the best way to do this
+                end
                 shadedErrorBar(1:length(total_mean),total_mean,ebar);
                 set(gca, 'XTick', x_in_seconds)
                 set(gca, 'XTickLabel', x_label_in_seconds)
@@ -454,7 +476,11 @@ if plotReceptiveField
                
                 %Spike average
                 subplot(length(V_stim),2,p*2)
-                total_mean = mean(spks_mat(mat_rows,:));
+                if sum(mat_rows) == 1
+                    total_mean = spks_mat(mat_rows,:);
+                else
+                    total_mean = mean(spks_mat(mat_rows,:));
+                end
                 area(total_mean, 'FaceColor', [0.85 0.85 0.85]);
                 set(gca, 'XTick', x_in_seconds)
                 set(gca, 'XTickLabel', x_label_in_seconds)
@@ -529,13 +555,13 @@ if plotReceptiveField
                 ylim([0 max_spks+(ws*max_spks)]);
                 vline(nBaselineFrames,'k') %stim onset
                 if p <= length(V1_stim)%Top row
-                    title([num2str(V1_list(p)) ' ' stim_units{v}])
+                    title([num2str(V1_list(p)) ' ' stim_units{1}])
                 end
                 if p > nPlots - length(V1_stim) %Bottom row
                     xlabel('Time (s)')
                 end
                 if ismember(p,[1:length(V1_stim):nPlots]) %First column
-                    ylabel([num2str(V2_list(p)) ' ' stim_units{v}])
+                    ylabel([num2str(V2_list(p)) ' ' stim_units{2}])
                 end
             end
 

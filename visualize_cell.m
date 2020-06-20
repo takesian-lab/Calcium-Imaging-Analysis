@@ -25,9 +25,8 @@ function visualize_cell(block, cellnum)
 
 %% Magic numbers & Setup
 
-SF = 0.5; %Shrinking factor for traces to appear more spread out
-z = 1; %Portion of recording to plot e.g. 0.5, 0.33, 1
-
+SF = 0.5; %Shrinking factor for traces to appear more spread out (for visualization purposes)
+z = 1; %Portion of recording to plot between 0 and 1 e.g. 0.5, 0.33, 1 (for visualization purposes)
 
 if ~isfield(block,'aligned_stim')
     error('No stim-aligned data to plot');
@@ -49,112 +48,90 @@ all_cell_numbers = block.cell_number;
 F = block.F; %all the cell fluorescence data
 Fneu = block.Fneu; %neuropil
 F7 = F-setup.constant.neucoeff*Fneu; %neuropil corrected traces
-timestamp = block.timestamp;
-timeUnit = 'Timestamp';
+timestamp = block.timestamp; %In seconds
 Z = round(length(timestamp)*z);
 
 %Stim-aligned activity
 F7_stim = block.aligned_stim.F7_stim;
 spks_stim = block.aligned_stim.spks_stim;
-baseline_length = block.setup.constant.baseline_length;
+baseline_length = block.setup.constant.baseline_length; %seconds
 framerate = block.setup.framerate;
-nBaselineFrames = baseline_length*framerate;
+nBaselineFrames = baseline_length*framerate; %frames
+trial_duration_in_seconds = baseline_length + block.setup.constant.after_stim; %seconds
+trial_duration_in_frames = trial_duration_in_seconds*framerate;
+x_in_seconds = 0:0.5*(trial_duration_in_frames/trial_duration_in_seconds):trial_duration_in_frames;
+x_label_in_seconds = 0:0.5:trial_duration_in_seconds;
 
 %% Plot raw activity of cell(s) for duration of block
-    
-for p = 1:2 %Two plots
-    if p == 2 && length(cellnum) == 1
-        continue
+%Raw activity of each cell vs. time with locomoter activity beneath
+%Each cell is a separate trace
+
+figure('units','normalized','outerposition',[0 0 1 1])
+count = 1; %for staggering plot lines
+
+for c = 1:length(cellnum)
+    current_cellnum = cellnum(c);
+
+    subplot(3,4,1:8); hold on
+
+    row_num = find(all_cell_numbers == current_cellnum);
+    if isempty(row_num)
+        error(['Cell ' num2str(current_cellnum) ' was not found']);
     end
-        
-    figure('units','normalized','outerposition',[0 0 1 1])
-    count = 1; %for staggering plot lines
 
-    if p == 1
-        %PLOT 1 - Raw activity of each cell vs. time with locomoter activity beneath
-        %For this graph only, plot one figure with each cell as a separate trace
-        for c = 1:length(cellnum) %Cells to average together
-            current_cellnum = cellnum(c);
+    cell_trace = F7(row_num,:);%pull out the full trace for each cell
 
-            subplot(3,4,1:8); hold on
+    mean_gCAMP = mean(cell_trace);% average green for each cell
+    df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
+    A = smooth(df_f,10);
 
-            row_num = find(all_cell_numbers == current_cellnum);
-            if isempty(row_num)
-                error(['Cell ' num2str(current_cellnum) ' was not found']);
-            end
+    plot(timestamp, A*SF + count,'LineWidth',1);
+    count = count + 1;
+end
 
-            cell_trace = F7(row_num,:);%pull out the full trace for each cell
+suptitle(block.setup.block_supname)
+title('DF/F')
+xlim([0 timestamp(Z)])
+xlabel('Time (s)')
+set(gca, 'YTick', [1:1:count-1])
+set(gca, 'YTickLabel', [cellnum(1:count-1)])
+ylabel('Cell')
 
-            mean_gCAMP = mean(cell_trace);% average green for each cell
-            df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
-            A = smooth(df_f,10);
-
-            plot(timestamp, A*SF + count,'LineWidth',1);
-            count = count + 1;
-        end
-        
-            if length(cellnum) == 1
-                ylabel('DF/F')
-            else
-                set(gca, 'YTick', [1:1:count-1])
-                set(gca, 'YTickLabel', [cellnum(1:count-1)])
-            end
-            suptitle(block.setup.block_supname)
-
-    elseif p == 2
-        %PLOT 2 - Averaged raw activity of each cell vs. time with locomoter activity beneath
-            subplot(3,4,1:8); hold on
-            
-            a = nan(length(cellnum),size(F7,2));
-            for c = 1:length(cellnum)
-                row_num = find(all_cell_numbers == cellnum(c));
-                cell_trace = F7(row_num,:);%pull out the full trace for each cell
-                mean_gCAMP = mean(cell_trace);% average green for each cell
-                df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean]
-                a(c,:) = df_f;
-            end
-            
-            A = smooth(mean(a,1),10); %smoothed average of df_f traces
-            plot(timestamp, A*SF,'LineWidth',1,'Color', 'k');
-            ylabel('DF/F')
-            suptitle(strcat(block.setup.block_supname, ' - Average of ', num2str(length(cellnum)), ' cells'))
-    end
-    
-    xlim([0 timestamp(Z)])
-    xlabel(timeUnit)
-    %Vertical lines for sound times
-    if Z < 15000 && isfield(block, 'Sound_Time') %Don't plot red lines if there is too much data, otherwise its messy
-        %plot multicolored lines if less than 8 stim, else plot red lines
-        if isfield(block.parameters, 'variable1')
-                var1 = unique(block.parameters.variable1);
-                variable1 = block.parameters.variable1;
-            if length(variable1) > 1 && length(var1) < 8
-                for i = 1:length(var1)
-                    colours = {'r', 'g', 'k', 'b', 'y', 'm', 'c'};
-                    vline(Sound_Time(variable1 == var1(i)), colours{i})
-                end
-            else
-                vline(Sound_Time, 'r');
+%Vertical lines for sound times
+if Z < 15000 && isfield(block, 'Sound_Time') %Don't plot red lines if there is too much data, otherwise its messy
+    %plot multicolored lines if less than 8 stim, else plot red lines
+    if isfield(block.parameters, 'variable1')
+            var1 = unique(block.parameters.variable1);
+            variable1 = block.parameters.variable1;
+        if length(variable1) > 1 && length(var1) < 8
+            for i = 1:length(var1)
+                colours = {'r', 'g', 'k', 'b', 'y', 'm', 'c'};
+                vline(Sound_Time(variable1 == var1(i)), colours{i})
             end
         else
             vline(Sound_Time, 'r');
         end
+    else
+        vline(Sound_Time, 'r');
     end
+end
 
-    subplot(3,4,9:12); hold on %loco
-    title('Locomotor activity')
-    ylabel('Activity')
-    xlabel(timeUnit)
-    xlim([0 timestamp(Z)])
-    if ~ismissing(block.setup.Tosca_path)
-        if isfield(block, 'locomotion_data')
-            loco_data = block.locomotion_data;
-        else
-            loco_data = block.loco_data;
-        end
-        plot(loco_data(:,1), loco_data(:,3));
+%Plot locomotor activity
+if ~ismissing(block.setup.Tosca_path)
+    if isfield(block, 'locomotion_data')
+        loco_data = block.locomotion_data;
+    else
+        loco_data = block.loco_data;
     end
-end   
+    
+    subplot(3,4,9:12); hold on %loco
+    plot(loco_data(:,1), loco_data(:,3));
+    title('Locomotor activity')
+    ylabel('Activity (cm/s)')
+    xlim([0 timestamp(Z)])
+    xlabel('Time (s)')
+end
+  
     
 %% Plot graphs according to stim presentation
 
@@ -183,35 +160,50 @@ for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
             spks_cell = squeeze(mean(spks_stim(row_nums,:,:),1));
             ebar_spks = std(spks_cell,1)/sqrt(length(current_cells)-1);
         end
-
-        %DF_F raster
-        figure; hold on
-        subplot(2,2,1)
-        imagesc(F7_df_f)
-        ylabel('Trials')
-        xlabel('Frames')
+        
+        figure %hold all
         
         %DF_F average
-        subplot(2,2,2)
+        subplot(2,2,1)
         total_mean = mean(F7_df_f);
         shadedErrorBar(1:length(total_mean),total_mean,ebar);
-        ylabel('DF/F')
-        xlabel('Frames')
-        xlim([0 length(total_mean)])
-        
-        %Spike raster
-        subplot(2,2,3)
-        imagesc(spks_cell)
-        ylabel('Trials')
-        xlabel('Frames')
+        vline(nBaselineFrames,'k') %stim onset
+        set(gca, 'XTick', x_in_seconds)
+        set(gca, 'XTickLabel', x_label_in_seconds)
+        xlabel('Time (s)')
+        xlim([0 trial_duration_in_frames])
+        ylabel('DF/F')       
         
         %Spike average
-        subplot(2,2,4)
+        subplot(2,2,2)
         total_mean = mean(spks_cell);
-        shadedErrorBar(1:length(total_mean),total_mean,ebar_spks);
+        area(total_mean, 'FaceColor', [0.85 0.85 0.85]);
+        vline(nBaselineFrames,'k') %stim onset
+        set(gca, 'XTick', x_in_seconds)
+        set(gca, 'XTickLabel', x_label_in_seconds)
+        xlabel('Time (s)')
+        xlim([0 trial_duration_in_frames])
         ylabel('Deconvolved spikes')
-        xlabel('Frames')
-        xlim([0 length(total_mean)])
+        
+        %DF_F raster
+        subplot(2,2,3)
+        imagesc(F7_df_f)
+        vline(nBaselineFrames,'k') %stim onset
+        set(gca, 'XTick', x_in_seconds)
+        set(gca, 'XTickLabel', x_label_in_seconds)
+        xlabel('Time (s)')
+        xlim([0 size(F7_df_f,2)])
+        ylabel('Trials')
+        
+        %Spike raster
+        subplot(2,2,4)
+        imagesc(spks_cell)
+        vline(nBaselineFrames,'k') %stim onset
+        set(gca, 'XTick', x_in_seconds)
+        set(gca, 'XTickLabel', x_label_in_seconds)
+        xlabel('Time (s)')
+        xlim([0 size(spks_cell,2)])
+        ylabel('Trials')
         
         if length(current_cells) == 1
             suptitle([block.setup.block_supname...
@@ -228,18 +220,19 @@ end
 plotAirOrH20 = 0;
 
 if stim_protocol == 9 %Random H20
-    var1 = 'H20';
-    var0 = 'No H20';
+    stim_names = {'H20', 'No H20'};
     plotAirOrH20 = 1;
 elseif stim_protocol == 11 %Random Air
-    var1 = 'Air';
-    var0 = 'No Air'; 
+    stim_names = {'Air', 'No Air'};
+    plotAirOrH20 = 1;
+elseif stim_protocol == 10 %Noiseburst ITI
+    stim_names = {'70dB', '0dB'};
     plotAirOrH20 = 1;
 end
 
 if plotAirOrH20
     
-V1 = block.parameters.variable1;
+    V1 = block.parameters.variable1;
 
     for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
         current_cells = cellnum(f,:);
@@ -248,15 +241,18 @@ V1 = block.parameters.variable1;
         for c = 1:length(current_cells)
             row_nums(c) = find(all_cell_numbers == current_cells(c));
         end
-    
-        stimValues = [1 0];  %1 for stim, 0 for sham
+        
+        figure; hold all
+        
+        stimValues = fliplr(unique(V1));  %first is stim, second is sham
         for v = 1:length(stimValues)
+            stim_name = stim_names(v);
             if length(current_cells) == 1
                 F7_cell = squeeze(F7_stim(row_nums,V1 == stimValues(v),:));
                 F7_baseline = F7_cell(:,1:nBaselineFrames); %baseline for each trial
                 F7_df_f = (F7_cell-mean(F7_baseline,2))./mean(F7_baseline,2); %(total-mean)/mean
                 ebar = std(F7_df_f,1);
-                spks_cell = squeeze(spks_stim(row_nums,:,:));
+                spks_cell = squeeze(spks_stim(row_nums,V1 == stimValues(v),:));
                 ebar_spks = std(spks_cell,1);
             elseif length(current_cells) > 1
                 F7_cells = F7_stim(row_nums,V1 == stimValues(v),:);
@@ -264,94 +260,70 @@ V1 = block.parameters.variable1;
                 F7_df_fs = (F7_cells-mean(F7_baselines,3))./mean(F7_baselines,3);
                 F7_df_f = squeeze(mean(F7_df_fs,1));
                 ebar = std(F7_df_f,1)/sqrt(length(current_cells)-1);
-                spks_cell = squeeze(mean(spks_stim(row_nums,:,:),1));
+                spks_cell = squeeze(mean(spks_stim(row_nums,V1 == stimValues(v),:),1));
                 ebar_spks = std(spks_cell,1)/sqrt(length(current_cells)-1);
             end   
-            if v == 1
-                var1_F7_df_f = F7_df_f;
-                var1_ebar = ebar;
-                var1_spks_cell = spks_cell;
-                var1_ebar_spks = ebar_spks;
-            elseif v == 2
-                var2_F7_df_f = F7_df_f;
-                var2_ebar = ebar;
-                var2_spks_cell = spks_cell;
-                var2_ebar_spks = ebar_spks;
+            
+            %Shift figure position in for loop
+            if v == 2
+                q = 4;
+            else
+                q = 0;
             end
+        
+            %DF_F average
+            subplot(4,2,1+q)
+            total_mean = mean(F7_df_f);
+            shadedErrorBar(1:length(total_mean),total_mean,ebar);
+            vline(nBaselineFrames,'k') %stim onset
+            set(gca, 'XTick', x_in_seconds)
+            set(gca, 'XTickLabel', x_label_in_seconds)
+            xlabel('Time (s)')
+            xlim([0 trial_duration_in_frames])
+            ylabel('DF/F')
+            title(stim_name)
+
+            %Spike average
+            subplot(4,2,2+q)
+            total_mean = mean(spks_cell);
+            area(total_mean, 'FaceColor', [0.85 0.85 0.85]);
+            vline(nBaselineFrames,'k') %stim onset
+            set(gca, 'XTick', x_in_seconds)
+            set(gca, 'XTickLabel', x_label_in_seconds)
+            xlabel('Time (s)')
+            xlim([0 trial_duration_in_frames])
+            ylabel('Deconvolved spikes')
+            title(stim_name)
+
+            %DF_F raster
+            subplot(4,2,3+q)
+            imagesc(F7_df_f)
+            vline(nBaselineFrames,'k') %stim onset
+            set(gca, 'XTick', x_in_seconds)
+            set(gca, 'XTickLabel', x_label_in_seconds)
+            xlabel('Time (s)')
+            xlim([0 size(F7_df_f,2)])
+            ylabel('Trials')
+
+            %Spike raster
+            subplot(4,2,4+q)
+            imagesc(spks_cell)
+            vline(nBaselineFrames,'k') %stim onset
+            set(gca, 'XTick', x_in_seconds)
+            set(gca, 'XTickLabel', x_label_in_seconds)
+            xlabel('Time (s)')
+            xlim([0 size(spks_cell,2)])
+            ylabel('Trials')
         end
 
-            figure; hold on
-            
-            %RASTERS
-            %DF/F stim on
-            subplot(4,2,1)
-            imagesc(var1_F7_df_f)
-            ylabel('Trials')
-            xlabel('Frames')
-            title(var1)
-            
-            %DF/F stim off
-            subplot(4,2,3)
-            imagesc(var2_F7_df_f)
-            ylabel('Trials')
-            xlabel('Frames')
-            title(var0)
-            
-            %Spikes stim on
-            subplot(4,2,5)
-            imagesc(var1_spks_cell)
-            ylabel('Trials')
-            xlabel('Frames')
-            title(var1)
-            
-            %Spikes stim off
-            subplot(4,2,7)
-            imagesc(var2_spks_cell)
-            ylabel('Trials')
-            xlabel('Frames')
-            title(var0)
-            
-            %AVERAGES
-            %DF/F stim on
-            subplot(4,2,2)
-            total_mean = mean(var1_F7_df_f);
-            plot(total_mean);
-            shadedErrorBar(1:length(total_mean),total_mean,var1_ebar);
-            %ylim([0 1800])
-            ylabel('DF/F')
-            xlabel('Frames')
-            title(var1)
+        if length(current_cells) == 1
+            suptitle([block.setup.block_supname...
+                strcat(' Cell #', num2str(cellnum(f)))])
+        else
+            suptitle([block.setup.block_supname...
+                strcat('Average of ', num2str(length(cellnum)), ' cells')])
+        end            
 
-            %DF/F stim off
-            subplot(4,2,4)
-            total_mean = mean(var2_F7_df_f);
-            plot(total_mean);
-            shadedErrorBar(1:length(total_mean),total_mean,var2_ebar);
-            %ylim([0 1800])
-            ylabel('DF/F')
-            xlabel('Frames')
-            title(var0)
-            
-            %Spikes stim on
-            subplot(4,2,6)
-            total_mean = mean(var1_spks_cell);
-            plot(total_mean);
-            shadedErrorBar(1:length(total_mean),total_mean,var1_ebar_spks);
-            %ylim([0 1800])
-            ylabel('Deconvolved spikes')
-            xlabel('Frames')
-            title(var1)
-
-            %DF/F stim off
-            subplot(4,2,8)
-            total_mean = mean(var2_spks_cell);
-            plot(total_mean);
-            shadedErrorBar(1:length(total_mean),total_mean,var2_ebar_spks);
-            %ylim([0 1800])
-            ylabel('Deconvolved spikes')
-            xlabel('Frames')
-            title(var0)           
-            
     end
 end
 

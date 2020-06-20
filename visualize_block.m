@@ -275,6 +275,7 @@ else
             if m == 1
                 figtitle = 'Ref Image';
                 img = block.img.refImg;
+                %img = block.img.meanImg;
                 image(img);
                 if block.setup.voltage_recording == 0
                     imagesc(img);

@@ -5,10 +5,13 @@ function visualize_cell(block, cellnum)
 % This function allows you to preview the data from a single cell (neuron) or
 % selection of cells from a block
 %
-% cellnum is a 1-D array of cell numbers or labels, matching the Suite2p GUI
+% cellnum is a 1-D array of cell numbers matching the Suite2p GUI
 % If the array is horizontal, the results from all cells will be averaged
 % and plotted together. If the array is vertical, each cell will be plotted
 % independently
+%
+% Error bars are SEM when N > 1 (showing inter-cell variability)
+% and STD when N == 1 (showing inter-trial variability)
 %
 % Argument(s): 
 %   block (struct)
@@ -27,6 +30,9 @@ function visualize_cell(block, cellnum)
 
 SF = 0.5; %Shrinking factor for traces to appear more spread out (for visualization purposes)
 z = 1; %Portion of recording to plot between 0 and 1 e.g. 0.5, 0.33, 1 (for visualization purposes)
+ws = 0.15; %Multiplication factor for adding white space to the top of each graph (Above max value)
+t1 = 20; %Time of response window onset in frames (for receptive field plots)
+t2 = 40; %Time of response window offset in frames (for receptive field plots)
 
 if ~isfield(block,'aligned_stim')
     error('No stim-aligned data to plot');
@@ -58,7 +64,7 @@ baseline_length = block.setup.constant.baseline_length; %seconds
 framerate = block.setup.framerate;
 nBaselineFrames = baseline_length*framerate; %frames
 trial_duration_in_seconds = baseline_length + block.setup.constant.after_stim; %seconds
-trial_duration_in_frames = trial_duration_in_seconds*framerate;
+trial_duration_in_frames = size(F7_stim,3);
 x_in_seconds = 0:0.5*(trial_duration_in_frames/trial_duration_in_seconds):trial_duration_in_frames;
 x_label_in_seconds = 0:0.5:trial_duration_in_seconds;
 
@@ -135,7 +141,7 @@ end
     
 %% Plot graphs according to stim presentation
 
-% Plot 1 - average response to all stim
+% Average response to all stim
 for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
         current_cells = cellnum(f,:);
         
@@ -167,43 +173,43 @@ for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
         subplot(2,2,1)
         total_mean = mean(F7_df_f);
         shadedErrorBar(1:length(total_mean),total_mean,ebar);
-        vline(nBaselineFrames,'k') %stim onset
         set(gca, 'XTick', x_in_seconds)
         set(gca, 'XTickLabel', x_label_in_seconds)
         xlabel('Time (s)')
         xlim([0 trial_duration_in_frames])
-        ylabel('DF/F')       
+        ylabel('DF/F')
+        vline(nBaselineFrames,'k') %stim onset
         
         %Spike average
         subplot(2,2,2)
         total_mean = mean(spks_cell);
         area(total_mean, 'FaceColor', [0.85 0.85 0.85]);
-        vline(nBaselineFrames,'k') %stim onset
         set(gca, 'XTick', x_in_seconds)
         set(gca, 'XTickLabel', x_label_in_seconds)
         xlabel('Time (s)')
         xlim([0 trial_duration_in_frames])
         ylabel('Deconvolved spikes')
+        vline(nBaselineFrames,'k') %stim onset
         
         %DF_F raster
         subplot(2,2,3)
         imagesc(F7_df_f)
-        vline(nBaselineFrames,'k') %stim onset
         set(gca, 'XTick', x_in_seconds)
         set(gca, 'XTickLabel', x_label_in_seconds)
         xlabel('Time (s)')
         xlim([0 size(F7_df_f,2)])
         ylabel('Trials')
+        vline(nBaselineFrames,'k') %stim onset
         
         %Spike raster
         subplot(2,2,4)
         imagesc(spks_cell)
-        vline(nBaselineFrames,'k') %stim onset
         set(gca, 'XTick', x_in_seconds)
         set(gca, 'XTickLabel', x_label_in_seconds)
         xlabel('Time (s)')
         xlim([0 size(spks_cell,2)])
         ylabel('Trials')
+        vline(nBaselineFrames,'k') %stim onset
         
         if length(current_cells) == 1
             suptitle([block.setup.block_supname...
@@ -215,7 +221,7 @@ for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
         
 end
 
-%% Plot 2 - average response separated by stim type - air and H20
+%% Average response separated by stim type - air and H20
 
 plotAirOrH20 = 0;
 
@@ -265,55 +271,51 @@ if plotAirOrH20
             end   
             
             %Shift figure position in for loop
-            if v == 2
-                q = 4;
-            else
-                q = 0;
-            end
+            if v == 2; q = 4; else; q = 0; end
         
             %DF_F average
             subplot(4,2,1+q)
             total_mean = mean(F7_df_f);
             shadedErrorBar(1:length(total_mean),total_mean,ebar);
-            vline(nBaselineFrames,'k') %stim onset
             set(gca, 'XTick', x_in_seconds)
             set(gca, 'XTickLabel', x_label_in_seconds)
             xlabel('Time (s)')
             xlim([0 trial_duration_in_frames])
             ylabel('DF/F')
+            vline(nBaselineFrames,'k') %stim onset
             title(stim_name)
 
             %Spike average
             subplot(4,2,2+q)
             total_mean = mean(spks_cell);
             area(total_mean, 'FaceColor', [0.85 0.85 0.85]);
-            vline(nBaselineFrames,'k') %stim onset
             set(gca, 'XTick', x_in_seconds)
             set(gca, 'XTickLabel', x_label_in_seconds)
             xlabel('Time (s)')
             xlim([0 trial_duration_in_frames])
             ylabel('Deconvolved spikes')
+            vline(nBaselineFrames,'k') %stim onset
             title(stim_name)
 
             %DF_F raster
             subplot(4,2,3+q)
             imagesc(F7_df_f)
-            vline(nBaselineFrames,'k') %stim onset
             set(gca, 'XTick', x_in_seconds)
             set(gca, 'XTickLabel', x_label_in_seconds)
             xlabel('Time (s)')
-            xlim([0 size(F7_df_f,2)])
+            xlim([0 trial_duration_in_frames])
+            vline(nBaselineFrames,'k') %stim onset
             ylabel('Trials')
 
             %Spike raster
             subplot(4,2,4+q)
             imagesc(spks_cell)
-            vline(nBaselineFrames,'k') %stim onset
             set(gca, 'XTick', x_in_seconds)
             set(gca, 'XTickLabel', x_label_in_seconds)
             xlabel('Time (s)')
-            xlim([0 size(spks_cell,2)])
+            xlim([0 trial_duration_in_frames])
             ylabel('Trials')
+            vline(nBaselineFrames,'k') %stim onset
         end
 
         if length(current_cells) == 1
@@ -327,63 +329,257 @@ if plotAirOrH20
     end
 end
 
-%% Receptive field
+%% Average response separated by stim type - Receptive Field
 
-V1 = block.parameters.variable1;
-V2 = block.parameters.variable2;
+plotReceptiveField = 0;
 
-freqs = unique(V1);
-ints = fliplr(unique(V2));
+if stim_protocol == 2 %Receptive Field
+    stim_units = {'kHz', 'dB'};
+    V1_label = 'Frequency (kHz)';
+    V2_label = 'Intensity (dB)';
+    plotReceptiveField = 1;
+end
 
-t1 = 20;
-t2 = 40;
+if plotReceptiveField
 
-for f = 1:length(cellnum)
+    V1 = block.parameters.variable1;
+    V2 = block.parameters.variable2;
+
+    V1_stim = unique(V1);
+    V2_stim = fliplr(unique(V2));
     
-    RF = nan(length(ints),length(freqs));
-    
-        current_cellnum = cellnum(f);
-        row_num = find(all_cell_numbers == current_cellnum);
-        F7_cell = squeeze(F7_stim(row_num,:,:));
-   
-        figure; hold on
-        for i = 1:length(ints)
-        subplot(length(ints),1,i)
-        int_mean = mean(F7_cell(V2 == ints(i),:));
-        plot(int_mean);
-        title([num2str(ints(i)*100) '%'])
-        ylabel('DF/F')
+    for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
+        current_cells = cellnum(f,:);
+
+        row_nums = nan(length(current_cells),1);
+        for c = 1:length(current_cells)
+            row_nums(c) = find(all_cell_numbers == current_cells(c));
         end
         
-        figure; hold on
-        q = 1;
-        for i = 1:length(ints)
-            for k = 1:length(freqs)
-                
-                rows = intersect(find(V1 == freqs(k)), find(V2 == ints(i)));
+        %Preallocate
+        F7_df_f_mat = nan(length(V1_stim)*length(V2_stim),trial_duration_in_frames);
+        ebar_mat = nan(length(V1_stim)*length(V2_stim),trial_duration_in_frames);
+        spks_mat = nan(length(V1_stim)*length(V2_stim),trial_duration_in_frames);
+        ebar_spks_mat = nan(length(V1_stim)*length(V2_stim),trial_duration_in_frames);
+        %Record stim as well for sanity check
+        V1_list = nan(length(V1_stim)*length(V2_stim),1);
+        V2_list = nan(length(V1_stim)*length(V2_stim),1);
         
-                subplot(length(ints),length(freqs),q)
-                RF_mean = mean(F7_cell(rows,:));
-                RF(i,k) = mean(RF_mean(1,t1:t2));
-                plot(RF_mean, 'LineWidth', 2);
-                ylim([0 3000])
-                %ylabel('DF/F')
-                %xlabel([num2str(freqs(k))])
+        count = 1;
+        for v = 1:length(V2_stim) %Intensities
+            for vv = 1:length(V1_stim) %Frequencies
                 
-                q = q+1;
+                stim_rows = intersect(find(V1 == V1_stim(vv)), find(V2 == V2_stim(v)));
+                V1_list(count) = V1_stim(vv);
+                V2_list(count) = V2_stim(v);
+                
+                if length(current_cells) == 1
+                    F7_cell = squeeze(F7_stim(row_nums,stim_rows,:));
+                    F7_baseline = F7_cell(:,1:nBaselineFrames); %baseline for each trial
+                    F7_df_f = (F7_cell-mean(F7_baseline,2))./mean(F7_baseline,2); %(total-mean)/mean
+                    ebar = std(F7_df_f,1);
+                    spks_cell = squeeze(spks_stim(row_nums,stim_rows,:));
+                    ebar_spks = std(spks_cell,1);
+                    F7_df_f_mat(count,:) = mean(F7_df_f);
+                    ebar_mat(count,:) = ebar;
+                    spks_mat(count,:) = mean(spks_cell);
+                    ebar_spks_mat(count,:) = ebar_spks;
+                elseif length(current_cells) > 1
+                    F7_cells = F7_stim(row_nums,stim_rows,:);
+                    F7_baselines = F7_cells(:,:,1:nBaselineFrames);
+                    F7_df_fs = (F7_cells-mean(F7_baselines,3))./mean(F7_baselines,3);
+                    F7_df_f = squeeze(mean(F7_df_fs,1));
+                    ebar = std(F7_df_f,1)/sqrt(length(current_cells)-1);
+                    spks_cell = squeeze(mean(spks_stim(row_nums,stim_rows,:),1));
+                    ebar_spks = std(spks_cell,1)/sqrt(length(current_cells)-1);
+                    F7_df_f_mat(count,:) = mean(F7_df_f);
+                    ebar_mat(count,:) = ebar;
+                    spks_mat(count,:) = mean(spks_cell);
+                    ebar_spks_mat(count,:) = ebar_spks;
+                end
+                
+                count = count + 1;
             end
         end
+    
+        %Plot DF/F and Spikes for V1 and V2 separately
+        for v = 1:2
+            if v == 1
+                V_stim = V1_stim;
+                V_list = V1_list;
+            else
+                V_stim = V2_stim;
+                V_list = V2_list;
+            end
+            
+            if length(V_stim) == 1
+                continue; %Don't plot if there's only 1 stimulus value (e.g. all stim at same dB level)
+            end
+            
+            %Find max values for y limits
+            max_df_f = 0;
+            max_spks = 0;
+            for p = 1:length(V_stim)
+                mat_rows = V_list == V_stim(p);
+                df_f_std = mean(F7_df_f_mat(mat_rows,:)) + std(F7_df_f_mat(mat_rows,:));
+                spks_mean = mean(spks_mat(mat_rows,:));
+                if max(df_f_std) > max_df_f
+                    max_df_f = max(df_f_std);
+                end
+                if max(spks_mean) > max_spks
+                    max_spks = max(spks_mean);
+                end
+            end
+            
+            figure; hold on
+            for p = 1:length(V_stim)
+                mat_rows = V_list == V_stim(p);
+                
+                %DF_F average
+                subplot(length(V_stim),2,p*2-1)
+                total_mean = mean(F7_df_f_mat(mat_rows,:));
+                ebar = std(F7_df_f_mat,1); %recompute error bar for this part - not sure the best way to do this
+                shadedErrorBar(1:length(total_mean),total_mean,ebar);
+                set(gca, 'XTick', x_in_seconds)
+                set(gca, 'XTickLabel', x_label_in_seconds)
+                xlim([0 trial_duration_in_frames])
+                ylabel([num2str(V_stim(p)) ' ' stim_units{v}])
+                ylim([0 max_df_f]);
+                vline(nBaselineFrames,'k') %stim onset
+                if p == 1
+                    title('DF/F')
+                elseif p == length(V_stim)
+                    xlabel('Time (s)')
+                end
+               
+                %Spike average
+                subplot(length(V_stim),2,p*2)
+                total_mean = mean(spks_mat(mat_rows,:));
+                area(total_mean, 'FaceColor', [0.85 0.85 0.85]);
+                set(gca, 'XTick', x_in_seconds)
+                set(gca, 'XTickLabel', x_label_in_seconds)
+                xlim([0 trial_duration_in_frames])
+                ylabel([num2str(V_stim(p)) ' ' stim_units{v}])
+                ylim([0 max_spks+(ws*max_spks)]);
+                vline(nBaselineFrames,'k') %stim onset
+                if p == 1
+                    title('Deconvolved spikes')
+                elseif p == length(V_stim)
+                    xlabel('Time (s)')
+                end
+                
+            end
+            
+            if length(current_cells) == 1
+                suptitle([block.setup.block_supname...
+                strcat(' Cell #', num2str(cellnum(f)))])
+            else
+                suptitle([block.setup.block_supname...
+                strcat('Average of ', num2str(length(cellnum)), ' cells')])
+            end 
+        end
+                
+        %Plot V1 x V2 grid using DF/F or Spikes
+        if length(V1_stim) > 1 && length(V2_stim) > 1 %Don't plot if there isn't a grid
+
+            nPlots = length(V1_stim)*length(V2_stim);
+            
+            %Find max values for y limits
+            max_df_f = max(max(F7_df_f_mat,[], 1)) + max(max(ebar_mat,[], 1));
+            max_spks = max(max(spks_mat,[], 1));
+
+            %DF_F average
+            figure; hold on
+            for p = 1:nPlots
+                subplot(length(V2_stim),length(V1_stim),p)
+                plot(F7_df_f_mat(p,:), 'Linewidth', 2);
+                %shadedErrorBar(1:length(F7_df_f_mat(p,:)),F7_df_f_mat(p,:),ebar_mat(p,:));
+                set(gca, 'XTick', x_in_seconds)
+                set(gca, 'XTickLabel', x_label_in_seconds)
+                xlim([0 trial_duration_in_frames])
+                ylim([0 max_df_f]);
+                vline(nBaselineFrames,'k') %stim onset
+                if p <= length(V1_stim)%Top row
+                    title([num2str(V1_list(p)) ' ' stim_units{v}])
+                end
+                if p > nPlots - length(V1_stim) %Bottom row
+                    xlabel('Time (s)')
+                end
+                if ismember(p,[1:length(V1_stim):nPlots]) %First column
+                    ylabel([num2str(V2_list(p)) ' ' stim_units{v}])
+                end
+            end
+            
+            if length(current_cells) == 1
+                suptitle([block.setup.block_supname...
+                strcat(' Cell #', num2str(cellnum(f)))])
+            else
+                suptitle([block.setup.block_supname...
+                strcat('Average of ', num2str(length(cellnum)), ' cells')])
+            end 
+            
+            %Spike average
+            figure; hold on
+            for p = 1:nPlots
+                subplot(length(V2_stim),length(V1_stim),p)
+                area(spks_mat(p,:), 'FaceColor',[0, 0.4470, 0.7410]);
+                set(gca, 'XTick', x_in_seconds)
+                set(gca, 'XTickLabel', x_label_in_seconds)
+                xlim([0 trial_duration_in_frames])
+                ylim([0 max_spks+(ws*max_spks)]);
+                vline(nBaselineFrames,'k') %stim onset
+                if p <= length(V1_stim)%Top row
+                    title([num2str(V1_list(p)) ' ' stim_units{v}])
+                end
+                if p > nPlots - length(V1_stim) %Bottom row
+                    xlabel('Time (s)')
+                end
+                if ismember(p,[1:length(V1_stim):nPlots]) %First column
+                    ylabel([num2str(V2_list(p)) ' ' stim_units{v}])
+                end
+            end
+
+            if length(current_cells) == 1
+                suptitle([block.setup.block_supname...
+                strcat(' Cell #', num2str(cellnum(f)))])
+            else
+                suptitle([block.setup.block_supname...
+                strcat('Average of ', num2str(length(cellnum)), ' cells')])
+            end 
+        end
         
-        figure;
-        imagesc(RF)
-        xlabel('Frequency (kHz)')
-        set(gca,'XTickLabel',freqs)
-        ylabel('Modulation %')
-        set(gca, 'YTickLabel', ints)
-        h = colorbar;
-        set(get(h,'title'),'string','DF/F');
+                        
+        %Plot Receptive field grid using DF/F peak between t1 and t2
+        if length(V1_stim) > 1 && length(V2_stim) > 1 %Don't plot if there isn't a grid
+        
+            RF = nan(length(V2_stim),length(V1_stim));
+            count = 1;
+            for v = 1:length(V2_stim)
+                for vv = 1:length(V1_stim)
+                    RF(v,vv) = mean(F7_df_f_mat(count,t1:t2));
+                    count = count + 1;
+                end
+            end
+    
+            figure;
+            imagesc(RF)
+            set(gca,'XTickLabel',V1_stim)
+            set(gca, 'YTickLabel', V2_stim)
+            xlabel(V1_label)
+            ylabel(V2_label)
+            h = colorbar;
+            set(get(h,'title'),'string','DF/F');
+
+            if length(current_cells) == 1
+                suptitle([block.setup.block_supname...
+                    strcat(' Cell #', num2str(cellnum(f)))])
+            else
+                suptitle([block.setup.block_supname...
+                    strcat('Average of ', num2str(length(cellnum)), ' cells')])
+            end            
+        end   
+    end
 end
 
-
-end
+end %function end
 

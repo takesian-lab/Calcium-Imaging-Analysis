@@ -11,7 +11,16 @@ function [block] = define_sound_singleblock(block)
 % Returns:
 %   block (struct)
 % 
-% Notes:
+% Notes: This function uses the Voltage recording file. OVer time, we have
+% added addition inputs into our Bruker system. As of 6/25/20, they should
+% be the following
+% 1)timestamp
+% 2)State trigger
+% 3) Rep trigger
+% 4) trial trigger (we use this to align the timestamps of each trial
+% 5) frame trigger from camera (for widefield control only)
+% 6) speaker trigger
+%   - older data sets will only have columns 1-4-
 %
 % Variables needed from block.setup:
 % -block_path
@@ -66,18 +75,37 @@ if ~ismissing(block.setup.Tosca_path) %Skip if Tosca info is missing
     
     %Load variables previously obtained during define_behavior_singleblock
     New_sound_times = block.New_sound_times;
-    start_time = block.start_time;
+%     start_time = block.start_time;
     loco_data = block.loco_data;
     
     %Align with VR csv
     display(['Loading ' VR_filename])
-    M = csvread(VR_filename, 1,0);
-    start = M(find( M(:,2) > 3, 1 ) )./1000;% find the first time that tosca sends a signal to VoltageRecording (in seconds)
-    Sound_Time(1,:) = (New_sound_times-start_time)+start;
-    loco_times = block.loco_times;
-    locTime2 = start + loco_times;
+    M = csvread(VR_filename, 1,0); %see notes at top for description of M
     
-    %Moved this part from define_loco:
+    % find the start of each trial, and align times to it
+    Bruker_trial_triggers = M(find( M(:,4) > 3 ) )./1000;
+    % each trigger is active for 19-20ms, find the first instance of it 
+    diffTrigger = diff(Bruker_trial_triggers);
+    Bruker_trial = find(diffTrigger>1)+1;
+    % I have the trial start times for all except the first trial, find
+    % that trial and add to the list
+    Bruker_trial_time = Bruker_trial_triggers(Bruker_trial);
+    trial_one = Bruker_trial_triggers(1,1);
+    Bruker_trial_time = [trial_one;Bruker_trial_time];
+    
+    %if there were errors in the run, remove from Bruker trial time
+    errors = block.errors;
+    Bruker_trial_time(errors,:)=[];
+    
+    % find the time (normalized from trial start) of sound time
+   for i = 1:length(Bruker_trial_time)
+   Sound_Time(1,i) = (Bruker_trial_time(i))+New_sound_times(1,i);
+   end
+   
+    loco_times = block.loco_times;
+    locTime2 = loco_times; %TODO:needs to be corrected
+    
+    %Moved this part from define_loco: TODO
     [loco_data,active_time] = locomotor_activity(loco_data,VR_filename,setup);
     block.locomotion_data = loco_data; %TRANSFORMED LOCO DATA
     block.active_time = active_time;

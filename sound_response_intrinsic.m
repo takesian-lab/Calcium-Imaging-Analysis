@@ -1,5 +1,5 @@
-function [traces]=sound_response_intrinsic(parameters,setup, All_Images_df_over_f);
-
+function [traces]=sound_response_intrinsic(parameters,data, All_Images_df_over_f);
+setup = data.setup;
 loops=parameters.loops;
 timestamp=parameters.timestamp;
 for ll=1:loops
@@ -28,17 +28,17 @@ for ll=1:loops
                 
                 
                 length_sound_trial(sound) = closest_frame_after-closest_frame_before;
-                %    length_baseline_trial(sound) = closest_frame_sound-closest_frame_before;
+                   length_baseline_trial(sound) = closest_frame_after-closest_frame_before;
                 
                 %             if matching_value(matching_value)>1 %to make all the sound traces the same
                 %                 difference_length_sound_trial(matching_value) = length_sound_trial(matching_value)-length_sound_trial(1);
                 %                 closest_frame_after = closest_frame_after-difference_length_sound_trial(matching_value);
                 %             end
                 %
-                %             if sound>1 %to make all the baseline traces the same
-                %                 difference_length_baseline(sound) = length_baseline_trial(sound)-length_baseline_trial(1);
-                %                 closest_frame_sound = closest_frame_sound-difference_length_baseline(sound);
-                %             end
+                            if sound>1 %to make all the baseline traces the same
+                                difference_length_baseline(sound) = length_baseline_trial(sound)-length_baseline_trial(1);
+                                closest_frame_after = closest_frame_after-difference_length_baseline(sound);
+                            end
                 
                 trace_around_sound(:,:,:,sound) =  Tile(:,:,closest_frame_before:closest_frame_after);
 %                 stimBaseline(:,:,:,sound)=Tile(:,:,closest_frame_before:closest_frame_sound);

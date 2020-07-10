@@ -1,24 +1,37 @@
 
-function [imageData,parameters] = crop_window(setup,parameters)
-
-for a=1:length(setup.mousename)
-    mouseID=setup.mousename{(a)}
-    date=setup.expt_date{(a)};
-    Imaging_Block=setup.BOT_maps(a,:)
+function [imageData,data,parameters] = crop_window(data)
+setup = data.setup;
+for a=1:size(setup.mousename,1) %Mice
+    for b=1:size(setup.mousename,2) %ROIs
+        
+        if isempty(setup.mousename{a,b})
+            continue;
+        end
+        
+        mouseID=setup.mousename{a,b};
+        Imaging_Block=setup.Imaging_sets{a,b};
+        date=setup.expt_date{a,:};
     
-    for i=1:length(setup.BOT_maps)
-        BOT_number = num2str(setup.BOT_maps(i));
-        BOT_number
-        folder = sprintf([setup.path_name setup.username '/' mouseID '/' date '/' BOT_number]); %direct to BOT data folder
+    for i=1:length(Imaging_Block)
+        unique_block_name = setup.unique_block_names{a,b}(i);
+        block = data.([mouseID]).([unique_block_name]);
+        folder = convertStringsToChars(setup.BOTpath);
+        
+        
+%         BOT_number = num2str(setup.BOT_maps(i));
+%         BOT_number
+%         folder = sprintf([setup.Compiled_blocks_path '/' mouseID '/' date '/' BOT_number]); %direct to BOT data folder
         cd(folder);
-        [folder '/*.ome.tif']
-        d = dir([folder '/*.ome.tif']);%extract tiffs
+%         [folder '*/*.ome.tif']
+        d = dir([folder '*/*.ome.tif']);%extract tiffs
         
         for k=1:length(d);
 %             
-            num_BOT = sprintf('%06d',((setup.BOT_start-1)+k))
+            num_BOT = sprintf('%06d',((setup.BOT_start-1)+k));
             num_BOT
-            image = imread(['BOT_' mouseID '_noiseburst-00' BOT_number '_Cycle00001_Ch2_' num_BOT '.ome.tif']);
+            fig_name = strcat(setup.BOTname, '_Cycle00001_', setup.imaging_chan, '_', num_BOT, '.ome.tif');
+            fig_name = convertStringsToChars(fig_name);
+            image = imread(fig_name);
             filtered_image = imresize(image,0.5);%reduce to 256x256
             Full_Tile_Matrix(:,:,k) = filtered_image;
         
@@ -29,7 +42,7 @@ for a=1:length(setup.mousename)
         imageData.Full_Tile_Mean = mat2gray(mean(Full_Tile_Matrix,3));
         imshow(imageData.Full_Tile_Mean);
 
-        title(sprintf('Mean Window Tile %d',BOT_number));
+        title(sprintf('Mean Window Tile'));
 %         data.([setup.mousename]).(['Tile' BOT_number]).Window_Image = Full_Tile_Mean;
         
         

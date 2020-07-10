@@ -38,8 +38,8 @@ for a=1:size(setup.mousename,1) %Mice
         constants = data.([mouseID]).([unique_block_name]).setup.constant;
         FrameRate = setup.FrameRate{a,b};
 
-        base_numFrames = (FrameRate(a,b)*constants.baseline_length);
-        window_frames = (FrameRate(a,b)*constants.response_window);
+        base_numFrames = round(FrameRate*constants.baseline_length);
+        window_frames = (FrameRate*constants.response_window);
         local_base = zeros(size(F7,1),size(F7,2),base_numFrames); 
         
         for i = 1:size(F7,1)

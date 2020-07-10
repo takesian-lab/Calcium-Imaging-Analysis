@@ -60,7 +60,9 @@ trials=sort_nat(trials);
 Var1=[]; Var2=[];
 b=setup.Tosca_run;
 
+
 [Data,Params] = tosca_read_run(behaveblock{b}); %Load block meta-data%%%HACK!!!!!
+
 inblock=trials(contains(trials,['Run' num2str(b) '-'])); %% added hyphen to eliminate double digit spurious entries...
 
 if length(inblock)>length(Data)
@@ -71,7 +73,9 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
     s=tosca_read_trial(Params,Data,t);%the read_trial gives us more info than read_run alone
     if ~isempty(s)
         Tosca_times{t}=s.Time_s; %pulls out the tosca generated timestamps for each trial
-        start_time=Tosca_times{1,1}(1,1);
+        explore.Tosca_times_size(t) = length(Tosca_times{t});
+        start_time=Tosca_times{1,t}(1,1);
+        zero_times{t}=Tosca_times{1,t}(1,:)-start_time;
         licks{t,:}=s.Lickometer;
         states{t}=[0 (diff(s.State_Change)>0)];
         if states{t}(:,:)~=1
@@ -81,32 +85,38 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
             StateChange(t,:)=find(states{1,t}(:,:)~=0, 1, 'first');
         end
 
-        for y=1:length(Tosca_times) % find the time (in Tosca units) for the new sound
+        for y=1:length(zero_times) % find the time (in Tosca units) for the new sound
             n=StateChange(y,1);
-            New_sound_times(y)=Tosca_times{1,y}(1,n);
-        end
-        
+            New_sound_times(y)=zero_times{1,y}(1,n);
+        end        
          %Get CS+/CS- results
-        if isequal(Data{t}.Result,'Hit')
-            b_Outcome{t}=1;
-            if setup.stim_protocol == 7
-                targetFreq=s.cue.Signal.Waveform.Frequency_kHz;%pull out the target frequency
-            end
-            trialType{t}=1;
-        elseif isequal(Data{t}.Result,'Miss')
-            b_Outcome{t}=0;
-            trialType{t}=1;
-            targetFreq=s.cue.Signal.Waveform.Frequency_kHz;
-        elseif isequal(Data{t}.Result,'Withhold')
-            b_Outcome{t}=3;
-            trialType{t}=0;
-        elseif isequal(Data{t}.Result,'False Alarm')
-            b_Outcome{t}=4;
-            trialType{t}=0;
-        else
-            b_Outcome{t}=NaN;
-            trialType{t}=NaN;
-        end
+         try
+             if isequal(Data{t}.Result,'Hit')
+                 b_Outcome{t}=1;
+                 if setup.stim_protocol == 7
+                     targetFreq=s.cue.Signal.Waveform.Frequency_kHz;%pull out the target frequency
+                 end
+                 trialType{t}=1;
+             elseif isequal(Data{t}.Result,'Miss')
+                 b_Outcome{t}=0;
+                 trialType{t}=1;
+                 targetFreq=s.cue.Signal.Waveform.Frequency_kHz;
+             elseif isequal(Data{t}.Result,'Withhold')
+                 b_Outcome{t}=3;
+                 trialType{t}=0;
+             elseif isequal(Data{t}.Result,'False Alarm')
+                 b_Outcome{t}=4;
+                 trialType{t}=0;
+             else
+                 b_Outcome{t}=NaN;
+                 trialType{t}=NaN;
+                 
+             end
+         catch
+             warning('Sound Pav tone trials')
+              b_Outcome{t}=s.Result;
+                 trialType{t}=('SoundPav');
+         end
     end
 end
 
@@ -128,6 +138,9 @@ for m = 1:length(Data)
     elseif setup.stim_protocol == 2 %Receptive field
         V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
+    elseif setup.stim_protocol == 4 %widefield,RF
+        V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
+        V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
     elseif setup.stim_protocol == 5 %SAM 
         V1(1,m)  = Data{m}.Sound.Signal.SAM.Rate_Hz;
         V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
@@ -138,8 +151,12 @@ for m = 1:length(Data)
         V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
     elseif setup.stim_protocol == 7 %Behavior
+        try
         V1(1,m)  = Data{m}.cue.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
+        catch  V1(1,m)  =Params.Output_States(2).StimChans.Stimulus.Waveform.Tone.Frequency_kHz;
+        V2(1,m)  = Params.Output_States(2).StimChans.Stimulus.Level.Level;
+        end
     elseif setup.stim_protocol == 8 %Behavior
         V1(1,m)  = Data{m}.cue.CurrentSource.Level.dB_re_1_Vrms;
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
@@ -179,6 +196,7 @@ end
 error_trials=cell2mat(error_trials);
 ~isnan(error_trials);
 k = find(error_trials>0);
+block.errors = k;
 if ~isempty(k)
     warning(['Found ' num2str(length(k)) ' error(s) out of ' num2str(length(error_trials)) ' Tosca trials'])
 end
@@ -197,10 +215,17 @@ Var2=[Var2,V2];
 Tosca_Run_number = num2str(setup.Tosca_run);
 Tosca_Session = num2str(setup.Tosca_session);
 mouseID = char(setup.mousename);
+try
 loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']); %locomotor data
 loco_times = loco_data(:,1)-start_time; %I am only looking at column 1
 loco_times = loco_times(:,1)+abs(loco_times(1,1));
 loco_activity = (abs(loco_data(:,3)));
+catch
+    warning('no loco data available')
+    loco_data =NaN;
+    loco_activity = NaN;
+    loco_times=NaN;
+end
 
 %% Save everything to block
 %Format used to be: data.([mouseID]).(['ImagingBlock' Imaging_Num]).VARIABLE

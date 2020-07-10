@@ -127,6 +127,7 @@ for i = 1:length(uniqueMice)
                 
         block_filenames = cell(1,size(currentInfo_R,1));
         unique_block_names = cell(1,size(currentInfo_R,1));
+        path_name =currentInfo_R{:,P};
         
         for r = 1:size(currentInfo_R,1)
             
@@ -134,6 +135,12 @@ for i = 1:length(uniqueMice)
   
             if currentInfo_R{r,VR} == 0
                 widefieldTag = 'widefield-';
+                setup.VRname = [currentInfo_R{:,VN}];
+                setup.BOTname = [currentInfo_R{:,B}];
+                setup.VRpath = strcat(path_name, '/', currentMouse, '/', setup.expt_date{i,j}, '/', setup.VRname); 
+                setup.BOTpath = strcat(path_name, '/', currentMouse, '/', setup.expt_date{i,j}, '/', setup.BOTname); 
+                
+                
             else
                 widefieldTag = '';
             end

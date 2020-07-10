@@ -26,7 +26,7 @@
 %% Load Info.mat and change user-specific options
 
 
-visualize = 1; %1 to plot figures of the block immediately, 0 to skip
+visualize = 0; %1 to plot figures of the block immediately, 0 to skip
 recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 %% set up values for 'align to stim'
@@ -60,8 +60,8 @@ switch PC_name
         ops_filename = 'Maryse_ops.mat';
     case 'RD0332' %Carolyn
         info_path = 'D:\2P analysis\2P local data\Carolyn';
-        save_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
-        info_filename = 'Info';
+        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
+        info_filename = 'Info_widefield';
         
     case 'RD0386' %Wisam
         % INSERT PATHS HERE

@@ -32,8 +32,8 @@ else
 
     stim_protocol = 1;
     run_redcell = 1;
-    std_level = 1.5;
-    std_level_byStim = 1.5;
+    std_level = 3;
+    std_level_byStim = 2;
 
     %% Load Info.mat
     % Make setup and data structure out of all blocks that correspond to stim_protocol
@@ -49,7 +49,8 @@ else
             info_filename = 'Info_NxDB092719M2';
         case 'RD0332' %Carolyn
             info_path = 'D:\2P analysis\2P local data\Carolyn';
-            compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
+%             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
+            compiled_blocks_path = 'Z:\Maryse\2p analysis\Compiled blocks';
             save_path = 'D:\2P analysis\2P local data\Carolyn';
             info_filename = 'Info';
         case 'RD0386' %Wisam

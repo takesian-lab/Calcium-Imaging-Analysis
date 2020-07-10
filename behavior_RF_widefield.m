@@ -1,20 +1,23 @@
 function [parameters] = behavior_RF_widefield(parameters,setup)
 
+
+setup = data.setup;
 for a=1:length(setup.mousename)
     mouseID=setup.mousename{(a)}
-    Tosca_Session=setup.Session{(a)}
+    Tosca_Session=num2str(setup.Session(a));
     date=setup.expt_date{(a)};
     Imaging_Block=setup.BOT_maps(a,:)
     Tosca_folder_name = ['Tosca_' mouseID]; %name of the Tosca folder
-    folder = sprintf([setup.path_name setup.username '/' mouseID '/' Tosca_folder_name '/Session ' Tosca_Session]);
+    folder = sprintf([setup.path_name '/' mouseID '/' Tosca_folder_name '/Session ' Tosca_Session]);
+   
     cd(folder)
     
     
     
     %  Tosca_folder_name = ['Tosca_' mouseID]; %name of the Tosca folder
-    folder = sprintf([setup.path_name setup.username '/' mouseID '/' Tosca_folder_name '/Session ' Tosca_Session]); %direct to specific Tosca folder within a
-    %     addpath (folder); %navigate to this folder
-    cd(folder)
+%     folder = sprintf([setup.path_name '/' mouseID '/' Tosca_folder_name '/Session ' Tosca_Session]); %direct to specific Tosca folder within a
+%     %     addpath (folder); %navigate to this folder
+%     cd(folder)
     allfiles=dir('*Run*');
     
     countblock=1;

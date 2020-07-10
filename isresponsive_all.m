@@ -21,7 +21,7 @@ setup = data.setup;
 display('...testing if cells are responsive to all (averaged) stimuli...')
 
 
-for a=1:length(setup.mousename)
+for a=1;%:length(setup.mousename)
     mouseID=setup.mousename{(a)};
     stimdata = data.([mouseID]).stim_df_f;
     
@@ -30,7 +30,7 @@ for a=1:length(setup.mousename)
         all_average(i,:) = squeeze(mean(stimdata.F7_df_f(i,:,:), 2)); %mean of all trials for each cell
         SEM_trace(i,:) = std(stimdata.F7_df_f(i,:,:))./sqrt(size(stimdata.F7_df_f(i,:,:),2));
         
-        window_avg(i,:) = mean(stimdata.window_trace(i,:), 2); %average means responses (sound to 2s post sound) across trials for each cell
+        window_avg(i,:) = mean(stimdata.window_trace(i,1:20), 2); %average means responses (sound to 2s post sound) across trials for each cell
         peak_avg(i,:) = mean(stimdata.peak_val(i,:), 2); %average peak response
         maxpeak_avg(i,:) = mean(stimdata.max_peak(i,:), 2);%average around max peak
         minpeak_avg(i,:) = mean(stimdata.min_peak(i,:), 2); %average around negative peak
@@ -42,6 +42,9 @@ for a=1:length(setup.mousename)
        
         data.([mouseID]).response.isRespPos(i) = maxpeak_avg(i,:) > std_level*mean(base_std(i)) & window_avg(i,:)>0; %will be 0 or 1
         data.([mouseID]).response.isRespNeg(i) = minpeak_avg(i,:) < -std_level*mean(base_std(i)) & window_avg(i,:)<0;
+       
+       
+     
     end
     
     
@@ -67,10 +70,10 @@ for a=1:length(setup.mousename)
                     shadedErrorBar(x_green,smooth((all_average(i,:)),10),smooth((SEM_trace(i,:)),10),'lineprops','-k','transparent',1); hold on;
                 end
             end
-            
-            plot(peak_avg(i),'o'); %plot average response
-            plot(maxpeak_avg(i),'o'); %plot average around peak
-            plot(minpeak_avg(i),'o');
+%             
+%             plot(peak_avg(i),'o'); %plot average response
+%             plot(maxpeak_avg(i),'o'); %plot average around peak
+%             plot(minpeak_avg(i),'o');
         end
         
      
@@ -78,9 +81,9 @@ for a=1:length(setup.mousename)
         isresponsive_avg= squeeze(mean(mean(stimdata.F7_df_f((data.([mouseID]).response.isRespPos),:,:),2),1));%mean across isRespPos cells
         isresponsiveneg_avg= squeeze(mean(mean(stimdata.F7_df_f((data.([mouseID]).response.isRespNeg),:,:),2),1));%mean across isRespNeg cells
         
-        a_green_std = squeeze(std(mean(stimdata.F7_df_f(:,:,:),2),1));%mean across all cells
-        b_green_std= squeeze(std(mean(stimdata.F7_df_f((data.([mouseID]).response.isRespPos),:,:),2),1));%mean across isRespPos cells
-        c_green_std= squeeze(std(mean(stimdata.F7_df_f((data.([mouseID]).response.isRespNeg),:,:),2),1));%mean across isRespNeg cells
+        a_green_std = squeeze(std(mean(stimdata.F7_df_f(:,:,:),2),1))./sqrt(size(stimdata.F7_df_f,1));%mean across all cells
+        b_green_std= squeeze(std(mean(stimdata.F7_df_f((data.([mouseID]).response.isRespPos),:,:),2),1))./sqrt(size(data.([mouseID]).response.isRespPos,1));%mean across isRespPos cells
+        c_green_std= squeeze(std(mean(stimdata.F7_df_f((data.([mouseID]).response.isRespNeg),:,:),2),1))./sqrt(size(data.([mouseID]).response.isRespNeg,1));%mean across isRespNeg cells
         
         try
             figure
@@ -104,6 +107,7 @@ for a=1:length(setup.mousename)
         
         
     
-        
+      clear all_average SEM_trace window_avg peak_avg...
+            minpeak_avg maxpeak_avg base_mean  base_std   
     end
 end

@@ -1,7 +1,7 @@
 %% Rename files to be numbered
 
 % Get all files in the current folder
-folder =('C:\2P analysis\2P local data\Carolyn\VxAB121018M5\2019-04-01\BOT_VxAB121018M5_2019-04-01-005'); 
+folder =('\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\NxDC030220F2\Tosca_NxDC030220F2\Session 1'); 
 % addpath (folder); 
 files = dir([folder '/*.tif']);
 % 
@@ -12,6 +12,6 @@ for id = 1:A
 %addpath (folder);
 f = files(id).name;
 % = sprintf('%06d',id);
-f_new = strrep(f,'.ome',''); %strrep(f,'a','b') - within file "f" replace b with a;
+f_new = strrep(f,'NxDC030920F2','NxDC030220F2'); %strrep(f,'a','b') - within file "f" replace a with b;
 movefile(f,f_new);
 end

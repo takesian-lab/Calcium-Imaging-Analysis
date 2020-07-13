@@ -45,9 +45,9 @@ else
     switch PC_name
         case 'RD0366' %Maryse
             info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-            compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
+            compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledWidefieldBlocks';
             save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-            info_filename = 'Info_NxDB092719M2';
+            info_filename = 'Info_widefield';
         case 'RD0332' %Carolyn
             info_path = 'D:\2P analysis\2P local data\Carolyn';
 %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
@@ -363,8 +363,9 @@ clear tempBase idx f b count ll loop_num lv m mean_base
               
               mm=avgTrace.(['Tile' loop_num]){f,lv};
               rejoin_tiles=double(cat(1, rejoin_tiles, mm));
-          end
-          stimAverages.(['kHz' numF ]){lv}=rejoin_tiles;
+               end
+          fieldName = matlab.lang.makeValidName(['kHz' numF ]); %Replace invalid characters from fieldname, like -
+          stimAverages.(fieldName){lv}=rejoin_tiles;
           clear rejoin_tiles
       end
       end
@@ -374,11 +375,12 @@ clear tempBase idx f b count ll loop_num lv m mean_base
 figure;
 for f=1:length(parameters.frequencies)
           numF=num2str(round(parameters.frequencies(f)))
-          subplot(2,4,f)
+          subplot(2,ceil(length(parameters.frequencies)/2),f)
          
           for lv=1:length(parameters.levels);
               numLV=num2str(parameters.levels(lv))
-              a1 = stimAverages.(['kHz' numF ]){lv};
+              fieldName = matlab.lang.makeValidName(['kHz' numF ]);
+              a1 = stimAverages.(fieldName){lv};
                a2 = squeeze(mean(mean(a1,1),2));
                
                plot(smooth(a2,5)); hold on
@@ -390,18 +392,20 @@ end
 %% convert to tif? and then store as individual file. 
     folder = 'D:\2P analysis\2P local data\Carolyn\Widefield\VxDD033120F2_gcamp';
     
-%     folder = 'C:\Anne\';
+     %folder = 'C:\Anne\';
     cd(folder)
     tic
     for f=1:length(parameters.frequencies);
         toc
         numF=num2str(round(parameters.frequencies(f)));
+        fieldName = matlab.lang.makeValidName(['kHz' numF]);
         for lv=1:length(parameters.levels);
             numLV=num2str(parameters.levels(lv));
             idx=parameters.stimIDX{f,lv};
-            outputFileName= (['avgStim' numF 'khz' numLV 'db.tif']);
-            for k = 1:size(stimAverages.(['kHz' numF ]){lv},3)
-                imwrite(stimAverages.(['kHz' numF ]){lv}(:, :, k), outputFileName, 'WriteMode', 'append')
+            fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
+            outputFileName= ([fileName 'db.tif']);
+            for k = 1:size(stimAverages.(fieldName){lv},3)
+                imwrite(stimAverages.(fieldName){lv}(:, :, k), outputFileName, 'WriteMode', 'append')
             end
         end
     end

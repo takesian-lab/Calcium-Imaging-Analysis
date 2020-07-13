@@ -25,15 +25,21 @@ for a=1:size(setup.mousename,1) %Mice
 %         [folder '*/*.ome.tif']
         d = dir([folder '*/*.ome.tif']);%extract tiffs
         
+        num_BOT_count = 1;
         for k=1:length(d);
 %             
             num_BOT = sprintf('%06d',((setup.BOT_start-1)+k));
-            num_BOT
             fig_name = strcat(setup.BOTname, '_Cycle00001_', setup.imaging_chan, '_', num_BOT, '.ome.tif');
             fig_name = convertStringsToChars(fig_name);
             image = imread(fig_name);
             filtered_image = imresize(image,0.5);%reduce to 256x256
             Full_Tile_Matrix(:,:,k) = filtered_image;
+            
+            %Print update every 100 tiffs to let the user know the code is working
+            num_BOT_count = num_BOT_count + 1;
+            if mod(num_BOT_count,100) == 0
+                disp(num_BOT_count)
+            end
         
         end
         

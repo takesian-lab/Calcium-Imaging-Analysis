@@ -54,9 +54,16 @@ for time=1:length(Sound_Time)
 
      closest_frame_sound_all(time) = closest_frame_sound;
      closest_frame_window_all(time) = closest_frame_window;
-
-
-    % if any times are active, it will count as loco time
+     
+     % if any times are active, it will count as loco time
+    
+     %For the case where the closest frame surpasses the length of active_time
+     %This should only be the case if we're on the last trial, so let the
+     %code throw an error if we're not (no else case)
+     if closest_frame_window > length(active_time) && time == length(Sound_Time)
+         closest_frame_window = length(active_time);
+     end
+    
      Loco_1(time) = sum(active_time(closest_frame_sound:closest_frame_window))>1;
 end
 

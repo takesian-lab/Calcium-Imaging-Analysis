@@ -57,7 +57,7 @@ switch PC_name
     case 'RD0366' %Maryse
         info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
         save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
-        info_filename = 'Info_NxDC030220M3';
+        info_filename = 'Info_VxDC030520M2';
         ops_filename = 'Maryse_ops2.mat';
     case 'RD0332' %Carolyn
         info_path = 'D:\2P analysis\2P local data\Carolyn';

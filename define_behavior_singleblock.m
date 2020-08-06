@@ -142,14 +142,26 @@ for m = 1:length(Data)
         V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
     elseif setup.stim_protocol == 5 %SAM 
-        V1(1,m)  = Data{m}.Sound.Signal.SAM.Rate_Hz;
-        V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
+        try
+            V1(1,m)  = Data{m}.Sound.Signal.SAM.Rate_Hz;
+            V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
+        catch
+            %blank trials
+            V1(1,m)  = nan;
+            V2(1,m)  = nan;
+        end            
     elseif setup.stim_protocol == 3 %FM sweep
         V1(1,m)  = Data{m}.Sound.Signal.FMSweep.Rate_oct_s;
         V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
     elseif setup.stim_protocol == 6 %SAM freq
-        V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
-        V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
+        try
+            V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
+            V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
+        catch
+            %blank trials
+            V1(1,m)  = nan;
+            V2(1,m)  = nan;
+        end   
     elseif setup.stim_protocol == 7 %Behavior
         try
         V1(1,m)  = Data{m}.cue.Signal.Waveform.Frequency_kHz;
@@ -177,6 +189,10 @@ for m = 1:length(Data)
         else
             V2(1,m)  = New_sound_times(m) - New_sound_times(m-1);
         end
+    elseif setup.stim_protocol == 12 %Spontaneous
+        V1 = 0;
+        V2 = 0;
+        break
     else %stim_protocol doeesn't match any of the above
         warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])
         break;

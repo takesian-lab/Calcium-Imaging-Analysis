@@ -37,7 +37,7 @@ disp('Pulling out Tosca data...');
 %% Go to Tosca folder and pull out files related to setup.Tosca_run
 
 setup = block.setup;
-cd(setup.Tosca_path)
+cd(setup.Tosca_path{1})
 allfiles=dir('*Run*');
 
 countblock=1;
@@ -95,18 +95,34 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                  b_Outcome{t}=1;
                  if setup.stim_protocol == 7
                      targetFreq=s.cue.Signal.Waveform.Frequency_kHz;%pull out the target frequency
+                 elseif setup.stim_protocol == 13
+                     targetFreq(t) = Data{t}.Target_kHz;
+                     rxn_time(t) = Data{t}.Rxn_time_ms;
                  end
                  trialType{t}=1;
              elseif isequal(Data{t}.Result,'Miss')
                  b_Outcome{t}=0;
                  trialType{t}=1;
-                 targetFreq=s.cue.Signal.Waveform.Frequency_kHz;
+                 if setup.stim_protocol == 13
+                     targetFreq(t) = Data{t}.Target_kHz;
+                     rxn_time(t) = nan;
+                 else
+                     targetFreq = s.cue.Signal.Waveform.Frequency_kHz;
+                 end
              elseif isequal(Data{t}.Result,'Withhold')
                  b_Outcome{t}=3;
                  trialType{t}=0;
+                 if setup.stim_protocol == 13
+                     targetFreq(t) = Data{t}.Target_kHz;
+                     rxn_time(t) = nan;
+                 end
              elseif isequal(Data{t}.Result,'False Alarm')
                  b_Outcome{t}=4;
                  trialType{t}=0;
+                 if setup.stim_protocol == 13
+                     targetFreq(t) = Data{t}.Target_kHz;
+                     rxn_time(t) = Data{t}.Rxn_time_ms;
+                 end
              else
                  b_Outcome{t}=NaN;
                  trialType{t}=NaN;
@@ -166,7 +182,8 @@ for m = 1:length(Data)
         try
         V1(1,m)  = Data{m}.cue.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
-        catch  V1(1,m)  =Params.Output_States(2).StimChans.Stimulus.Waveform.Tone.Frequency_kHz;
+        catch
+        V1(1,m)  = Params.Output_States(2).StimChans.Stimulus.Waveform.Tone.Frequency_kHz;
         V2(1,m)  = Params.Output_States(2).StimChans.Stimulus.Level.Level;
         end
     elseif setup.stim_protocol == 8 %Behavior
@@ -193,6 +210,9 @@ for m = 1:length(Data)
         V1 = 0;
         V2 = 0;
         break
+    elseif setup.stim_protocol == 13 %Maryse behavior
+        V1(1,m) = Data{1,1}.Standard_kHz;
+        V2(1,m) = Data{1,1}.Target_kHz;
     else %stim_protocol doeesn't match any of the above
         warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])
         break;
@@ -259,5 +279,6 @@ block.parameters.variable2 = Var2; %index of variable 2 (e.g. level)
 block.loco_data = loco_data;
 block.loco_activity = loco_activity;
 block.loco_times = loco_times;
+block.rxn_time = rxn_time;
 block.setup = setup;
 end

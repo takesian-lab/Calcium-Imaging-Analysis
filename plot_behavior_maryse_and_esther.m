@@ -35,6 +35,7 @@ figure
 plot(x,y)
 ylabel('Hit Rate')
 xlabel('Alternating frequency')
+set(gca, 'XTick', x)
 set(gca, 'XTickLabel', uniqueFrequencies)
 title([mousename ' ' expt_date])
 

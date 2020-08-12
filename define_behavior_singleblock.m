@@ -77,6 +77,7 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
         start_time=Tosca_times{1,t}(1,1);
         zero_times{t}=Tosca_times{1,t}(1,:)-start_time;
         licks{t,:}=s.Lickometer;
+        rxn_time(t) = s.Rxn_time_ms;
         states{t}=[0 (diff(s.State_Change)>0)];
         if states{t}(:,:)~=1
             StateChange(t,:)=1;
@@ -97,7 +98,7 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                      targetFreq=s.cue.Signal.Waveform.Frequency_kHz;%pull out the target frequency
                  elseif setup.stim_protocol == 13
                      targetFreq(t) = Data{t}.Target_kHz;
-                     rxn_time(t) = Data{t}.Rxn_time_ms;
+                     holdingPeriod(t) = s.Script.output;
                  end
                  trialType{t}=1;
              elseif isequal(Data{t}.Result,'Miss')
@@ -105,7 +106,7 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                  trialType{t}=1;
                  if setup.stim_protocol == 13
                      targetFreq(t) = Data{t}.Target_kHz;
-                     rxn_time(t) = nan;
+                     holdingPeriod(t) = s.Script.output;
                  else
                      targetFreq = s.cue.Signal.Waveform.Frequency_kHz;
                  end
@@ -114,14 +115,14 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                  trialType{t}=0;
                  if setup.stim_protocol == 13
                      targetFreq(t) = Data{t}.Target_kHz;
-                     rxn_time(t) = nan;
+                     holdingPeriod(t) = s.Script.output;
                  end
              elseif isequal(Data{t}.Result,'False Alarm')
                  b_Outcome{t}=4;
                  trialType{t}=0;
                  if setup.stim_protocol == 13
                      targetFreq(t) = Data{t}.Target_kHz;
-                     rxn_time(t) = Data{t}.Rxn_time_ms;
+                     holdingPeriod(t) = s.Script.output;
                  end
              else
                  b_Outcome{t}=NaN;
@@ -281,4 +282,7 @@ block.loco_activity = loco_activity;
 block.loco_times = loco_times;
 block.rxn_time = rxn_time;
 block.setup = setup;
+if setup.stim_protocol == 13
+    block.holdingPeriod = holdingPeriod;
+end
 end

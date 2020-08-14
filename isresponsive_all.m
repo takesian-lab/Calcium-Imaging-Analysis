@@ -24,6 +24,7 @@ display('...testing if cells are responsive to all (averaged) stimuli...')
 for a=1;%:length(setup.mousename)
     mouseID=setup.mousename{(a)};
     stimdata = data.([mouseID]).stim_df_f;
+    blockName = setup.unique_block_names{(a)};
     
     %go through all of the cells
     for i=1:size(stimdata.F7_df_f,1);
@@ -60,6 +61,8 @@ for a=1;%:length(setup.mousename)
             %green, non-responsive are black
             subplot_num = i-first_cell+1;
             subplot(ceil(sqrt(num_cells)),ceil(sqrt(num_cells)),subplot_num);
+            cell_label = data.([mouseID]).([blockName]).cell_number(i);
+            title(cell_label);
             x_green = 1:length(all_average(i,:));
             if data.([mouseID]).response.isRespPos(i) == 1
                 shadedErrorBar(x_green,smooth((all_average(i,:)),10),smooth((SEM_trace(i,:)),10),'lineprops','-b','transparent',1); hold on;

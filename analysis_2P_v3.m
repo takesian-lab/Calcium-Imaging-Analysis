@@ -33,7 +33,7 @@ else
     stim_protocol = 1;
     run_redcell = 1;
     std_level = 3;
-    std_level_byStim = 2;
+    std_level_byStim = 3;
 
     %% Load Info.mat
     % Make setup and data structure out of all blocks that correspond to stim_protocol
@@ -44,9 +44,10 @@ else
     switch PC_name
         case 'RD0366' %Maryse
             info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-            compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
+            %compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
+            compiled_blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\analyzed\Daily_Imaging';
             save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-            info_filename = 'Info_NxDB092719M2';
+            info_filename = 'Info_VxAC031419M1';
         case 'RD0332' %Carolyn
             info_path = 'D:\2P analysis\2P local data\Carolyn';
 %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';

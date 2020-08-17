@@ -55,6 +55,22 @@ end
 
 behaveblock = sort_nat(behaveblock); %Replaced previous code that sorted behaveblock
 trials=sort_nat(trials);
+%% Pull out loco info
+
+Tosca_Run_number = num2str(setup.Tosca_run);
+Tosca_Session = num2str(setup.Tosca_session);
+mouseID = char(setup.mousename);
+try
+loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']); %locomotor data
+loco_times = loco_data(:,1);%-start_time; %I am only looking at column 1
+loco_times = loco_times(:,1)+abs(loco_times(1,1));
+loco_activity = (abs(loco_data(:,3)));
+catch
+    warning('no loco data available')
+    loco_data =NaN;
+    loco_activity = NaN;
+    loco_times=NaN;
+end
 
 %% Read data from the run
 Var1=[]; Var2=[];
@@ -74,8 +90,9 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
     if ~isempty(s)
         Tosca_times{t}=s.Time_s; %pulls out the tosca generated timestamps for each trial
         explore.Tosca_times_size(t) = length(Tosca_times{t});
-        start_time=Tosca_times{1,t}(1,1);
-        zero_times{t}=Tosca_times{1,t}(1,:)-start_time;
+        start_time(t)=Tosca_times{1,t}(1,1);
+        end_time(t) =Tosca_times{1,t}(1,end);
+        zero_times{t}=Tosca_times{1,t}(1,:)-start_time(t);
         licks{t,:}=s.Lickometer;
         states{t}=[0 (diff(s.State_Change)>0)];
         if states{t}(:,:)~=1
@@ -133,14 +150,30 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
               b_Outcome{t}=s.Result;
                  trialType{t}=('SoundPav');
          end
-    end
+   
+             % find the loco times that are closest to the trial start times.
+         % Use this information to find which locomotor 
+         [c closest_trial_start] = min(abs(loco_data(:,1)-start_time(t)));
+         [c closest_trial_end] = min(abs(loco_data(:,1)-end_time(t)));
+         est_loc_start(t) = closest_trial_start;
+         est_loc_end(t) = closest_trial_end;
+         if t==1
+             locTrial_idx{t} = 1:est_loc_end(t)-1;
+         else 
+             locTrial_idx{t} = est_loc_start(t):est_loc_end(t)-1;
+         end
+         
+         zero_loc{t} = loco_data(locTrial_idx{t}(:),1) - start_time(t);
 end
-
+ end
 A=exist('targetFreq');
 if A==0
     targetFreq=NaN;
 end
-
+B=exist('rxn_time')
+if B==0
+    rxn_time=NaN;
+end
 %% Extract stimulus-specific variables
 
 V1 = [];
@@ -280,5 +313,6 @@ block.loco_data = loco_data;
 block.loco_activity = loco_activity;
 block.loco_times = loco_times;
 block.rxn_time = rxn_time;
+block.loc_Trial_times = zero_loc;
 block.setup = setup;
 end

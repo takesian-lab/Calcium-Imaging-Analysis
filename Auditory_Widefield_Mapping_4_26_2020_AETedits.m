@@ -230,8 +230,8 @@ parameters.adjusted_times = parameters.adjusted_times_est;   %AT
 %% DETREND: Grab a coffee - this will take approx. 2 hours
 t = cputime;
 parameters.loops=loops;
-for i=1:length(setup.BOT_maps)
-    BOT_number = num2str(setup.BOT_maps(i));
+for i=1:length(data.setup.Imaging_sets)
+%     BOT_number = num2str(data.setup.Imaging_sets(i));
    Cropped = imageData.Cropped_Imaging_Data;
     [All_Images_df_over_f] = Pixel_Detrend_Widefield_v2(Cropped,loops);   
 end
@@ -241,9 +241,9 @@ e = cputime-t
 clear t e i BOT_number
 
 %% view df_over_f
-for i=1:length(setup.BOT_maps)
+for i=1:length(data.setup.Imaging_sets)
     %mean of all pixels across time
-    BOT_number = num2str(setup.BOT_maps(i));
+%     BOT_number = num2str(setup.BOT_maps(i));
     FullTile_df= squeeze(mean(mean(All_Images_df_over_f.Tile4,1),2));
     timestamp=parameters.timestamp;
     Sound_Time=parameters.adjusted_times; %changed AT on 4/11/20 to adjust for timing issue

@@ -38,21 +38,21 @@
 
 %% SETUP
 % set up your files in folders in D drive using the following
-    setup.username = {'Anne'};
-    setup.mousename={'LD-031920-M1'};
+    setup.username = {'Carolyn'};
+    setup.mousename={'VxDD033120F2'};
     %setup.mousename={'CnJ091019F4'};
     %setup.expt_date={'2020-01-09'};
-    setup.expt_date={'2020-03-06'};
-    setup.Session =[1]; %widefield receptive field
+    setup.expt_date={'2020-06-19'};
+    setup.Session =[2]; %widefield receptive field
     %setup.Session ={'2'};
     %setup.Session = [2]; %Tosca session
     %setup.Tosca_Runs = [5];
-    setup.Tosca_Runs = [2];
+    setup.Tosca_Runs = [4];
     %setup.BOT_maps = [5];
-    setup.BOT_maps = [1];
+    setup.BOT_maps = [4];
     setup.voltage_recording = [4];
     %setup.voltage_recording = [5];
-    setup.path_name = 'C:/'
+    setup.path_name = 'Z:/Carolyn/2P Imaging data/VIPvsNDNF_response_stimuli_study'
     setup.BOT_start = [1]; %define which number the BOT file starts (n) and the number BOT
     
 %analysis type
@@ -77,15 +77,15 @@
 %can define raw folders and file names here if unconventional - 
     %otherwise leave blank and will be generated
     setup.Tosca_folder_name = ['Session 2']; %name of the Tosca folder
-    setup.Tosca_folder_path = ['Z:\Nick\Microglia Project\COVID_timeline\LD-031920-M1\Baseline_3\Session 2'];
-    setup.loco_filename = ['LD-031920-M1-Session2-Run1.loco'];
+    setup.Tosca_folder_path = ['Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\VxDD033120F2\Tosca_VxDD033120F2\Session 2'];
+    setup.loco_filename = ['VxDD033120F2-Session2-Run4.loco'];
 
-    setup.BOT_folder_path = ['Z:\Nick\Microglia Project\COVID_timeline\LD-031920-M1\Baseline_3\BrightnessOverTime-06172020-1337-IntrinsicImaging_GFPCube-002'];
-    setup.BOT_image_filename_start = ['BrightnessOverTime-06172020-1337-IntrinsicImaging_GFPCube-002_Cycle00001_Ch1_'];%['BOT_CnJ091019F4_5HT_noiseburst-005_Cycle00001_Ch2_']; % this is the first part of the image filename 
-    setup.BOT_filename = ['BrightnessOverTime-06172020-1337-IntrinsicImaging_GFPCube-002_Cycle00001-botData.csv']; %['BOT_CnJ091019F4_5HT_noiseburst-005_Cycle00001-botData.csv'];
+    setup.BOT_folder_path = ['Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\VxDD033120F2\2020-06-19\BOT_VxDD033120F2_widefield_RF_630-004'];
+    setup.BOT_image_filename_start = ['BOT_VxDD033120F2_widefield_RF_630-004_Cycle00001_Ch2_'];%['BOT_CnJ091019F4_5HT_noiseburst-005_Cycle00001_Ch2_']; % this is the first part of the image filename 
+    setup.BOT_filename = ['BOT_VxDD033120F2_widefield_RF_630-004_Cycle00001-botData.csv']; %['BOT_CnJ091019F4_5HT_noiseburst-005_Cycle00001-botData.csv'];
 
-    setup.VoltageRecording_folder_path = ['Z:\Nick\Microglia Project\COVID_timeline\LD-031920-M1\Baseline_3\VoltageRecording-06172020-1337-IntrinsicImaging_GFPCube-002']; 
-    setup.VoltageRecording_filename = ['VoltageRecording-06172020-1337-IntrinsicImaging_GFPCube-002_Cycle00001_VoltageRecording_001.csv']; % ['BOT_CnJ091019F4_5HT_noiseburst-005_Cycle00001_VoltageRecording_001.csv'];
+    setup.VoltageRecording_folder_path = ['Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\VxDD033120F2\2020-06-19\VoltageRecording_VxDD033120F2_widefield_RF_630-004']; 
+    setup.VoltageRecording_filename = ['VoltageRecording_VxDD033120F2_widefield_RF_630-004.csv']; % ['BOT_CnJ091019F4_5HT_noiseburst-005_Cycle00001_VoltageRecording_001.csv'];
 
 % %create BOT file names - check if overriden above
 % voltage_number = sprintf('%03d',setup.voltage_recording);
@@ -133,17 +133,17 @@ if isempty(p)
     parpool('local',10);
 end
 %can define raw folders and file names here if unconventional - 
-    %otherwise leave blank and will be generated
-    setup.Tosca_folder_name = ['Session 2']; %name of the Tosca folder
-    setup.Tosca_folder_path = ['C:\Anne\LD-031920-M3\Baseline_2\Session 2'];
-    setup.loco_filename = ['LD-031920-F3-Session2-Run2.loco'];
-
-    setup.BOT_folder_path = ['C:\Anne\LD-031920-F3\Baseline_2\BrightnessOverTime-06132020-0938-intrinsic-GFPCube-002'];
-    setup.BOT_image_filename_start = ['BrightnessOverTime-06132020-0938-intrinsic-GFPCube-002_Cycle00001_Ch1_'];%['BOT_CnJ091019F4_5HT_noiseburst-005_Cycle00001_Ch2_']; % this is the first part of the image filename 
-    setup.BOT_filename = ['BrightnessOverTime-06132020-0938-intrinsic-GFPCube-002_Cycle00001-botData.csv']; %['BOT_CnJ091019F4_5HT_noiseburst-005_Cycle00001-botData.csv'];
-
-    setup.VoltageRecording_folder_path = ['C:\Anne\LD-031920-F3\Baseline_2\VoltageRecording-06132020-0938-intrinsic-GFPCube-002']; 
-    setup.VoltageRecording_filename = ['VoltageRecording-06132020-0938-intrinsic-GFPCube-002_Cycle00001_VoltageRecording_001.csv']; % ['BOT_CnJ091019F4_5HT_noiseburst-005_Cycle00001_VoltageRecording_001.csv'];
+%     %otherwise leave blank and will be generated
+%     setup.Tosca_folder_name = ['Session 2']; %name of the Tosca folder
+%     setup.Tosca_folder_path = ['Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\VxDD033120F2\Tosca_VxDD033120F2'];
+%     setup.loco_filename = ['VxDD033120F2-Session2-Run4.loco'];
+% 
+%     setup.BOT_folder_path = ['C:\Anne\LD-031920-F3\Baseline_2\BrightnessOverTime-06132020-0938-intrinsic-GFPCube-002'];
+%     setup.BOT_image_filename_start = ['BrightnessOverTime-06132020-0938-intrinsic-GFPCube-002_Cycle00001_Ch1_'];%['BOT_CnJ091019F4_5HT_noiseburst-005_Cycle00001_Ch2_']; % this is the first part of the image filename 
+%     setup.BOT_filename = ['BrightnessOverTime-06132020-0938-intrinsic-GFPCube-002_Cycle00001-botData.csv']; %['BOT_CnJ091019F4_5HT_noiseburst-005_Cycle00001-botData.csv'];
+% 
+%     setup.VoltageRecording_folder_path = ['C:\Anne\LD-031920-F3\Baseline_2\VoltageRecording-06132020-0938-intrinsic-GFPCube-002']; 
+%     setup.VoltageRecording_filename = ['VoltageRecording-06132020-0938-intrinsic-GFPCube-002_Cycle00001_VoltageRecording_001.csv']; % ['BOT_CnJ091019F4_5HT_noiseburst-005_Cycle00001_VoltageRecording_001.csv'];
 
 %create BOT file names - check if overriden above
 voltage_number = sprintf('%03d',setup.voltage_recording);
@@ -205,7 +205,7 @@ end
  Full_Tile_Mean = mean(mean(imageData.Cropped_Imaging_Data,1),2);
  Full_Tile_Mean_Detrend = locdetrend(Full_Tile_Mean(1,1,:),1,setup.detrend_filter); %
  timestamp = parameters.timestamp; %change this number
- parameters.adjusted_times(:)= parameters.adjusted_times(:)-5;
+ parameters.adjusted_times(:)= parameters.adjusted_times(:)-5; % this '5' accounts for an apparent 500 ms shift in the data
       figure;   
       hold on;
        
@@ -263,7 +263,7 @@ end
       
       %AT added 4/15/20 to center window around peak response across window
       
-      [amp_average_response,time_average_response] = min(mean_across_all_trials);
+      [amp_average_response,time_average_response] = min(mean_across_all_trials);% its min for intrinsic 
       estimated_peak = parameters.image_f*5; %the peak min response should be about 5 sec after stim (1s)
       estimated_time = (time_average_response-estimated_peak)*(1/parameters.image_f); 
       parameters.adjusted_times_est = parameters.adjusted_times+estimated_time;
@@ -408,7 +408,7 @@ clear BOT_number FullTile_df i Sound_Time timestamp
 
 %% create frequency and level indicies and find responses to sound across stim
 [parameters] = indexStimuli(parameters,setup);
-[traces]=sound_response_intrinsic(parameters,All_Images_df_over_f);
+[traces]=sound_response_intrinsic(parameters,setup, All_Images_df_over_f);
 
 %% view the traces with sounds
 
@@ -484,34 +484,40 @@ clear tempBase idx f b count ll loop_num lv m mean_base
               numLV=num2str(parameters.levels(lv))
              
               rejoin_tiles=[];
-               for ll=1:loops
-      loop_num=num2str(ll)
+              for ll=1:loops
+                  loop_num=num2str(ll)
+                  
+                  mm=avgTrace.(['Tile' loop_num]){f,lv};
+                  rejoin_tiles=double(cat(1, rejoin_tiles, mm));
+              end
               
-              mm=avgTrace.(['Tile' loop_num]){f,lv};
-              rejoin_tiles=double(cat(1, rejoin_tiles, mm));
+              if numF == '-1000'
+                  numF ='0';
+              
+              end
+              
+              stimAverages.(['kHz' numF ]){lv}=rejoin_tiles;
+              clear rejoin_tiles
           end
-          stimAverages.(['kHz' numF ]){lv}=rejoin_tiles;
-          clear rejoin_tiles
       end
-  end
-  clear mm avgTrace
-
-%% what do the stim averages look like?
-for f=1:length(parameters.frequencies)
+      clear mm avgTrace
+      
+      %% what do the stim averages look like?
+      for f=1:length(parameters.frequencies)
           numF=num2str(round(parameters.frequencies(f)))
           subplot(2,4,f)
-         
+          
           for lv=1:length(parameters.levels);
               numLV=num2str(parameters.levels(lv))
               a1 = stimAverages.(['kHz' numF ]){lv};
-               a2 = squeeze(mean(mean(a1,1),2));
-               
-               plot(smooth(a2,5)); hold on
-               
-               
+              a2 = squeeze(mean(mean(a1,1),2));
+              
+              plot(smooth(a2,5)); hold on
+              
+              
               
           end
-end
+      end
 
 
 

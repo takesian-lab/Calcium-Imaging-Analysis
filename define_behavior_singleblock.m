@@ -108,6 +108,8 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                  if setup.stim_protocol == 13
                      targetFreq(t) = Data{t}.Target_kHz;
                      holdingPeriod(t) = s.Script.output;
+                 elseif setup.stim_protocol == 9
+                     targretFreq = s.cue.Signal.FMSweep.Rate_oct_s;
                  else
                      targetFreq = s.cue.Signal.Waveform.Frequency_kHz;
                  end

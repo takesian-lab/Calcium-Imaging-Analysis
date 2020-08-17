@@ -30,8 +30,8 @@ else
     %Random air puff = 11
 
 
-    stim_protocol = 1;
-    run_redcell = 1;
+    stim_protocol = 2;
+    run_redcell = 0;
     std_level = 3;
     std_level_byStim = 2;
 
@@ -50,9 +50,9 @@ else
         case 'RD0332' %Carolyn
             info_path = 'D:\2P analysis\2P local data\Carolyn';
 %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
-            compiled_blocks_path = 'Z:\Maryse\2p analysis\Compiled blocks';
+            compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
             save_path = 'D:\2P analysis\2P local data\Carolyn';
-            info_filename = 'Info';
+            info_filename = 'Info_Aug2020';
         case 'RD0386' %Wisam
             % INSERT PATHS HERE
             info_filename = 'Info';

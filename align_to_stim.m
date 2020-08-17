@@ -43,6 +43,7 @@ Sound_Time = block.Sound_Time;
 
 % loop through each stim-presenation
 for time=1:length(Sound_Time)
+   
     sound = Sound_Time(time);
     
     % define when baseline starts

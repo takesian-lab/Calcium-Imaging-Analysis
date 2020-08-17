@@ -56,6 +56,23 @@ end
 behaveblock = sort_nat(behaveblock); %Replaced previous code that sorted behaveblock
 trials=sort_nat(trials);
 
+
+%% Pull out loco info
+
+Tosca_Run_number = num2str(setup.Tosca_run);
+Tosca_Session = num2str(setup.Tosca_session);
+mouseID = char(setup.mousename);
+try
+loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']); %locomotor data
+loco_times = loco_data(:,1);%-start_time; %I am only looking at column 1
+loco_times = loco_times(:,1)+abs(loco_times(1,1));
+loco_activity = (abs(loco_data(:,3)));
+catch
+    warning('no loco data available')
+    loco_data =NaN;
+    loco_activity = NaN;
+    loco_times=NaN;
+end
 %% Read data from the run
 Var1=[]; Var2=[];
 b=setup.Tosca_run;
@@ -73,9 +90,9 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
     s=tosca_read_trial(Params,Data,t);%the read_trial gives us more info than read_run alone
     if ~isempty(s)
         Tosca_times{t}=s.Time_s; %pulls out the tosca generated timestamps for each trial
-        explore.Tosca_times_size(t) = length(Tosca_times{t});
-        start_time=Tosca_times{1,t}(1,1);
-        zero_times{t}=Tosca_times{1,t}(1,:)-start_time;
+        start_time(t)=Tosca_times{1,t}(1,1);
+        end_time(t) =Tosca_times{1,t}(1,end);
+        zero_times{t}=Tosca_times{1,t}(1,:)-start_time(t);
         licks{t,:}=s.Lickometer;
         states{t}=[0 (diff(s.State_Change)>0)];
         if states{t}(:,:)~=1
@@ -117,6 +134,21 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
               b_Outcome{t}=s.Result;
                  trialType{t}=('SoundPav');
          end
+         % find the loco times that are closest to the trial start times.
+         % Use this information to find which locomotor 
+         [c closest_trial_start] = min(abs(loco_data(:,1)-start_time(t)));
+         [c closest_trial_end] = min(abs(loco_data(:,1)-end_time(t)));
+         est_loc_start(t) = closest_trial_start;
+         est_loc_end(t) = closest_trial_end;
+         if t==1
+             locTrial_idx{t} = 1:est_loc_end(t)-1;
+         else 
+             locTrial_idx{t} = est_loc_start(t):est_loc_end(t)-1;
+         end
+         
+        
+         zero_loc{t} = loco_data(locTrial_idx{t}(:),1) - start_time(t);
+         
     end
 end
 
@@ -132,7 +164,11 @@ V2 = [];
 
 for m = 1:length(Data)
     if setup.stim_protocol==1 %noiseburst
+        try
+         V1(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
+        catch
         V1 = 0;
+        end
         V2 = 0;
         break
     elseif setup.stim_protocol == 2 %Receptive field
@@ -148,7 +184,7 @@ for m = 1:length(Data)
         V1(1,m)  = Data{m}.Sound.Signal.FMSweep.Rate_oct_s;
         V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
     elseif setup.stim_protocol == 6 %SAM freq
-        V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
+        V1(1,m)  = Data{1,m}.Sound.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
     elseif setup.stim_protocol == 7 %Behavior
         try
@@ -210,22 +246,6 @@ end
 Var1=[Var1,V1];
 Var2=[Var2,V2];
 
-%% Pull out loco info
-
-Tosca_Run_number = num2str(setup.Tosca_run);
-Tosca_Session = num2str(setup.Tosca_session);
-mouseID = char(setup.mousename);
-try
-loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']); %locomotor data
-loco_times = loco_data(:,1)-start_time; %I am only looking at column 1
-loco_times = loco_times(:,1)+abs(loco_times(1,1));
-loco_activity = (abs(loco_data(:,3)));
-catch
-    warning('no loco data available')
-    loco_data =NaN;
-    loco_activity = NaN;
-    loco_times=NaN;
-end
 
 %% Save everything to block
 %Format used to be: data.([mouseID]).(['ImagingBlock' Imaging_Num]).VARIABLE
@@ -243,5 +263,6 @@ block.parameters.variable2 = Var2; %index of variable 2 (e.g. level)
 block.loco_data = loco_data;
 block.loco_activity = loco_activity;
 block.loco_times = loco_times;
+block.loc_Trial_times = zero_loc;
 block.setup = setup;
 end

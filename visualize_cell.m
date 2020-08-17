@@ -41,7 +41,7 @@ end
 
 setup = block.setup;
 stim_protocol = setup.stim_protocol;
-code = {'Noiseburst', 'Receptive Field', 'FM sweep', 'Widefield', 'SAM', 'SAM freq' , 'Behavior', 'Behavior', 'Random H20', 'Noiseburst ITI', 'Random Air'};
+code = {'Noiseburst', 'Receptive Field', 'FM sweep', 'Widefield', 'SAM', 'SAM freq' , 'Behavior', 'Behavior', 'Random H20', 'Noiseburst ITI', 'Random Air', 'Spontaneous'};
 currentStim = code{stim_protocol};
 disp(['Plotting figures for ' currentStim '...'])
 
@@ -223,20 +223,34 @@ end
 plotAirOrH20 = 0;
 
 if stim_protocol == 9 %Random H20
+    V1 = block.parameters.variable1;
     stim_names = {'H20', 'No H20'};
     plotAirOrH20 = 1;
 elseif stim_protocol == 11 %Random Air
+    V1 = block.parameters.variable1;
     stim_names = {'Air', 'No Air'};
     plotAirOrH20 = 1;
 elseif stim_protocol == 10 %Noiseburst ITI
+    V1 = block.parameters.variable1;
     stim_names = {'70dB', '0dB'};
     plotAirOrH20 = 1;
+else %Use same format to plot sound blocks where blank/sham stim were included
+    V1 = block.parameters.variable1;
+    V2 = block.parameters.variable2;
+    
+    if any(isnan(V1)) || any(isnan(V2))
+        V1 = ~isnan(V1);
+        V2 = ~isnan(V2);
+        if ~isequal(V1,V2)
+            error('Stil need to account for case where V1 and V2 have different Nans')
+        end
+        stim_names = {'Sound', 'No sound'};
+        plotAirOrH20 = 1;
+    end
 end
 
 if plotAirOrH20
     
-    V1 = block.parameters.variable1;
-
     for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
         current_cells = cellnum(f,:);
         
@@ -248,6 +262,7 @@ if plotAirOrH20
         figure; hold all
         
         stimValues = fliplr(unique(V1));  %first is stim, second is sham
+        
         for v = 1:length(stimValues)
             stim_name = stim_names(v);
             if length(current_cells) == 1
@@ -360,6 +375,16 @@ if plotReceptiveField
     V1_stim = unique(V1);
     V2_stim = fliplr(unique(V2));
     
+    if any(isnan(V1_stim))
+        V1_stim(isnan(V1_stim)) = []; % remove all nans
+        %V1_stim(end+1) = NaN; % add the unique one.
+    end
+    
+    if any(isnan(V2_stim))
+        V2_stim(isnan(V2_stim)) = []; % remove all nans
+        %V2_stim(end+1) = NaN; % add the unique one.
+    end
+    
     for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
         current_cells = cellnum(f,:);
 
@@ -437,8 +462,8 @@ if plotReceptiveField
                     df_f_std = F7_df_f_mat(mat_rows,:) + ebar_mat(mat_rows,:);
                     spks_mean = spks_mat(mat_rows,:);
                 else
-                    df_f_std = mean(F7_df_f_mat(mat_rows,:)) + std(F7_df_f_mat(mat_rows,:));
-                    spks_mean = mean(spks_mat(mat_rows,:));
+                    df_f_std = nanmean(F7_df_f_mat(mat_rows,:)) + nanstd(F7_df_f_mat(mat_rows,:));
+                    spks_mean = nanmean(spks_mat(mat_rows,:));
                 end
                 if max(df_f_std) > max_df_f
                     max_df_f = max(df_f_std);

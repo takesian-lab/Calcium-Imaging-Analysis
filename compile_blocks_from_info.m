@@ -26,7 +26,7 @@
 %% Load Info.mat and change user-specific options
 
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
-recompile = 1; %1 to save over previously compiled blocks, 0 to skip
+recompile = 0; %1 to save over previously compiled blocks, 0 to skip
 checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
 %% set up values for 'align to stim'
@@ -55,9 +55,11 @@ PC_name = getenv('computername');
 
 switch PC_name
     case 'RD0366' %Maryse
-        info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
-        save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks';
-        info_filename = 'Info';
+        info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
+        save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks';
+        %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
+        %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks';
+        info_filename = 'Info_NxDC030220F2';
         ops_filename = 'Maryse_ops2.mat';
         
     case 'TAKESIANLAB2P' %2P computer

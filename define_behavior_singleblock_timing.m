@@ -37,7 +37,7 @@ disp('Pulling out Tosca data...');
 %% Go to Tosca folder and pull out files related to setup.Tosca_run
 
 setup = block.setup;
-cd(setup.Tosca_path{1})
+cd(setup.Tosca_path)
 allfiles=dir('*Run*');
 
 countblock=1;
@@ -55,35 +55,16 @@ end
 
 behaveblock = sort_nat(behaveblock); %Replaced previous code that sorted behaveblock
 trials=sort_nat(trials);
-%% Pull out loco info
-
-Tosca_Run_number = num2str(setup.Tosca_run);
-Tosca_Session = num2str(setup.Tosca_session);
-mouseID = char(setup.mousename);
-try
-loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']); %locomotor data
-loco_times = loco_data(:,1);%-start_time; %I am only looking at column 1
-loco_times = loco_times(:,1)+abs(loco_times(1,1));
-loco_activity = (abs(loco_data(:,3)));
-catch
-    warning('no loco data available')
-    loco_data =NaN;
-    loco_activity = NaN;
-    loco_times=NaN;
-end
 
 %% Read data from the run
 Var1=[]; Var2=[];
 b=setup.Tosca_run;
 
-
 [Data,Params] = tosca_read_run(behaveblock{b}); %Load block meta-data%%%HACK!!!!!
-
 inblock=trials(contains(trials,['Run' num2str(b) '-'])); %% added hyphen to eliminate double digit spurious entries...
 
 if length(inblock)>length(Data)
-    inblock=inblock(1:length(Data));  %inblock=inblock(1:end-1); previous code
-    %Why don't we just make the loop go through length(Data) here instead of inblock?
+    inblock=inblock(1:end-1);
 end
 
 for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so start on trial 1
@@ -91,11 +72,9 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
     if ~isempty(s)
         Tosca_times{t}=s.Time_s; %pulls out the tosca generated timestamps for each trial
         explore.Tosca_times_size(t) = length(Tosca_times{t});
-        start_time(t)=Tosca_times{1,t}(1,1);
-        end_time(t) =Tosca_times{1,t}(1,end);
-        zero_times{t}=Tosca_times{1,t}(1,:)-start_time(t);
+        start_time=Tosca_times{1,t}(1,1);
+        zero_times{t}=Tosca_times{1,t}(1,:)-start_time;
         licks{t,:}=s.Lickometer;
-        rxn_time(t) = s.Rxn_time_ms;
         states{t}=[0 (diff(s.State_Change)>0)];
         if states{t}(:,:)~=1
             StateChange(t,:)=1;
@@ -107,77 +86,37 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
         for y=1:length(zero_times) % find the time (in Tosca units) for the new sound
             n=StateChange(y,1);
             New_sound_times(y)=zero_times{1,y}(1,n);
-        end        
+        end
+        
          %Get CS+/CS- results
-         try
-             if isequal(Data{t}.Result,'Hit')
-                 b_Outcome{t}=1;
-                 if setup.stim_protocol == 7
-                     targetFreq=s.cue.Signal.Waveform.Frequency_kHz;%pull out the target frequency
-                 elseif setup.stim_protocol == 13
-                     targetFreq(t) = Data{t}.Target_kHz;
-                     holdingPeriod(t) = s.Script.output;
-                 end
-                 trialType{t}=1;
-             elseif isequal(Data{t}.Result,'Miss')
-                 b_Outcome{t}=0;
-                 trialType{t}=1;
-                 if setup.stim_protocol == 13
-                     targetFreq(t) = Data{t}.Target_kHz;
-                     holdingPeriod(t) = s.Script.output;
-                 elseif setup.stim_protocol == 9
-                     targretFreq = s.cue.Signal.FMSweep.Rate_oct_s;
-                 else
-                     targetFreq = s.cue.Signal.Waveform.Frequency_kHz;
-                 end
-             elseif isequal(Data{t}.Result,'Withhold')
-                 b_Outcome{t}=3;
-                 trialType{t}=0;
-                 if setup.stim_protocol == 13
-                     targetFreq(t) = Data{t}.Target_kHz;
-                     holdingPeriod(t) = s.Script.output;
-                 end
-             elseif isequal(Data{t}.Result,'False Alarm')
-                 b_Outcome{t}=4;
-                 trialType{t}=0;
-                 if setup.stim_protocol == 13
-                     targetFreq(t) = Data{t}.Target_kHz;
-                     holdingPeriod(t) = s.Script.output;
-                 end
-             else
-                 b_Outcome{t}=NaN;
-                 trialType{t}=NaN;
-                 
-             end
-         catch
-             warning('Sound Pav tone trials')
-              b_Outcome{t}=s.Result;
-                 trialType{t}=('SoundPav');
-         end
-   
-             % find the loco times that are closest to the trial start times.
-         % Use this information to find which locomotor 
-         [c closest_trial_start] = min(abs(loco_data(:,1)-start_time(t)));
-         [c closest_trial_end] = min(abs(loco_data(:,1)-end_time(t)));
-         est_loc_start(t) = closest_trial_start;
-         est_loc_end(t) = closest_trial_end;
-         if t==1
-             locTrial_idx{t} = 1:est_loc_end(t)-1;
-         else 
-             locTrial_idx{t} = est_loc_start(t):est_loc_end(t)-1;
-         end
-         
-         zero_loc{t} = loco_data(locTrial_idx{t}(:),1) - start_time(t);
+        if isequal(Data{t}.Result,'Hit')
+            b_Outcome{t}=1;
+            if setup.stim_protocol == 7
+                targetFreq=s.cue.Signal.Waveform.Frequency_kHz;%pull out the target frequency
+            end
+            trialType{t}=1;
+        elseif isequal(Data{t}.Result,'Miss')
+            b_Outcome{t}=0;
+            trialType{t}=1;
+            targetFreq=s.cue.Signal.Waveform.Frequency_kHz;
+        elseif isequal(Data{t}.Result,'Withhold')
+            b_Outcome{t}=3;
+            trialType{t}=0;
+        elseif isequal(Data{t}.Result,'False Alarm')
+            b_Outcome{t}=4;
+            trialType{t}=0;
+        else
+            b_Outcome{t}=NaN;
+            trialType{t}=NaN;
+        end
+    end
 end
- end
+
 A=exist('targetFreq');
 if A==0
     targetFreq=NaN;
 end
-B=exist('rxn_time')
-if B==0
-    rxn_time=NaN;
-end
+
 %% Extract stimulus-specific variables
 
 V1 = [];
@@ -195,34 +134,17 @@ for m = 1:length(Data)
         V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
     elseif setup.stim_protocol == 5 %SAM 
-        try
-            V1(1,m)  = Data{m}.Sound.Signal.SAM.Rate_Hz;
-            V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
-        catch
-            %blank trials
-            V1(1,m)  = nan;
-            V2(1,m)  = nan;
-        end            
+        V1(1,m)  = Data{m}.Sound.Signal.SAM.Rate_Hz;
+        V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
     elseif setup.stim_protocol == 3 %FM sweep
         V1(1,m)  = Data{m}.Sound.Signal.FMSweep.Rate_oct_s;
         V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
     elseif setup.stim_protocol == 6 %SAM freq
-        try
-            V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
-            V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
-        catch
-            %blank trials
-            V1(1,m)  = nan;
-            V2(1,m)  = nan;
-        end   
+        V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
+        V2(1,m)  = Data{m}.Sound.Signal.SAM.Depth_0_minus1;
     elseif setup.stim_protocol == 7 %Behavior
-        try
         V1(1,m)  = Data{m}.cue.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
-        catch
-        V1(1,m)  = Params.Output_States(2).StimChans.Stimulus.Waveform.Tone.Frequency_kHz;
-        V2(1,m)  = Params.Output_States(2).StimChans.Stimulus.Level.Level;
-        end
     elseif setup.stim_protocol == 8 %Behavior
         V1(1,m)  = Data{m}.cue.CurrentSource.Level.dB_re_1_Vrms;
         V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
@@ -243,14 +165,6 @@ for m = 1:length(Data)
         else
             V2(1,m)  = New_sound_times(m) - New_sound_times(m-1);
         end
-    elseif setup.stim_protocol == 12 %Spontaneous
-        V1 = 0;
-        V2 = 0;
-        break
-    elseif setup.stim_protocol == 13 %Maryse behavior
-        V1(1,m) = Data{1,1}.Standard_kHz;
-        V2(1,m) = Data{1,1}.Target_kHz;
-        stim_level = Params.Output_States(2).StimChans(1).Stimulus.Level.Level;
     else %stim_protocol doeesn't match any of the above
         warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])
         break;
@@ -270,7 +184,6 @@ end
 error_trials=cell2mat(error_trials);
 ~isnan(error_trials);
 k = find(error_trials>0);
-block.errors = k;
 if ~isempty(k)
     warning(['Found ' num2str(length(k)) ' error(s) out of ' num2str(length(error_trials)) ' Tosca trials'])
 end
@@ -289,17 +202,10 @@ Var2=[Var2,V2];
 Tosca_Run_number = num2str(setup.Tosca_run);
 Tosca_Session = num2str(setup.Tosca_session);
 mouseID = char(setup.mousename);
-try
 loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']); %locomotor data
 loco_times = loco_data(:,1)-start_time; %I am only looking at column 1
 loco_times = loco_times(:,1)+abs(loco_times(1,1));
 loco_activity = (abs(loco_data(:,3)));
-catch
-    warning('no loco data available')
-    loco_data =NaN;
-    loco_activity = NaN;
-    loco_times=NaN;
-end
 
 %% Save everything to block
 %Format used to be: data.([mouseID]).(['ImagingBlock' Imaging_Num]).VARIABLE
@@ -317,11 +223,5 @@ block.parameters.variable2 = Var2; %index of variable 2 (e.g. level)
 block.loco_data = loco_data;
 block.loco_activity = loco_activity;
 block.loco_times = loco_times;
-block.rxn_time = rxn_time;
-block.loc_Trial_times = zero_loc;
 block.setup = setup;
-if setup.stim_protocol == 13
-    block.holdingPeriod = holdingPeriod;
-    block.stim_level = stim_level;
-end
 end

@@ -26,7 +26,7 @@
 %% Load Info.mat and change user-specific options
 
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
-recompile = 0; %1 to save over previously compiled blocks, 0 to skip
+recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
 %% set up values for 'align to stim'
@@ -35,10 +35,10 @@ checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 constant.baseline_length = 0.5;
 
 % How many seconds after stim should we look at?
-constant.after_stim = 2.5;
+constant.after_stim = 3;
 
 % Define (in seconds) where to look for the response peak?
-constant.response_window = 1;
+constant.response_window = 2;
 
 % define where to look for locomotor responses, in sec?
 constant.locowindow = 2.5;
@@ -70,7 +70,12 @@ switch PC_name
     case 'RD0332' %Carolyn
         info_path = 'D:\2P analysis\2P local data\Carolyn';
         save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
-        info_filename = 'Info_widefield';
+        info_filename = 'Info_widefield_YD111219M1';
+        
+         case 'RD-6-TAK2' %Esther's computer
+        info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';
+        save_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob\Compiled Blocks';
+        info_filename = 'Info_widefield_YD111219M1';
         
     case 'RD0386' %Wisam
         % INSERT PATHS HERE

@@ -17,6 +17,10 @@ for a=1:size(setup.mousename,1) %Mice
         block = data.([mouseID]).([unique_block_name]);
         folder = convertStringsToChars(setup.BOTpath);
         
+        %how many tiffs do we need to load?
+        tiffnum = length(block.timestamp);
+        display(sprintf('...Loading %d tiffs to make window...',tiffnum))
+        
         
 %         BOT_number = num2str(setup.BOT_maps(i));
 %         BOT_number
@@ -26,6 +30,8 @@ for a=1:size(setup.mousename,1) %Mice
         d = dir([folder '*/*.ome.tif']);%extract tiffs
         
         num_BOT_count = 1;
+        
+        
         for k=1:length(d);
 %             
             num_BOT = sprintf('%06d',((setup.BOT_start-1)+k));

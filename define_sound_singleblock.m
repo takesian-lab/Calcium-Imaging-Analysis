@@ -100,6 +100,7 @@ if ~ismissing(block.setup.Tosca_path) %Skip if Tosca info is missing
     % find the time (normalized from trial start) of sound time
    for i = 1:length(Bruker_trial_time)
    Sound_Time(1,i) = (Bruker_trial_time(i))+New_sound_times(1,i);
+   Loc_BrukerTime{i} = block.loc_Trial_times{i}(:)+Bruker_trial_time(i);
    end
    
     loco_times = block.loco_times;

@@ -18,7 +18,7 @@
 %  - define_suite2p_singleblock
 %  - align_to_stim
 %  - visualize_block
-%    
+%
 %  Use visualize_block to preview the block contents once they've been compiled.
 %
 %  TAKESIAN LAB - March 2020
@@ -50,7 +50,7 @@ constant.locoThresh = 0.8;
 % TODO: automatically grab this from Suite2p
 constant.neucoeff = 0.7;
 
-%% 
+%%
 PC_name = getenv('computername');
 
 switch PC_name
@@ -63,14 +63,14 @@ switch PC_name
     case 'TAKESIANLAB2P' %2P computer
         info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
         save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks';
-        info_filename = 'Info';    
+        info_filename = 'Info';
         
     case 'RD0332' %Carolyn
         info_path = 'D:\2P analysis\2P local data\Carolyn';
         save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
         info_filename = 'Info_widefield_YD111219M1';
         
-         case 'RD-6-TAK2' %Esther's computer
+    case 'RD-6-TAK2' %Esther's computer
         info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';
         save_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob\Compiled Blocks';
         info_filename = 'Info_widefield_YD111219M1';
@@ -106,7 +106,7 @@ if size(Info,2) < lastColumn
     end
     warning('gcamp_type and expt_group columns missing from Info')
 end
-        
+
 %Remove header from Info
 Info(1,:) = [];
 
@@ -116,7 +116,7 @@ currentInfo = Info(ignore == 0,:);
 
 %Loop through all remaining rows
 for i = 1:size(currentInfo,1)
-
+    
     %Create setup variable that will contain all the necessary information about the block
     setup = struct;
     setup.constant = constant;
@@ -215,28 +215,28 @@ for i = 1:size(currentInfo,1)
             error('Your Suite2p analysis path is incorrect.')
         end
     end
-   
+    
     
     %% COMPILE BLOCK
     disp('Processing...');
     disp(setup.block_filename);
-
+    
     block = struct;
     block.setup = setup;
-
+    
     % Behavior, locomotion, sound, and Suite2p data
-
+    
     %pull out the Tosca-derived, behaviorally relevant data
     [block] = define_behavior_singleblock(block);
     [block] = FreqDisc_Behavior_singleblock(block);
-
+    
     %pull out the Bruker-derived timestamps from BOTs and Voltage Recordings
     [block] = define_sound_singleblock(block);
-
+    
     %determine which trials are considered "active (locomotor)"
     % This might not be necessary to do here, but leaving in for now.
     [block] = define_loco_singleblock(block);
-
+    
     %pull out block-specific data from Fall.mat
     [block] = define_suite2p_singleblock(block, user_ops);
     
@@ -252,6 +252,6 @@ for i = 1:size(currentInfo,1)
     disp('Saving...');
     cd(save_path)
     save(setup.block_filename, 'block');
-end       
+end
 
 disp('Finished compiling all blocks.');

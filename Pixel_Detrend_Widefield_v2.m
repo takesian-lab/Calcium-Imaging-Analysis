@@ -45,7 +45,7 @@ for ll=1:loops
      for i=1:length(x)
          toc
          for y=1:size_dim2
-             %             x(i)
+%                          x(i)
              f1 = squeeze(double(Cropped(x(i),y,:)));
              locdetrend_temp = locdetrend(f1,1,[300 10]);
              temp_DF_F0(i,y,:) = locdetrend_temp./(f1-locdetrend_temp);

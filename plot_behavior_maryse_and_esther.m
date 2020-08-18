@@ -33,7 +33,8 @@ reaction_times = raw_reactionTimes - holdingPeriod; %subtract holding period
 %Calculate hit rate per frequency
 hitsPerFrequency = nan(1,length(uniqueFrequencies)); %make empty vector to fill with data
 for i = 1:length(uniqueFrequencies)
-    freqResponse = hits(allFrequencies == uniqueFrequencies(i));
+    hits_and_FPs = hits + FPs;
+    freqResponse = hits_and_FPs(allFrequencies == uniqueFrequencies(i));
     hitsPerFrequency(i) = sum(freqResponse);
 end
 hitRatePerFrequency = hitsPerFrequency./nRepsPerFrequency;

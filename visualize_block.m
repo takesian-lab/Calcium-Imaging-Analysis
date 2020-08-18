@@ -170,6 +170,9 @@ else
         end
 
         B = floor(length(currentCells)/bin);
+        if B == 0
+            B = 1;
+        end
         extraCells = mod(length(currentCells),bin);
         if extraCells <= 5
             lastBin = bin + extraCells;
@@ -261,7 +264,7 @@ else
         elseif f == 3 && redcells_exist
             plotROIs = 1;
             currentCells = redcell_ones;
-            currentNumbers = redcell_number
+            currentNumbers = redcell_number;
             fig_title = 'Red cells';
         else
             continue

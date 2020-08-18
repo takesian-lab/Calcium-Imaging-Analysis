@@ -82,7 +82,8 @@ b=setup.Tosca_run;
 inblock=trials(contains(trials,['Run' num2str(b) '-'])); %% added hyphen to eliminate double digit spurious entries...
 
 if length(inblock)>length(Data)
-    inblock=inblock(1:end-1);
+    inblock=inblock(1:length(Data));  %inblock=inblock(1:end-1); previous code
+    %Why don't we just make the loop go through length(Data) here instead of inblock?
 end
 
 for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so start on trial 1
@@ -94,6 +95,7 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
         end_time(t) =Tosca_times{1,t}(1,end);
         zero_times{t}=Tosca_times{1,t}(1,:)-start_time(t);
         licks{t,:}=s.Lickometer;
+        rxn_time(t) = s.Rxn_time_ms;
         states{t}=[0 (diff(s.State_Change)>0)];
         if states{t}(:,:)~=1
             StateChange(t,:)=1;
@@ -114,7 +116,7 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                      targetFreq=s.cue.Signal.Waveform.Frequency_kHz;%pull out the target frequency
                  elseif setup.stim_protocol == 13
                      targetFreq(t) = Data{t}.Target_kHz;
-                     rxn_time(t) = Data{t}.Rxn_time_ms;
+                     holdingPeriod(t) = s.Script.output;
                  end
                  trialType{t}=1;
              elseif isequal(Data{t}.Result,'Miss')
@@ -122,7 +124,9 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                  trialType{t}=1;
                  if setup.stim_protocol == 13
                      targetFreq(t) = Data{t}.Target_kHz;
-                     rxn_time(t) = nan;
+                     holdingPeriod(t) = s.Script.output;
+                 elseif setup.stim_protocol == 9
+                     targretFreq = s.cue.Signal.FMSweep.Rate_oct_s;
                  else
                      targetFreq = s.cue.Signal.Waveform.Frequency_kHz;
                  end
@@ -131,14 +135,14 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                  trialType{t}=0;
                  if setup.stim_protocol == 13
                      targetFreq(t) = Data{t}.Target_kHz;
-                     rxn_time(t) = nan;
+                     holdingPeriod(t) = s.Script.output;
                  end
              elseif isequal(Data{t}.Result,'False Alarm')
                  b_Outcome{t}=4;
                  trialType{t}=0;
                  if setup.stim_protocol == 13
                      targetFreq(t) = Data{t}.Target_kHz;
-                     rxn_time(t) = Data{t}.Rxn_time_ms;
+                     holdingPeriod(t) = s.Script.output;
                  end
              else
                  b_Outcome{t}=NaN;
@@ -246,6 +250,7 @@ for m = 1:length(Data)
     elseif setup.stim_protocol == 13 %Maryse behavior
         V1(1,m) = Data{1,1}.Standard_kHz;
         V2(1,m) = Data{1,1}.Target_kHz;
+        stim_level = Params.Output_States(2).StimChans(1).Stimulus.Level.Level;
     else %stim_protocol doeesn't match any of the above
         warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])
         break;
@@ -315,4 +320,8 @@ block.loco_times = loco_times;
 block.rxn_time = rxn_time;
 block.loc_Trial_times = zero_loc;
 block.setup = setup;
+if setup.stim_protocol == 13
+    block.holdingPeriod = holdingPeriod;
+    block.stim_level = stim_level;
+end
 end

@@ -17,6 +17,8 @@ The stim_protocol code is:
 - random h20      = 9
 - noiseburst_ITI  = 10
 - random air      = 11
+- spontaneous     = 12
+- behavior MT     = 13
 
 -----
 
@@ -28,6 +30,7 @@ The stim_protocol code is:
 - Update paths at the top of compile_blocks_from_info
 - Run compile_blocks_from_info
 - Visualize the output of a single block with the function visualize_block
+- Visualize the output of a single cell from a block with the function visualize_cell
 
 2. Analyze
 - You can use either the same Info spreadsheet as before or create a dedicated spreadsheet for each type of analysis you want to do.

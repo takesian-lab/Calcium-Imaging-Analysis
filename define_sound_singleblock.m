@@ -1,4 +1,4 @@
-function [block] = define_sound_singleblock(block)
+function [block] = define_sound_singleblock(block,constant)
 % DOCUMENTATION IN PROGRESS
 % 
 % This function obtains the Bruker timestamp from the BOT and VR csv files,
@@ -98,10 +98,37 @@ if ~ismissing(block.setup.Tosca_path) %Skip if Tosca info is missing
     Bruker_trial_time(errors,:)=[];
     
     % find the time (normalized from trial start) of sound time
-   for i = 1:length(Bruker_trial_time)
-   Sound_Time(1,i) = (Bruker_trial_time(i))+New_sound_times(1,i);
-   Loc_BrukerTime{i} = block.loc_Trial_times{i}(:)+Bruker_trial_time(i);
-   end
+    locomotion_trace =[];
+    for i = 1:length(Bruker_trial_time)
+        % put sound times on Bruker timescale
+        Sound_Time(1,i) = (Bruker_trial_time(i))+New_sound_times(1,i);
+        % put locomotor times on Bruker timescale
+        Loc_BrukerTime{i} = block.loc_Trial_times{i}(:)+Bruker_trial_time(i);
+        % concat loco trials to remake loco trace
+        locomotion_trace =[locomotion_trace;Loc_BrukerTime{i}(:)];
+      
+    end
+    
+    % set the sound "window" in which to look for locomotor activity. We
+    % will use the baseline to end of constant.locowindow. These two
+    % numbers are defined at the top of compile_blocks_from_info.m
+    base = constant.baseline_length;
+    stopwin = constant.locowindow;
+    activity = block.loco_activity; % velocity for whole block
+    for i = 1:length(Sound_Time)
+        sound = Sound_Time(i);
+        window = sound + stopwin;
+        loc_trial = Loc_BrukerTime{i}(:);
+        [c closest_loc_window] = min(abs(loc_trial(:,1)-window));
+     act = block.activity_trial{i}(1:closest_loc_window);
+     actThrsh = find(act>constant.locoThresh);
+     if sum(actThrsh)>1
+     active_trials(i) = 1;
+     else active_trials(i) = 0;
+     end
+    
+        
+    end
    
     loco_times = block.loco_times;
     locTime2 = loco_times; %TODO:needs to be corrected
@@ -130,6 +157,7 @@ display(['Loading ' BOT_filename])
 frame_data = csvread(BOT_filename, 1,0);
 timestamp = frame_data(:,1)-frame_data(1,1);% this is where we make that small correction
 block.timestamp = timestamp;
+block.active_trials = active_trials;
 
 %Record filenames
 setup.VR_filename = VR_filename;

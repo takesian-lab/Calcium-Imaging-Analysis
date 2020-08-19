@@ -149,11 +149,11 @@ scatter(water_times,zeros(size(water_times))+ymax,'c','Filled')
 %% Plot example trial(s)
 
 %Adjust xlim and ylim to show only a selection of trials
-nTrialsToPlot = 5;
-trialToStartWith = 5;
+nTrialsToPlot = 1;
+trialToStartWith = 35;
 
 xStart = trial_times(trialToStartWith);
-xEnd = trial_times(trialToStartWith + nTrialsToPlot + 1);
+xEnd = trial_times(trialToStartWith + nTrialsToPlot);
 y_ind1 = find(loco_times > xStart, 1, 'first');
 y_ind2 = find(loco_times > xEnd, 1, 'first');
 ymax = round(1.05*max(loco_activity(y_ind1:y_ind2,1)));
@@ -185,5 +185,28 @@ scatter(water_times,zeros(size(water_times))+ymax,'c','Filled')
 
 
 %% Plot lick rasterplot
+
+%For each trial, extract AltSound - 1 second to AltSound + 3 seconds
+
+toscaFrameRate = loco_times(end)/length(loco_times);
+baselinePeriodInSeconds = 1;
+holdingPeriodInSeconds = 3;
+baselinePeriodInFrames = floor(baselinePeriodInSeconds/toscaFrameRate);
+holdingPeriodInFrames = floor(holdingPeriodInSeconds/toscaFrameRate);
+
+trialRaster = nan(length(trial_times),baselinePeriodInFrames + holdingPeriodInFrames);
+computer_time = block.Tosca_times{1,1}(1,1);
+trial_times = nan(size(block.Tosca_times));
+lick_times = [];
+for i = 1:length(block.Tosca_times)
+    %Get the time each trial starts and subtract computer time
+    trial_times(i) = block.Tosca_times{1,i}(1,1) - computer_time;
+    %Get the times where the mouse was licking per trial and subtract computer time
+    trial_lick_times = block.Tosca_times{1,i}(1,block.lick_time{i,1}==1) - computer_time;
+    %Concatenate with previous lick times
+    lick_times = [lick_times, trial_lick_times];
+end
+alternating_sound_times = trial_times + holdingPeriod;
+trial_type = block.trialType;
 
 %figure; hold on

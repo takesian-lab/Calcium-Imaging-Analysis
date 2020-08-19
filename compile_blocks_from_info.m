@@ -35,13 +35,13 @@ checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 constant.baseline_length = 0.5;
 
 % How many seconds after stim should we look at?
-constant.after_stim = 3;
+constant.after_stim = 2.5;
 
 % Define (in seconds) where to look for the response peak?
 constant.response_window = 2;
 
 % define where to look for locomotor responses, in sec?
-constant.locowindow = 2.5;
+constant.locowindow = 2;
 
 %minimum amout of time (sec) that mouse is moving to be considered active
 constant.locoThresh = 0.8;
@@ -68,9 +68,9 @@ switch PC_name
         info_filename = 'Info';    
         
     case 'RD0332' %Carolyn
-        info_path = 'D:\2P analysis\2P local data\Carolyn';
+        info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
         save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
-        info_filename = 'Info_widefield_YD111219M1';
+        info_filename = 'Info_VxDD033120F2';
         
          case 'RD-6-TAK2' %Esther's computer
         info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';
@@ -233,7 +233,7 @@ for i = 1:size(currentInfo,1)
     [block] = FreqDisc_Behavior_singleblock(block);
 
     %pull out the Bruker-derived timestamps from BOTs and Voltage Recordings
-    [block] = define_sound_singleblock(block);
+    [block] = define_sound_singleblock(block,constant);
 
     %determine which trials are considered "active (locomotor)"
     % This might not be necessary to do here, but leaving in for now.

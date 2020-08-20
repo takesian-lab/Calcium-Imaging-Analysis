@@ -62,44 +62,40 @@ Tosca_Session = num2str(setup.Tosca_session);
 mouseID = char(setup.mousename);
 try
     loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']); %locomotor data
-    loco_times = loco_data(:,1);%-start_time; %I am only looking at column 1
-    loco_times = loco_times(:,1)+abs(loco_times(1,1));
-    loco_activity = (abs(loco_data(:,3)));
+%     loco_times = loco_data(:,1);%-start_time; %I am only looking at column 1
+%     loco_times = loco_times(:,1)+abs(loco_times(1,1));
+%     loco_activity = (abs(loco_data(:,3)));
 catch
     warning('no loco data available')
     loco_data =NaN;
-    loco_activity = NaN;
-    loco_times=NaN;
+%     loco_activity = NaN;
+%     loco_times=NaN;
 end
-
 %% Read data from the run
 Var1=[]; Var2=[];
 b=setup.Tosca_run;
 
-
 [Data,Params] = tosca_read_run(behaveblock{b}); %Load block meta-data%%%HACK!!!!!
 
-inblock=trials(contains(trials,['Run' num2str(b) '-'])); %% added hyphen to eliminate double digit spurious entries...
+% inblock=trials(contains(trials,['Run' num2str(b) '-'])); %% added hyphen to eliminate double digit spurious entries...
+% 
+% if length(inblock)>length(Data)
+%     inblock=inblock(1:length(Data));  %inblock=inblock(1:end-1); previous code
+%     %Why don't we just make the loop go through length(Data) here instead of inblock?
+% end
 
-if length(inblock)>length(Data)
-    inblock=inblock(1:length(Data));  %inblock=inblock(1:end-1); previous code
-    %Why don't we just make the loop go through length(Data) here instead of inblock?
-end
-
-for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so start on trial 1
+for t=1:length(Data) %Hypothesis is trial 00 is generated abberantly, so start on trial 1
     s=tosca_read_trial(Params,Data,t);%the read_trial gives us more info than read_run alone
     if ~isempty(s)
         Tosca_times{t}=s.Time_s; %pulls out the tosca generated timestamps for each trial
-        explore.Tosca_times_size(t) = length(Tosca_times{t});
         start_time(t)=Tosca_times{1,t}(1,1);
         end_time(t) =Tosca_times{1,t}(1,end);
-        zero_times{t}=Tosca_times{1,t}(1,:)-start_time(t);
+        zero_times{t}=Tosca_times{1,t}(1,:)-start_time(t);%set the start of each trial to zero and normalize
         licks{t,:}=s.Lickometer;
         rxn_time(t) = s.Rxn_time_ms;
         states{t}=[0 (diff(s.State_Change)>0)];
         if states{t}(:,:)~=1
             StateChange(t,:)=1;
-            check_for_error=1000;
         else
             StateChange(t,:)=find(states{1,t}(:,:)~=0, 1, 'first');
         end
@@ -108,6 +104,7 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
             n=StateChange(y,1);
             New_sound_times(y)=zero_times{1,y}(1,n);
         end
+        
         %Get CS+/CS- results
         try
             if isequal(Data{t}.Result,'Hit')
@@ -127,6 +124,8 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                     holdingPeriod(t) = s.Script.output;
                 elseif setup.stim_protocol == 9
                     targretFreq = s.cue.Signal.FMSweep.Rate_oct_s;
+                elseif setup.stim_protocol == 7
+                    targetFreq=s.cue.Signal.Waveform.Frequency_kHz;
                 else
                     targetFreq = s.cue.Signal.Waveform.Frequency_kHz;
                 end
@@ -156,7 +155,8 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
         end
         
         % find the loco times that are closest to the trial start times.
-        % Use this information to find which locomotor
+        % Use this information to find which locomotor timestamps
+        % correspond to each trial
         [c closest_trial_start] = min(abs(loco_data(:,1)-start_time(t)));
         [c closest_trial_end] = min(abs(loco_data(:,1)-end_time(t)));
         est_loc_start(t) = closest_trial_start;
@@ -170,24 +170,22 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
         %each trial's locomotor trials, corrected by zeroing out the start
         %of each trial.
         zero_loc{t} = loco_data(locTrial_idx{t}(:),1) - start_time(t);
-        % divide teh loco activity by trials to use in
+        % divide the loco activity by trials to use in
         % define_sound_singleblock
         activity_trial{t} = loco_data(locTrial_idx{t}(:),3);
         
         % now that all the loco times are corrected per trial, put them
         % back together to get a loc trace that is on a correct timescale
-        loco_trace_fix = [];
+        loco_trace_times = [];
         for j = 1:length(zero_loc)
             if j == 1
                 loc_add = zero_loc{1,j}(:);
-                loco_trace_fix = [loco_trace_fix; loc_add];
+                loco_trace_times = [loco_trace_times; loc_add];
             else
             loc_add = zero_loc{1,j}(:) + zero_loc{1,j-1}(end);
-            loco_trace_fix = [loco_trace_fix; loc_add];
+            loco_trace_times = [loco_trace_times; loc_add];
             end
-        end
-        
-        
+        end 
     end
 end
 
@@ -195,9 +193,6 @@ A=exist('targetFreq');
 if A==0
     targetFreq=NaN;
 end
-B=exist('rxn_time')
-if B==0
-    rxn_time=NaN;
 end
 %% Extract stimulus-specific variables
 
@@ -306,23 +301,6 @@ end
 Var1=[Var1,V1];
 Var2=[Var2,V2];
 
-% %% Pull out loco info
-% 
-% Tosca_Run_number = num2str(setup.Tosca_run);
-% Tosca_Session = num2str(setup.Tosca_session);
-% mouseID = char(setup.mousename);
-% try
-%     loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']); %locomotor data
-%     loco_times = loco_data(:,1)-start_time; %I am only looking at column 1
-%     loco_times = loco_times(:,1)+abs(loco_times(1,1));
-%     loco_activity = (abs(loco_data(:,3)));
-% catch
-%     warning('no loco data available')
-%     loco_data =NaN;
-%     loco_activity = NaN;
-%     loco_times=NaN;
-% end
-
 %% Save everything to block
 %Format used to be: data.([mouseID]).(['ImagingBlock' Imaging_Num]).VARIABLE
 %And: data.([mouseID]).parameters
@@ -330,15 +308,15 @@ Var2=[Var2,V2];
 block.New_sound_times = New_sound_times;
 block.start_time = start_time;
 block.lick_time = licks;
-block.Tosca_times = Tosca_times;
+% block.Tosca_times = Tosca_times;
 block.Outcome =  cell2mat(b_Outcome);
 block.trialType = cell2mat(trialType);
 block.TargetFreq = targetFreq;
 block.parameters.variable1 = Var1; %index of variable1 (e.g. frequency)
 block.parameters.variable2 = Var2; %index of variable 2 (e.g. level)
 block.loco_data = loco_data;
-block.loco_activity = loco_activity;
-block.loco_times = loco_trace_fix;
+% block.loco_activity = loco_activity;
+block.loco_times = loco_trace_times;
 block.rxn_time = rxn_time;
 block.loc_Trial_times = zero_loc;
 block.setup = setup;

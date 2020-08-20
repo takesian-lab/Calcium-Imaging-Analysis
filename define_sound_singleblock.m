@@ -120,7 +120,7 @@ if ~ismissing(block.setup.Tosca_path) %Skip if Tosca info is missing
         window = sound + stopwin;
         loc_trial = Loc_BrukerTime{i}(:);
         [c closest_loc_window] = min(abs(loc_trial(:,1)-window));
-     act = block.activity_trial{i}(1:closest_loc_window);
+     act = abs(block.activity_trial{i}(1:closest_loc_window));
      actThrsh = find(act>constant.locoThresh);
      if sum(actThrsh)>1
      active_trials(i) = 1;
@@ -158,6 +158,7 @@ frame_data = csvread(BOT_filename, 1,0);
 timestamp = frame_data(:,1)-frame_data(1,1);% this is where we make that small correction
 block.timestamp = timestamp;
 block.active_trials = active_trials;
+block.locomotion_trace = locomotion_trace;
 
 %Record filenames
 setup.VR_filename = VR_filename;

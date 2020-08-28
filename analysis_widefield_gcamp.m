@@ -50,11 +50,11 @@ else
             save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
             info_filename = 'Info_widefield';
         case 'RD0332' %Carolyn
-            info_path = 'D:\2P analysis\2P local data\Carolyn';
+            info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
             compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
-            save_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Widefield';
-            info_filename = 'Info_widefield';
+            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\VxDD053120M2\gcamp_RF';
+            info_filename = 'Info_VxDD053120M2';
             
         case 'RD-6-TAK2' %Esther's computer
             info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';
@@ -423,7 +423,7 @@ for f=1:length(parameters.frequencies)
     end
 end
 %% convert to tif? and then store as individual file.
-folder = 'D:\2P analysis\2P local data\Carolyn\Widefield\NxDD042920M5_noiseburst';
+folder = save_path;
 
 %folder = 'C:\Anne\';
 cd(folder)
@@ -593,7 +593,7 @@ end
 %% %% find cumulative baseline and the response window
 baseline=1:(0.5*data.setup.FrameRate{1});%TODO magic number
 window=(length(baseline)):(data.setup.FrameRate{1}*3);
-folder = 'D:\2P analysis\2P local data\Carolyn\Widefield\VxDC030520M4_FMsweep_gcamp';
+folder = save_path;
 % folder = 'C:\Anne';
 cd(folder)
 d = dir([folder '/*.tif']);%extract tiffs
@@ -686,6 +686,240 @@ for f=1:length(parameters.frequencies);
     axis image;
     set(gca,'XTick',[], 'YTick', [])
 end
+
+%% zscore data
+for f=1:length(parameters.frequencies);
+    numF=num2str(round(parameters.frequencies(f)))
+    figure;
+    for lv=1:length(parameters.levels);
+        numLV=num2str(parameters.levels(lv));
+        idx=parameters.stimIDX{f,lv};
+        mainResponse = ResponseWindow{f,lv};%temporally/spatially filtered response (2s post  sound)
+        Df_f0 = DFF0_mean{f,lv};%temporally/spatially filtered mean response (entire trace i.e. baseline and 3s post sound)
+        %z score of every frame of response window
+        zscR = (bsxfun(@minus, mainResponse, (repmat(meanAccumBaseline,...
+            [1 1 length(window)]))))./(repmat(stdBaseline,...
+            [1 1 length(window)]));
+        %zscore of every frame for entire trace
+        zscResponse{f,lv}=zscR;
+        zscS = (bsxfun(@minus,Df_f0, (repmat(meanAccumBaseline,...
+            [1 1 size(Df_f0,3)]))))./(repmat(stdBaseline,...
+            [1 1 size(Df_f0,3)]));
+        zscSignal{f,lv} =  zscS;
+        
+        
+        [ d1 d2 frames ] =size(zscR);%size of response window data
+        
+        
+        maxResponse{f,lv} = max(mainResponse,[],3);%max of response window (not zscored)
+        meanR{f,lv} = mean(mainResponse);%average of sound response window
+        meanZresponse{f,lv} = mean(zscR(:,:,1:15),3);
+        plot(squeeze(mean(mean(zscR(:,:,:),1),2)));
+        title(sprintf('Freq %d', round(parameters.frequencies(f),2)));
+        
+        hold on;
+
+    end
+end
+
+%% average z-scores across all levels
+     figure;
+for f=1:length(parameters.frequencies);
+    numF=num2str(round(parameters.frequencies(f)))
+        for k = 1:length(parameters.levels);
+            AA = meanZresponse{f,lv};
+            stack(:,:,k)=AA(:,:);
+            stack=double(stack);
+        end
+        
+        y = mean(stack,3); 
+        subplot(1,length(parameters.frequencies),f);
+        imagesc(y);
+        title(sprintf('Freq %d', f));
+        axis image;
+        set(gca,'XTick',[], 'YTick', [])
+     %   caxis([2 15]);
+        colormap jet
+end
+
+% %% average the DFF0 for each f/lv and see what it looks like
+% figure;
+% for f=1:length(parameters.frequencies);
+%     numF=num2str(round(parameters.frequencies(f)))
+%     for lv=1:length(parameters.levels);
+%         numLV=num2str(parameters.levels(lv));
+%         mainResponse = ResponseWindow{f,lv};%temporally/spatially filtered response (2s post  sound)
+%         Df_f0 = DFF0_mean{f,lv};%temporally/spatially filtered
+%         g = mean(Df_f0,3);
+%       %  CLIM = [0 350];
+%      %   imagesc(g,CLIM);
+%         imagesc(g);
+%         
+%         subplotSpot=f+(length(parameters.frequencies))*(length(parameters.levels)-lv);
+%         subplot(length(parameters.levels),length(parameters.frequencies),subplotSpot);
+%         
+%         title({sprintf('%s dB',numLV);sprintf('%s kHz',numF)});
+%         
+%     end
+% end
+% 
+
+% figure;
+% 
+% for V1=1:length(data.([mouseID]).parameters.Var1List)%loop through stim#1
+%     for V2=1:length(data.([mouseID]).parameters.Var2List)%loop through stim#2
+%         stim_list=data.([mouseID]).parameters.stimIDX{V1,V2};
+%         stimIDXpos=(data.([mouseID]).parameters.isRespPosStim(V1,V2,:));%index of responsive cells by stim
+%         
+%         meanPosResp=squeeze(mean(mean(data.([mouseID]).traces_G(stimIDXpos,stim_list,:),2),1));%avg response of positive responsive cells by stim
+%         std_resp=squeeze(std(mean(data.([mouseID]).traces_G(stimIDXpos,stim_list,:),2),1));
+%         subplotSpot=V1+(length(data.([mouseID]).parameters.Var1List)*(length(data.([mouseID]).parameters.Var2List)-V2))
+%         subplot(length(data.([mouseID]).parameters.Var2List),length(data.([mouseID]).parameters.Var1List),subplotSpot),
+%         shadedErrorBar(x_green,smooth(meanPosResp,10),smooth(std_resp,10),'lineprops','b')
+%         stim1=num2str(data.([mouseID]).parameters.Var1List(V1));
+%         stim2=num2str(data.([mouseID]).parameters.Var2List(V2));
+%         if setup.stim_protocol==2
+%             title({sprintf('%s dB',stim2);sprintf('%s kHz',stim1)});
+%         end
+%          axis([0 length(x_green) 0 70])
+%         
+%     end
+% end
+
+%% determine CFs for each pixel
+[dim1 dim2 dim3] = size(imageData.Cropped_Imaging_Data);
+CF=NaN(dim1,dim2,1);           
+response_threshold = 3;
+
+
+for x= 1:dim1 % go through all x pixels
+    disp(['CF mapping for x pixel ', num2str(x)])
+    for y = 1:dim2 %go through all y pixels
+        threshold_reached = 0; %reset threshold flag
+        threshold_level=length(parameters.levels); %reset threshold level
+        for lv = 1:length(parameters.levels)-1  % if level is less than max level and threshold has not been found
+            for f = 1:length(parameters.frequencies)
+                peak_response = meanZresponse{f,lv}(x,y,:);% 
+                if peak_response>response_threshold % if threshold has been found - set by user in parameter file above
+                    threshold_level = lv;
+                    threshold_reached=1;
+                    break
+                end
+            end
+            if threshold_reached == 1
+                break
+            end
+        end
+       
+         if threshold_level < length(parameters.levels)
+                level_level_plusone = threshold_level+1;
+            for f = 1:length(parameters.frequencies)
+                frequency_num = num2str(round(parameters.frequencies(f)));
+                signal_threshold(f) = meanZresponse{f,threshold_level}(x,y,:);
+                signal_threshold_plus_one(f) = meanZresponse{f,level_level_plusone}(x,y,:);
+                avg_threshold_responses(f) = (signal_threshold(f)+signal_threshold_plus_one(f))/2;
+            end
+            options = fitoptions('gauss1');
+            options.Lower = [0 1 0];
+            gauss_fit = fit(parameters.frequencies',avg_threshold_responses', 'gauss1',options);
+            
+            gauss_curve = gauss_fit(parameters.frequencies(1):0.1:parameters.frequencies(length(parameters.frequencies)));
+            x_freq = [parameters.frequencies(1):0.1:parameters.frequencies(length(parameters.frequencies))];
+            [peak_amplitude,characteristic_frequency] = max(gauss_fit(x_freq));
+       %      figure; %plot gaussian fits
+        %     plot(parameters.frequencies,avg_threshold_responses); % use
+%              hold on; plot(parameters.frequencies,signal_threshold, 'b'); % use
+%              hold on; plot(parameters.frequencies,signal_threshold_plus_one, 'c'); % use
+%              hold on; plot(x_freq, gauss_curve);
+  %           pause;
+%       
+            
+            CF(x,y,:)=characteristic_frequency*0.1+parameters.frequencies(1);
+           imageData.CF=CF;
+         end
+    end
+end
+
+%% MAP FREQUENCIES: Plot CFs
+
+BW = mean(imageData.Cropped_Imaging_Data,3);
+
+%make elliptical mask to eliminate values outside window
+size_x = size(BW,1);
+size_y = size(BW,2);
+[col row] = meshgrid(1:size_x,1:size_y);
+center_x = round(size_x/2);
+center_y = round(size_y/2);
+rad_x = round(size_x/2);
+rad_y = round(size_y/2);
+ellipse = (row-center_y).^2./rad_y^2+(col-center_x).^2./rad_x^2 <=1;
+mask = ellipse';
+
+%display window with masked edges
+figure;
+ax1=axes;
+BW_mask = BW.*mask;
+imagesc(BW_mask);
+colormap(ax1,'gray');
+hold on;
+
+%display window with masked edges with CF overlay
+ax2=axes;
+CF = imageData.CF;
+CF = medfilt2(CF,[5 5]);
+CF_mask = CF.*mask;
+CF_color_map = load('CFColormap.mat');
+alpha(size_x,size_y)=0;
+alpha(CF_mask>1)=0.3;
+alpha(isnan(CF_mask))=0;
+%alpha(isnan)=0;
+im = imagesc(ax2,CF_mask,'alphadata',alpha);
+colormap(ax2, CF_color_map.mymap);
+caxis(ax2,[min(nonzeros(CF_mask)) max(nonzeros(CF_mask))]);
+%alpha(0.3);
+ax2.Visible = 'off';
+linkprop([ax1 ax2],'Position');
+colorbar;
+%CF_color = CF_color_map.mymap;
+%colormap(CF_color_map.mymap);
+%RGB = ind2rgb(CF_mask, CF_color_map.mymap);
+%CF_color_map.mymap);
+%im2 = imagesc(CF_mask);
+%image(RGB);
+%pbaspect([1 1 1]);
+%set(im2,'AlphaData',~isnan(CF_mask))
+%colormap color_map.mymap;
+%colormap(CF_color_map.mymap);
+
+%colormap jet
+%caxis([4 45]);
+%image_CF = imagesc(CF_mask);
+%set(h,'AlphaData',CF_mask);
+%alpha(im,0.5);
+
+%set(im,'AlphaData',~isnan(CF_mask))
+
+figure;
+im2 = imagesc(CF_mask);
+%image(RGB);
+pbaspect([1 1 1]);
+set(im2,'AlphaData',~isnan(CF_mask))
+
+
+
+
+%title(sprintf('CF Map'));
+%hold off;
+
+
+%     figure;
+%     frequency_num = num2str(round(frequencies(f)));
+%     CF = data.([mouseID]).(['Tile' BOT_number]).CF;s
+%     A = medfilt2(CF,[2 2]);
+%     A(BW==0)=-0.1;
+%     %   A=A(y_min:y_max,x_min:x_max);
+%     imagesc(A); colormap jet;
+%     caxis([4 32]);
 
 
 %% Save data

@@ -114,7 +114,7 @@ if ~ismissing(block.setup.Tosca_path) %Skip if Tosca info is missing
     % numbers are defined at the top of compile_blocks_from_info.m
     base = constant.baseline_length;
     stopwin = constant.locowindow;
-    activity = block.loco_activity; % velocity for whole block
+    activity = block.loco_data(:,3); % velocity for whole block
     for i = 1:length(Sound_Time)
         sound = Sound_Time(i);
         window = sound + stopwin;

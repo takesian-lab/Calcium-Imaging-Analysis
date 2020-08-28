@@ -193,7 +193,7 @@ A=exist('targetFreq');
 if A==0
     targetFreq=NaN;
 end
-end
+
 %% Extract stimulus-specific variables
 
 V1 = [];

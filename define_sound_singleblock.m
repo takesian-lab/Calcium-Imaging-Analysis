@@ -120,12 +120,13 @@ if ~ismissing(block.setup.Tosca_path) %Skip if Tosca info is missing
         window = sound + stopwin;
         loc_trial = Loc_BrukerTime{i}(:);
         [c closest_loc_window] = min(abs(loc_trial(:,1)-window));
-     act = abs(block.activity_trial{i}(1:closest_loc_window));
+         [c closest_sound] = min(abs(loc_trial(:,1)-sound));
+     act = abs(block.loc_Trial_activity{i}(closest_sound:closest_loc_window));
      actThrsh = find(act>constant.locoThresh);
      if sum(actThrsh)>1
      active_trials(i) = 1;
      else active_trials(i) = 0;
-     end
+     end 
     
         
     end

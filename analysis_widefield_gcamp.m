@@ -34,6 +34,7 @@ else
     imaging_chan = 'Ch2';
     BOT_start = [1];
     detrend_filter = [300 10];
+    parameters.sort_loco =[1]; % pull out locomotor trials?
     
     
     
@@ -53,8 +54,8 @@ else
             info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
             compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
-            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\NxDC030220F2\gcamp_RF';
-            info_filename = 'Info_NxDC030220F2';
+            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\VxDD033120F2\gcamp_RF_loco';
+            info_filename = 'Info_VxDD033120F2';
             
         case 'RD-6-TAK2' %Esther's computer
             info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';
@@ -298,7 +299,6 @@ for i=1:length(data.setup.Imaging_sets)
     title(sprintf('Mean Response across all Trials from Tile %d', tile_to_view));
 end
 clear BOT_number FullTile_df i Sound_Time timestamp
-
 %% create frequency and level indicies and find responses to sound across stim
 % [parameters] = indexStimuli(parameters,setup);
 parameters.use_adjusted=0;
@@ -323,6 +323,20 @@ for i=1:length(data.setup.Imaging_sets)
     end
 end
 
+for i=1:length(data.setup.Imaging_sets)
+    mouseID=data.setup.mousename{i};
+    unique_block_name = data.setup.unique_block_names{i};
+    block = data.([mouseID]).([unique_block_name]);
+    for f=1:length(parameters.frequencies);
+        fnum=num2str(parameters.frequencies(f));
+        for lv=1:length(parameters.levels);
+            lvnum=num2str(parameters.levels(lv));
+            idx=parameters.stimIDX{f,lv};
+           parameters.loco_1.stimIDX{f,lv} = idx(find(block.active_trials(idx)==1));
+           parameters.loco_0.stimIDX{f,lv} = idx(find(block.active_trials(idx)==0));
+        end
+    end
+end
 [traces]=sound_response_widefield_v3(parameters,data,All_Images_df_over_f);
 %% pull out baseline and window
 length_trial=size(traces.Tile1{1,1},3);
@@ -330,12 +344,22 @@ baseline=1:(0.5*data.setup.FrameRate{1});% TODO: magic number
 window=(length(baseline)+1):(data.setup.FrameRate{1}*2);
 
 for ll=1:loops
-    loop_num=num2str(ll)
+    loop_num=num2str(ll);
     for f=1:length(parameters.frequencies);
         fnum=num2str(parameters.frequencies(f));
         for lv=1:length(parameters.levels);
             lvnum=num2str(parameters.levels(lv));
-            idx=parameters.stimIDX{f,lv};
+            if parameters.sort_loco ==0
+                idx=parameters.stimIDX{f,lv};
+                if lv ==1 & f==1 & ll==1
+                    display('...creating baseline for all trials...')
+                end
+            else idx = parameters.loco_0.stimIDX{f,lv};
+                if lv ==1 & f==1 & ll==1
+                    display('...creating baseline for non-motor trials...')
+                end
+            end
+            
             TF = isempty(idx); %the index of freq x level does not always have a value for every combination
             if TF==0
                 base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
@@ -352,30 +376,35 @@ for ll=1:loops
     loop_num=num2str(ll);
     for f=1:length(parameters.frequencies);
         for lv=1:length(parameters.levels);
-            idx=parameters.stimIDX{f,lv};
-            
+           if parameters.sort_loco ==0
+                idx=parameters.stimIDX{f,lv};
+                if lv ==1 & f==1 & ll==1
+                    display('...averaging across all trials...')
+                end
+            else idx = parameters.loco_0.stimIDX{f,lv};
+                if lv ==1 & f==1 & ll==1
+                    display('...averaging across non-motor trials...')
+                end
+            end
+            % occasionally, a stim will be empty, and this will correct
+            % for when this occurs
             TF = isempty(idx);
             if TF == 0
+                % do we want to pull out locomotor trials? If no (old
+                % version of the code) run this step, if yes, see below.
+                
                 m=traces.(['Tile' loop_num]){f,lv};
                 %mean response per stim
                 mean_stim(:,:,:)=mean(m,4);
                 avgTrace.(['Tile' loop_num]){f,lv}= mean_stim;
                 clear mean_stim
-                %mean baseline
-                %             b=base.(['Tile' loop_num]){f,lv};
-                %             mean_base=squeeze(mean(mean(mean(b,4),2),1));
-                %             tempBase(count,:)=mean_base;
-                
-                %mean window
-                %             d=stimbase.(['Tile' loop_num]){f,lv};
-                %              mean_win=squeeze(mean(mean(mean(d,4),2),1));
-                %              tempWin(count,:)=mean_win;
-                %              count=count+1;
+               
+                end
             end
         end
     end
     
-end
+
 %
 % parameters.avgBaseline=mean(tempBase,1);
 % parameters.stdBaseline=std(tempBase,1);
@@ -545,7 +574,6 @@ for f=1:length(parameters.frequencies);
     figure;
     for lv=1:length(parameters.levels);
         numLV=num2str(parameters.levels(lv));
-        idx=parameters.stimIDX{f,lv};
         mainResponse = ResponseWindow{f,lv};%temporally/spatially filtered response (2s post  sound)
         Df_f0 = DFF0_mean{f,lv};%temporally/spatially filtered mean response (entire trace i.e. baseline and 3s post sound)
         %z score of every frame of response window

@@ -55,16 +55,42 @@ end
 
 behaveblock = sort_nat(behaveblock); %Replaced previous code that sorted behaveblock
 trials=sort_nat(trials);
-%% Pull out loco info
+%% Pull out loco info, and check that loco trial markers match Tosca trial numbers
 
 Tosca_Run_number = num2str(setup.Tosca_run);
 Tosca_Session = num2str(setup.Tosca_session);
 mouseID = char(setup.mousename);
+b=setup.Tosca_run;
+[Data,Params] = tosca_read_run(behaveblock{b}); %Load block meta-data%%%HACK!!!!!
 try
-    loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']); %locomotor data
-    %     loco_times = loco_data(:,1);%-start_time; %I am only looking at column 1
-    %     loco_times = loco_times(:,1)+abs(loco_times(1,1));
-    %     loco_activity = (abs(loco_data(:,3)));
+    %     loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']); %locomotor data
+    loco_data = tosca_read_loco([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']); %locomotor data
+    tloco = loco_data.t(loco_data.ch > 0); % times of trial markers in locomotion data
+    mark_loco = find(loco_data.ch>0);
+    ntr = length(Data);% number of trials
+    ttr = NaN(ntr, 1);
+for k = 1:ntr
+    k
+   tr = tosca_read_trial(Params, Data, k);
+   ttr(k) = tr.Time_s(1);
+end
+    % The two sets of time stamps should be identical within a few
+    % milliseconds. Here, we'll check each locomotion marker and see if there
+    % is a real trial starting within 200 ms. If so, keep that locomotion
+    % marker.
+
+ikeep = false(size(tloco));
+for k = 1:length(tloco)
+   minDiff = min(abs(tloco(k) - ttr));
+   if minDiff < 0.3
+      ikeep(k) = true;
+   end
+end
+
+    tloco = tloco(ikeep); %updated start times for loco data, 9/24/20 cgs
+    mark_loco= mark_loco(ikeep);% loco trial start idx, with extra/error loco removed
+   
+    
 catch
     warning('no loco data available')
     loco_data =NaN;
@@ -73,9 +99,7 @@ catch
 end
 %% Read data from the run
 Var1=[]; Var2=[];
-b=setup.Tosca_run;
 
-[Data,Params] = tosca_read_run(behaveblock{b}); %Load block meta-data%%%HACK!!!!!
 
 % inblock=trials(contains(trials,['Run' num2str(b) '-'])); %% added hyphen to eliminate double digit spurious entries...
 %
@@ -159,12 +183,12 @@ for t=1:length(Data) %Hypothesis is trial 00 is generated abberantly, so start o
         % correspond to each trial
         
         %         when does each loco trial start:
-        t_starts = find(loco_data(:,2)==1); %trial starts
+%         t_starts = find(loco_data(:,2)==1); %trial starts
      
             try
-                locTrial_idx{t} = t_starts(t)+1 : t_starts(t+1)-1;
+                locTrial_idx{t} =mark_loco(t) : mark_loco(t+1)-1;
             catch
-                locTrial_idx{t} = t_starts(t)+1 : length(loco_data(:,2));
+                locTrial_idx{t} = mark_loco(t) : length(loco_data.t);
             end
        
         
@@ -183,10 +207,10 @@ for t=1:length(Data) %Hypothesis is trial 00 is generated abberantly, so start o
             %
             %each trial's locomotor trials, corrected by zeroing out the start
             %of each trial.
-            zero_loc{t} = loco_data(locTrial_idx{t}(:),1) - start_time(t);
+            zero_loc{t} = loco_data.t(locTrial_idx{t}(:)) - start_time(t);
             % divide the loco activity by trials to use in
             % define_sound_singleblock
-            activity_trial{t} = loco_data(locTrial_idx{t}(:),3);
+            activity_trial{t} = loco_data.speed(locTrial_idx{t}(:));
             
             % now that all the loco times are corrected per trial, put them
             % back together to get a loc trace that is on a correct timescale

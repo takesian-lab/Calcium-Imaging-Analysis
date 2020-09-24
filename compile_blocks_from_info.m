@@ -68,9 +68,9 @@ switch PC_name
         info_filename = 'Info';    
         
     case 'RD0332' %Carolyn
-        info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
-        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
-        info_filename = 'Info_VxDD033120F2';
+        info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';
+        save_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob\Compiled Blocks';
+        info_filename = 'Info_widefield_YD111219M1';
         
          case 'RD-6-TAK2' %Esther's computer
         info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';

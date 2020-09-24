@@ -2,7 +2,7 @@
 function [loco_data,active_time] = locomotor_activity(loco_data,filename,setup)
 % read_loco= [mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt'];
 %loco_data = dlmread(read_loco);%locomotor data
-r=loco_data(:,1);% I am only looking at column 1
+r=loco_data.t(:);% I am only looking at column 1
 r=r(:,1)-r(1,1);
 B=r;
 
@@ -29,12 +29,12 @@ for i=1:length(new_times);
     new_times(i) = new_times(i) + time_zero;
 end
 % scaled_times = (new_times./1000);
-loco_data(:,1) = new_times(:,1); %put the new timestamps into loco_data
+loco_data.t(:) = new_times(:,1); %put the new timestamps into loco_data
 
 
 %I used this step to take the absolute value of the data, but whether the
 %mouse is running forward or backward could be interesting in the future
-loco_data(:,3)=(abs(loco_data(:,3))); %take absolute value of data
+loco_data.speed(:)=(abs(loco_data.speed(:))); %take absolute value of data
 
 
 % figure; hold on
@@ -44,9 +44,9 @@ loco_data(:,3)=(abs(loco_data(:,3))); %take absolute value of data
 % plot(loco_data(:,1), loco_data(:,3));
 %% when is the animal moving?
 active_time=zeros(i,1);
-for i=1:length(loco_data)
-    if loco_data(i,3)>setup.constant.locoThresh
-        active_time(i) = loco_data(i,1);
+for i=1:length(loco_data.speed)
+    if loco_data.speed(i)>setup.constant.locoThresh
+        active_time(i) = loco_data.t(i);
     end
 end
 %% save

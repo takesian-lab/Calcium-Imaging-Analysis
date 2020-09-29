@@ -70,7 +70,6 @@ try
     ntr = length(Data);% number of trials
     ttr = NaN(ntr, 1);
 for k = 1:ntr
-    k
    tr = tosca_read_trial(Params, Data, k);
    ttr(k) = tr.Time_s(1);
 end
@@ -186,9 +185,9 @@ for t=1:length(Data) %Hypothesis is trial 00 is generated abberantly, so start o
 %         t_starts = find(loco_data(:,2)==1); %trial starts
      
             try
-                locTrial_idx{t} =mark_loco(t) : mark_loco(t+1)-1;
+                locTrial_idx{t} =mark_loco(t)+1 : mark_loco(t+1)-1;
             catch
-                locTrial_idx{t} = mark_loco(t) : length(loco_data.t);
+                locTrial_idx{t} = mark_loco(t)+1 : length(loco_data.t);
             end
        
         

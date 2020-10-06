@@ -189,12 +189,13 @@ scatter(water_times,zeros(size(water_times))+ymax,'c','Filled')
 %For each trial, extract AltSound - 1 second to AltSound + 3 seconds
 
 toscaFrameRate = loco_times(end)/length(loco_times);
-baselinePeriodInSeconds = 1;
-holdingPeriodInSeconds = 3;
+baselinePeriodInSeconds = 4;
+holdingPeriodInSeconds = 4;
 baselinePeriodInFrames = floor(baselinePeriodInSeconds/toscaFrameRate);
 holdingPeriodInFrames = floor(holdingPeriodInSeconds/toscaFrameRate);
+totalPeriodInFrames = baselinePeriodInFrames + holdingPeriodInFrames;
 
-trialRaster = nan(length(trial_times),baselinePeriodInFrames + holdingPeriodInFrames);
+trialRaster = zeros(length(trial_times),totalPeriodInFrames + 1);
 computer_time = block.Tosca_times{1,1}(1,1);
 trial_times = nan(size(block.Tosca_times));
 lick_times = [];
@@ -208,5 +209,54 @@ for i = 1:length(block.Tosca_times)
 end
 alternating_sound_times = trial_times + holdingPeriod;
 trial_type = block.trialType;
+allFrequencies;
+
+for i = 1:length(alternating_sound_times)
+    T = alternating_sound_times(i);
+    T0 = T - baselinePeriodInSeconds;
+    T1 = T + holdingPeriodInSeconds;
+    estimatedTimeInFrames = T0:(T1-T0)/80:T1;
+    L = lick_times(lick_times > T0);
+    L = L(L < T1);
+    if isempty(L)
+        continue;
+    else
+        for l = 1:length(L)
+            [timeVal, lickInd] = min(abs(estimatedTimeInFrames - L(l)));
+            if timeVal < toscaFrameRate
+                trialRaster(i,lickInd) = 1;
+            end
+        end
+    end
+    
+end
+
+[sortedFreqs, sortInd] = sort(allFrequencies);
+sortedTrialRaster = trialRaster(sortInd,:);
+sortedTrialType = trial_type(sortInd);
 
 %figure; hold on
+
+figure
+imagesc(flipud(sortedTrialRaster))
+set(gca, 'YTick', 1:length(sortedFreqs))
+set(gca, 'YTickLabel', fliplr(sortedFreqs));
+ylabel('Frequency')
+xlabel('Frames aligned to response window')
+
+figure; hold all %scatterplot
+for i = 1:size(sortedTrialRaster,1)
+    currentPoints = find(sortedTrialRaster(i,:));
+    scatter(currentPoints,zeros(1,length(currentPoints)) + i, 50, 'm', 'filled');
+    if ~isempty(currentPoints) && sortedTrialType(i) == 1
+        firstPoint = currentPoints(1);
+        if firstPoint >= baselinePeriodInFrames
+            scatter(firstPoint,zeros(1,length(firstPoint)) + i, 50, 'b', 'filled');
+        end
+    end
+end
+
+set(gca, 'YTick', 1:length(sortedFreqs))
+set(gca, 'YTickLabel', sortedFreqs);
+ylabel('Frequency')
+xlabel('Frames aligned to response window')

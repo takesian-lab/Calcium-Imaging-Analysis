@@ -108,6 +108,10 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
             n=StateChange(y,1);
             New_sound_times(y)=zero_times{1,y}(1,n);
         end
+        if setup.stim_protocol == 13
+            holdingPeriod(t) = s.Script.output; %Variable for Maryse behavior stim
+        end
+                
         %Get CS+/CS- results
         try
             if isequal(Data{t}.Result,'Hit')
@@ -116,7 +120,6 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                     targetFreq=s.cue.Signal.Waveform.Frequency_kHz;%pull out the target frequency
                 elseif setup.stim_protocol == 13
                     targetFreq(t) = Data{t}.Target_kHz;
-                    holdingPeriod(t) = s.Script.output;
                 end
                 trialType{t}=1;
             elseif isequal(Data{t}.Result,'Miss')
@@ -124,7 +127,6 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                 trialType{t}=1;
                 if setup.stim_protocol == 13
                     targetFreq(t) = Data{t}.Target_kHz;
-                    holdingPeriod(t) = s.Script.output;
                 elseif setup.stim_protocol == 9
                     targretFreq = s.cue.Signal.FMSweep.Rate_oct_s;
                 else
@@ -135,14 +137,12 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                 trialType{t}=0;
                 if setup.stim_protocol == 13
                     targetFreq(t) = Data{t}.Target_kHz;
-                    holdingPeriod(t) = s.Script.output;
                 end
             elseif isequal(Data{t}.Result,'False Alarm')
                 b_Outcome{t}=4;
                 trialType{t}=0;
                 if setup.stim_protocol == 13
                     targetFreq(t) = Data{t}.Target_kHz;
-                    holdingPeriod(t) = s.Script.output;
                 end
             else
                 b_Outcome{t}=NaN;
@@ -275,7 +275,7 @@ for m = 1:length(Data)
         stim_level = Params.Output_States(2).StimChans(1).Stimulus.Level.Level;
     else %stim_protocol doeesn't match any of the above
         warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])
-        break;
+        return;
     end
 end
 

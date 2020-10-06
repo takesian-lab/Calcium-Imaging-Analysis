@@ -41,7 +41,7 @@ end
 
 setup = block.setup;
 stim_protocol = setup.stim_protocol;
-code = {'Noiseburst', 'Receptive Field', 'FM sweep', 'Widefield', 'SAM', 'SAM freq' , 'Behavior', 'Behavior', 'Random H20', 'Noiseburst ITI', 'Random Air', 'Spontaneous'};
+code = {'Noiseburst', 'Receptive Field', 'FM sweep', 'Widefield', 'SAM', 'SAM freq' , 'Behavior', 'Behavior', 'Random H20', 'Noiseburst ITI', 'Random Air', 'Spontaneous', 'Behavior Maryse'};
 currentStim = code{stim_protocol};
 disp(['Plotting figures for ' currentStim '...'])
 
@@ -84,7 +84,7 @@ for c = 1:length(cellnum)
 
     cell_trace = F7(row_num,:);%pull out the full trace for each cell
 
-    mean_gCAMP = mean(cell_trace);% average green for each cell
+    mean_gCAMP = nanmean(cell_trace);% average green for each cell
     df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
     A = smooth(df_f,10);
 
@@ -150,17 +150,17 @@ for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
         if length(current_cells) == 1
             F7_cell = squeeze(F7_stim(row_nums,:,:));
             F7_baseline = F7_cell(:,1:nBaselineFrames); %baseline for each trial
-            F7_df_f = (F7_cell-mean(F7_baseline,2))./mean(F7_baseline,2); %(total-mean)/mean
+            F7_df_f = (F7_cell-nanmean(F7_baseline,2))./nanmean(F7_baseline,2); %(total-mean)/mean
             ebar = std(F7_df_f,1);
             spks_cell = squeeze(spks_stim(row_nums,:,:));
             ebar_spks = std(spks_cell,1);
         elseif length(current_cells) > 1
             F7_cells = F7_stim(row_nums,:,:);
             F7_baselines = F7_cells(:,:,1:nBaselineFrames);
-            F7_df_fs = (F7_cells-mean(F7_baselines,3))./mean(F7_baselines,3);
-            F7_df_f = squeeze(mean(F7_df_fs,1));
+            F7_df_fs = (F7_cells-nanmean(F7_baselines,3))./nanmean(F7_baselines,3);
+            F7_df_f = squeeze(nanmean(F7_df_fs,1));
             ebar = std(F7_df_f,1)/sqrt(length(current_cells)-1);
-            spks_cell = squeeze(mean(spks_stim(row_nums,:,:),1));
+            spks_cell = squeeze(nanmean(spks_stim(row_nums,:,:),1));
             ebar_spks = std(spks_cell,1)/sqrt(length(current_cells)-1);
         end
         
@@ -168,7 +168,7 @@ for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
         
         %DF_F average
         subplot(2,2,1)
-        total_mean = mean(F7_df_f);
+        total_mean = nanmean(F7_df_f);
         shadedErrorBar(1:length(total_mean),total_mean,ebar);
         set(gca, 'XTick', x_in_seconds)
         set(gca, 'XTickLabel', x_label_in_seconds)
@@ -179,7 +179,7 @@ for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
         
         %Spike average
         subplot(2,2,2)
-        total_mean = mean(spks_cell);
+        total_mean = nanmean(spks_cell);
         area(total_mean, 'FaceColor', [0.85 0.85 0.85]);
         set(gca, 'XTick', x_in_seconds)
         set(gca, 'XTickLabel', x_label_in_seconds)
@@ -233,7 +233,10 @@ elseif stim_protocol == 11 %Random Air
 elseif stim_protocol == 10 %Noiseburst ITI
     V1 = block.parameters.variable1;
     stim_names = {'70dB', '0dB'};
-    plotAirOrH20 = 1;
+    if length(unique(V1)) == 2 %Some versions of noisburst ITI had multiple dB levels
+        warning('Version of noiseburst ITI with multiple dB levels. Sound vs. No Sound not plotted.')
+        plotAirOrH20 = 1;
+    end
 else %Use same format to plot sound blocks where blank/sham stim were included
     V1 = block.parameters.variable1;
     V2 = block.parameters.variable2;
@@ -268,17 +271,17 @@ if plotAirOrH20
             if length(current_cells) == 1
                 F7_cell = squeeze(F7_stim(row_nums,V1 == stimValues(v),:));
                 F7_baseline = F7_cell(:,1:nBaselineFrames); %baseline for each trial
-                F7_df_f = (F7_cell-mean(F7_baseline,2))./mean(F7_baseline,2); %(total-mean)/mean
+                F7_df_f = (F7_cell-nanmean(F7_baseline,2))./nanmean(F7_baseline,2); %(total-mean)/mean
                 ebar = std(F7_df_f,1);
                 spks_cell = squeeze(spks_stim(row_nums,V1 == stimValues(v),:));
                 ebar_spks = std(spks_cell,1);
             elseif length(current_cells) > 1
                 F7_cells = F7_stim(row_nums,V1 == stimValues(v),:);
                 F7_baselines = F7_cells(:,:,1:nBaselineFrames);
-                F7_df_fs = (F7_cells-mean(F7_baselines,3))./mean(F7_baselines,3);
-                F7_df_f = squeeze(mean(F7_df_fs,1));
+                F7_df_fs = (F7_cells-nanmean(F7_baselines,3))./nanmean(F7_baselines,3);
+                F7_df_f = squeeze(nanmean(F7_df_fs,1));
                 ebar = std(F7_df_f,1)/sqrt(length(current_cells)-1);
-                spks_cell = squeeze(mean(spks_stim(row_nums,V1 == stimValues(v),:),1));
+                spks_cell = squeeze(nanmean(spks_stim(row_nums,V1 == stimValues(v),:),1));
                 ebar_spks = std(spks_cell,1)/sqrt(length(current_cells)-1);
             end   
             
@@ -287,7 +290,7 @@ if plotAirOrH20
         
             %DF_F average
             subplot(4,2,1+q)
-            total_mean = mean(F7_df_f);
+            total_mean = nanmean(F7_df_f);
             shadedErrorBar(1:length(total_mean),total_mean,ebar);
             set(gca, 'XTick', x_in_seconds)
             set(gca, 'XTickLabel', x_label_in_seconds)
@@ -299,7 +302,7 @@ if plotAirOrH20
 
             %Spike average
             subplot(4,2,2+q)
-            total_mean = mean(spks_cell);
+            total_mean = nanmean(spks_cell);
             area(total_mean, 'FaceColor', [0.85 0.85 0.85]);
             set(gca, 'XTick', x_in_seconds)
             set(gca, 'XTickLabel', x_label_in_seconds)
@@ -413,25 +416,25 @@ if plotReceptiveField
                 if length(current_cells) == 1
                     F7_cell = squeeze(F7_stim(row_nums,stim_rows,:));
                     F7_baseline = F7_cell(:,1:nBaselineFrames); %baseline for each trial
-                    F7_df_f = (F7_cell-mean(F7_baseline,2))./mean(F7_baseline,2); %(total-mean)/mean
+                    F7_df_f = (F7_cell-nanmean(F7_baseline,2))./nanmean(F7_baseline,2); %(total-mean)/mean
                     ebar = std(F7_df_f,1);
                     spks_cell = squeeze(spks_stim(row_nums,stim_rows,:));
                     ebar_spks = std(spks_cell,1);
-                    F7_df_f_mat(count,:) = mean(F7_df_f);
+                    F7_df_f_mat(count,:) = nanmean(F7_df_f);
                     ebar_mat(count,:) = ebar;
-                    spks_mat(count,:) = mean(spks_cell);
+                    spks_mat(count,:) = nanmean(spks_cell);
                     ebar_spks_mat(count,:) = ebar_spks;
                 elseif length(current_cells) > 1
                     F7_cells = F7_stim(row_nums,stim_rows,:);
                     F7_baselines = F7_cells(:,:,1:nBaselineFrames);
-                    F7_df_fs = (F7_cells-mean(F7_baselines,3))./mean(F7_baselines,3);
-                    F7_df_f = squeeze(mean(F7_df_fs,1));
+                    F7_df_fs = (F7_cells-nanmean(F7_baselines,3))./nanmean(F7_baselines,3);
+                    F7_df_f = squeeze(nanmean(F7_df_fs,1));
                     ebar = std(F7_df_f,1)/sqrt(length(current_cells)-1);
-                    spks_cell = squeeze(mean(spks_stim(row_nums,stim_rows,:),1));
+                    spks_cell = squeeze(nanmean(spks_stim(row_nums,stim_rows,:),1));
                     ebar_spks = std(spks_cell,1)/sqrt(length(current_cells)-1);
-                    F7_df_f_mat(count,:) = mean(F7_df_f);
+                    F7_df_f_mat(count,:) = nanmean(F7_df_f);
                     ebar_mat(count,:) = ebar;
-                    spks_mat(count,:) = mean(spks_cell);
+                    spks_mat(count,:) = nanmean(spks_cell);
                     ebar_spks_mat(count,:) = ebar_spks;
                 end
                 
@@ -483,7 +486,7 @@ if plotReceptiveField
                     total_mean = F7_df_f_mat(mat_rows,:);
                     ebar = ebar_mat(mat_rows,:);
                 else
-                    total_mean = mean(F7_df_f_mat(mat_rows,:));
+                    total_mean = nanmean(F7_df_f_mat(mat_rows,:));
                     ebar = std(F7_df_f_mat,1); %recompute error bar for this part - not sure the best way to do this
                 end
                 shadedErrorBar(1:length(total_mean),total_mean,ebar);
@@ -504,7 +507,7 @@ if plotReceptiveField
                 if sum(mat_rows) == 1
                     total_mean = spks_mat(mat_rows,:);
                 else
-                    total_mean = mean(spks_mat(mat_rows,:));
+                    total_mean = nanmean(spks_mat(mat_rows,:));
                 end
                 area(total_mean, 'FaceColor', [0.85 0.85 0.85]);
                 set(gca, 'XTick', x_in_seconds)
@@ -607,7 +610,7 @@ if plotReceptiveField
             count = 1;
             for v = 1:length(V2_stim)
                 for vv = 1:length(V1_stim)
-                    RF(v,vv) = mean(F7_df_f_mat(count,t1:t2));
+                    RF(v,vv) = nanmean(F7_df_f_mat(count,t1:t2));
                     count = count + 1;
                 end
             end

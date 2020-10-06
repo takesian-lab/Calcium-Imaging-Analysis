@@ -44,8 +44,8 @@ x = 1:length(hitRatePerFrequency);
 y = hitRatePerFrequency;
 
 %make figure
-figure; hold on
-subplot(2,1,1)
+figure;
+subplot(2,1,1); hold all
 plot(x,y,'Linewidth',2) %plot psychometric curve
 line([0 x(end)+1], [0.5, 0.5], 'Color', 'r') %plot horizontal red line at 50% hit rate (chance)
 ylabel('Hit Rate')
@@ -54,11 +54,17 @@ set(gca, 'XTick', x)
 set(gca, 'XTickLabel', uniqueFrequencies)
 title(plotTitle)
 
-%Maryse To Do:
-%1. plot psychometric curve with adjustments for trials where the lick was too early
-%2. plot S-shaped curve over psychometric curve
+% Fit psychometric functions
+targets = [0.25 0.5 0.75]; % 25 50 75 performance
+weights = ones(1,length(y)); % No weighting
+[fit_coeffs, fit_curve, fit_threshold] = fitPsycheCurveLogit(x, y, weights, targets);
 
-% Plot 2 - Reaction time vs. frequency (Esther)
+% Plot psychometic curves
+plot(fit_curve(:,1), fit_curve(:,2), 'Linewidth', 2, 'LineStyle', '--', 'Color', 'g')
+%legend('Performance', 'Fit');
+scatter(fit_threshold, targets, 'x', 'k')
+
+%% Plot 2 - Reaction time vs. frequency (Esther)
 
 %Calculate average reaction time per frequency
 reaction_timesPerFrequency_STD = nan(1,length(uniqueFrequencies));
@@ -96,8 +102,13 @@ xlim([x(1)-1 x(end)+1])
 %% Plot 3 - Locomotion and licks
 
 %Get locomotor activity
-loco_activity = block.loco_activity;
-loco_times = block.loco_times;
+loco_activity = abs(block.loco_data.speed); %uncorrected
+loco_times = block.loco_data.t - block.loco_data.t(1); %uncorrected
+
+%eventually we want to get it from this after Carolyn's fix
+% loco_activity = block.loco_activity;
+% loco_times = block.loco_times;
+
 ymax = round(1.05*max(loco_activity)); %Determine how high the graph ylim should be
 
 %Get sound and lick times
@@ -148,6 +159,10 @@ scatter(water_times,zeros(size(water_times))+ymax,'c','Filled')
 
 %% Plot example trial(s)
 
+plotExampleTrial = 0;
+
+if plotExampleTrial
+    
 %Adjust xlim and ylim to show only a selection of trials
 nTrialsToPlot = 1;
 trialToStartWith = 35;
@@ -182,9 +197,9 @@ end
 scatter(lick_times,zeros(size(lick_times))+ymax,'m','Filled')
 %Plot a circle for water
 scatter(water_times,zeros(size(water_times))+ymax,'c','Filled')
+end
 
-
-%% Plot lick rasterplot
+%% Plot #4 - Plot lick rasterplot
 
 %For each trial, extract AltSound - 1 second to AltSound + 3 seconds
 
@@ -235,16 +250,16 @@ end
 sortedTrialRaster = trialRaster(sortInd,:);
 sortedTrialType = trial_type(sortInd);
 
-%figure; hold on
-
 figure
+subplot(2,1,1)
 imagesc(flipud(sortedTrialRaster))
 set(gca, 'YTick', 1:length(sortedFreqs))
 set(gca, 'YTickLabel', fliplr(sortedFreqs));
 ylabel('Frequency')
 xlabel('Frames aligned to response window')
+title(plotTitle)
 
-figure; hold all %scatterplot
+subplot(2,1,2); hold all %scatterplot
 for i = 1:size(sortedTrialRaster,1)
     currentPoints = find(sortedTrialRaster(i,:));
     scatter(currentPoints,zeros(1,length(currentPoints)) + i, 50, 'm', 'filled');
@@ -260,3 +275,21 @@ set(gca, 'YTick', 1:length(sortedFreqs))
 set(gca, 'YTickLabel', sortedFreqs);
 ylabel('Frequency')
 xlabel('Frames aligned to response window')
+
+%% Plot frequency of hits and/or FPs over time (to see if mouse activity changes over a single session)
+
+FPtimes = trial_times(FPs);
+
+figure;
+subplot(2,1,1)
+hist(FPtimes);
+ylabel('Number of FPs')
+xlabel('Time (seconds)')
+xlim([0 loco_times(end)])
+title(plotTitle)
+
+subplot(2,1,2)
+scatter(FPtimes, 1:length(FPtimes))
+ylabel('FP count')
+xlabel('Time (seconds)')
+xlim([0 loco_times(end)])

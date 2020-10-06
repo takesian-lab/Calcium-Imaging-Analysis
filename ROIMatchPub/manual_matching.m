@@ -7,6 +7,11 @@ load(match_filename)
 filepaths = roiMatchData.allRois;
 mapping = roiMatchData.allSessionMapping;
 
+noMatchingROIs = 0;
+if isempty(mapping)
+    noMatchingROIs = 1;
+end
+
 %%
 figure;
 
@@ -21,8 +26,12 @@ for f = 1:length(filepaths)
     cellValid = Fall.iscell(:,1);
     cellIDMap = zeros(size(Fall.ops.meanImg));
     validCellList = find(cellValid(:,1)==1);
-    matchedCells{f,1} = validCellList(mapping(:,f));
-    unmatchedCells{f,1} = setdiff(validCellList,matchedCells{f,1});
+    if ~noMatchingROIs
+        matchedCells{f,1} = validCellList(mapping(:,f));
+        unmatchedCells{f,1} = setdiff(validCellList,matchedCells{f,1});
+    else
+        unmatchedCells{f,1} = validCellList;
+    end
     stat{f,1} = Fall.stat;
 
     subplot(1,2,f)
@@ -34,6 +43,9 @@ for f = 1:length(filepaths)
 end
 
 %%
+
+if ~noMatchingROIs
+    
 for i = 1:size(mapping,1)
     
     cellID_A = matchedCells{1,1}(i);
@@ -69,6 +81,8 @@ for i = 1:size(mapping,1)
     delete([h1 h2])
 end
 
+end
+
 %% Match A that are not on B
 
 %which Fall has fewer unmatched cells
@@ -83,15 +97,17 @@ if min_ind == max_ind
 end
 
 subplot(1,2,max_ind)
-    
-for i = 1:size(matchedCells{max_ind,1},1)
-    cellID = matchedCells{max_ind,1}(i);
-    roiPix = sub2ind(size(cellIDMap),stat{max_ind,1}{cellID}.ypix+1,stat{max_ind,1}{cellID}.xpix+1);
-    cellIDMap(roiPix) = cellID;
-end
+
+if ~noMatchingROIs
+    for i = 1:size(matchedCells{max_ind,1},1)
+        cellID = matchedCells{max_ind,1}(i);
+        roiPix = sub2ind(size(cellIDMap),stat{max_ind,1}{cellID}.ypix+1,stat{max_ind,1}{cellID}.xpix+1);
+        cellIDMap(roiPix) = cellID;
+    end
 B = bwboundaries(cellIDMap);
 h1 = visboundaries(B, 'Color', 'g');
 cellIDMap = zeros(size(Fall.ops.meanImg));
+end
 
 for i = 1:size(unmatchedCells{max_ind,1},1)
     cellID = unmatchedCells{max_ind,1}(i);
@@ -105,13 +121,16 @@ h2 = visboundaries(B, 'Color', 'r');
 subplot(1,2,min_ind)
 cellIDMap2 = zeros(size(Fall.ops.meanImg));
  
-for i = 1:size(matchedCells{min_ind,1},1)
-    cellID = matchedCells{min_ind,1}(i);
-    roiPix = sub2ind(size(cellIDMap2),stat{min_ind,1}{cellID}.ypix+1,stat{min_ind,1}{cellID}.xpix+1);
-    cellIDMap2(roiPix) = cellID;
+if ~noMatchingROIs
+    for i = 1:size(matchedCells{min_ind,1},1)
+        cellID = matchedCells{min_ind,1}(i);
+        roiPix = sub2ind(size(cellIDMap2),stat{min_ind,1}{cellID}.ypix+1,stat{min_ind,1}{cellID}.xpix+1);
+        cellIDMap2(roiPix) = cellID;
+    end
+
+    B = bwboundaries(cellIDMap2);
+    h3 = visboundaries(B, 'Color', 'g');
 end
-B = bwboundaries(cellIDMap2);
-h3 = visboundaries(B, 'Color', 'g');
 
 cellMatch = [];
 matchCount = 1;
@@ -159,15 +178,3 @@ manualMatching.newMatches = cellMatch;
 roiMatchData.manualMatching = manualMatching;
 save(match_filename,'roiMatchData');
 disp('All done')
-
-%%
-%
-%                     row_num = currentCells(a);
-%                 xcirc = double(block.stat{1,row_num}.xcirc);
-%                 ycirc = double(block.stat{1,row_num}.ycirc);
-% 
-%                 subplot(1,2,1);
-%                 if f == 2
-%                     plot(xcirc,ycirc,'Linewidth', 1.5);
-%                     
-%                     

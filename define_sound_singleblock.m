@@ -114,18 +114,19 @@ if ~ismissing(block.setup.Tosca_path) %Skip if Tosca info is missing
     % numbers are defined at the top of compile_blocks_from_info.m
     base = constant.baseline_length;
     stopwin = constant.locowindow;
-    activity = block.loco_activity; % velocity for whole block
+    activity = block.loco_data.speed(:); % velocity for whole block
     for i = 1:length(Sound_Time)
         sound = Sound_Time(i);
         window = sound + stopwin;
         loc_trial = Loc_BrukerTime{i}(:);
         [c closest_loc_window] = min(abs(loc_trial(:,1)-window));
-     act = block.activity_trial{i}(1:closest_loc_window);
+         [c closest_sound] = min(abs(loc_trial(:,1)-sound));
+     act = abs(block.loc_Trial_activity{i}(closest_sound:closest_loc_window));
      actThrsh = find(act>constant.locoThresh);
      if sum(actThrsh)>1
      active_trials(i) = 1;
      else active_trials(i) = 0;
-     end
+     end 
     
         
     end
@@ -158,6 +159,7 @@ frame_data = csvread(BOT_filename, 1,0);
 timestamp = frame_data(:,1)-frame_data(1,1);% this is where we make that small correction
 block.timestamp = timestamp;
 block.active_trials = active_trials;
+block.locomotion_trace = locomotion_trace;
 
 %Record filenames
 setup.VR_filename = VR_filename;

@@ -61,6 +61,7 @@ Tosca_Run_number = num2str(setup.Tosca_run);
 Tosca_Session = num2str(setup.Tosca_session);
 mouseID = char(setup.mousename);
 b=setup.Tosca_run;
+
 [Data,Params] = tosca_read_run(behaveblock{b}); %Load block meta-data%%%HACK!!!!!
 try
     %     loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']); %locomotor data
@@ -75,13 +76,14 @@ try
     end
     % The two sets of time stamps should be identical within a few
     % milliseconds. Here, we'll check each locomotion marker and see if there
-    % is a real trial starting within 200 ms. If so, keep that locomotion
-    % marker.
+    % is a real trial starting within 50 ms. If so, keep that locomotion
+    % marker. (note, Ken suggested 200ms, but Carolyn changed it on 10/6/20
+    % to better correct for a loco error. 
     
     ikeep = false(size(tloco));
     for k = 1:length(tloco)
         minDiff = min(abs(tloco(k) - ttr));
-        if minDiff < 0.3
+        if minDiff < 0.05
             ikeep(k) = true;
         end
     end
@@ -98,7 +100,12 @@ catch
 end
 %% Read data from the run
 Var1=[]; Var2=[];
-for t=1:length(Data) %Hypothesis is trial 00 is generated abberantly, so start on trial 1
+inblock=trials(contains(trials,['Run' num2str(b) '-'])); %% added hyphen to eliminate double digit spurious entries...
+        trialcount=0;
+        if length(inblock)>length(Data)
+            inblock=inblock(1:end-1);%Hypothesis is trial 00 is generated abberantly, so start on trial 1
+        end
+for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so start on trial 1
     s=tosca_read_trial(Params,Data,t);%the read_trial gives us more info than read_run alone
     if ~isempty(s)
         Tosca_times{t}=s.Time_s; %pulls out the tosca generated timestamps for each trial
@@ -204,11 +211,12 @@ for t=1:length(Data) %Hypothesis is trial 00 is generated abberantly, so start o
                 activity_add = activity_trial{1,j}(:);
                 loco_trace_activity =[loco_trace_activity;activity_add];
             else
-                loc_add = zero_loc{1,j}(:) + zero_loc{1,j-1}(end);
+                loc_add = zero_loc{1,j}(:) + loc_add(end);
                 loco_trace_times = [loco_trace_times; loc_add];
                 activity_add = activity_trial{1,j}(:);
                 loco_trace_activity =[loco_trace_activity;activity_add];
             end
+            loco_trace_activity=abs(loco_trace_activity);
         end
         
     end

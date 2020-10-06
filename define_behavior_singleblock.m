@@ -60,7 +60,20 @@ trials=sort_nat(trials);
 Tosca_Run_number = num2str(setup.Tosca_run);
 Tosca_Session = num2str(setup.Tosca_session);
 mouseID = char(setup.mousename);
-b=setup.Tosca_run;
+
+%Find behaveblock run number that is equal to Tosca_Run_number
+A = length(Tosca_Run_number) + length('.txt') - 1;
+B = length('.txt');
+behaveblock_runNumbers = {};
+for i = 1:length(behaveblock)
+    behaveblock_runNumbers{i} = behaveblock{i}(1,end-A:end-B);
+end
+    
+b = find(strcmp(behaveblock_runNumbers,Tosca_Run_number));
+if isempty(b) || length(b) > 1 %Run not found or more than one run equals run #
+    error('Check Tosca run number.')
+end
+
 
 [Data,Params] = tosca_read_run(behaveblock{b}); %Load block meta-data%%%HACK!!!!!
 try
@@ -125,7 +138,11 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
             n=StateChange(y,1);
             New_sound_times(y)=zero_times{1,y}(1,n);
         end
-        
+
+        if setup.stim_protocol == 13
+            holdingPeriod(t) = s.Script.output; %Variable for Maryse behavior stim
+        end
+                
         %Get CS+/CS- results
         try
             if isequal(Data{t}.Result,'Hit')
@@ -134,7 +151,6 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                     targetFreq=s.cue.Signal.Waveform.Frequency_kHz;%pull out the target frequency
                 elseif setup.stim_protocol == 13
                     targetFreq(t) = Data{t}.Target_kHz;
-                    holdingPeriod(t) = s.Script.output;
                 end
                 trialType{t}=1;
             elseif isequal(Data{t}.Result,'Miss')
@@ -142,10 +158,11 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                 trialType{t}=1;
                 if setup.stim_protocol == 13
                     targetFreq(t) = Data{t}.Target_kHz;
-                    holdingPeriod(t) = s.Script.output;
                 elseif setup.stim_protocol == 9
                     try
-                    targretFreq{t} = s.cue.Signal.FMSweep.Rate_oct_s;
+                        targetFreq = s.cue.Signal.FMSweep.Rate_oct_s;
+                    catch
+                        targetFreq = nan;
                     end
                 elseif setup.stim_protocol == 7
                     targetFreq=s.cue.Signal.Waveform.Frequency_kHz;
@@ -157,14 +174,12 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                 trialType{t}=0;
                 if setup.stim_protocol == 13
                     targetFreq(t) = Data{t}.Target_kHz;
-                    holdingPeriod(t) = s.Script.output;
                 end
             elseif isequal(Data{t}.Result,'False Alarm')
                 b_Outcome{t}=4;
                 trialType{t}=0;
                 if setup.stim_protocol == 13
                     targetFreq(t) = Data{t}.Target_kHz;
-                    holdingPeriod(t) = s.Script.output;
                 end
             else
                 b_Outcome{t}=NaN;
@@ -271,10 +286,10 @@ for m = 1:length(Data)
         catch
             V1(1,m)  = Params.Output_States(2).StimChans.Stimulus.Waveform.Tone.Frequency_kHz;
             V2(1,m)  = Params.Output_States(2).StimChans.Stimulus.Level.Level;
-        end
+         end
     elseif setup.stim_protocol == 8 %Behavior ABI
         V1(1,m)  = Data{m}.cue.CurrentSource.Level.dB_re_1_Vrms;
-        V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
+        V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;            
     elseif setup.stim_protocol == 9 || setup.stim_protocol == 11 %Random H20 or Air Puffs
         if strcmp(Data{m}.Type, 'CS+')
             type = 1;
@@ -305,7 +320,6 @@ for m = 1:length(Data)
         warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])
         break;
     end
-end
 
 %% Check for tosca trials that are errors, and remove them from the data
 

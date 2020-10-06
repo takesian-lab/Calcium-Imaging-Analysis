@@ -26,7 +26,7 @@
 %% Load Info.mat and change user-specific options
 
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
-recompile = 0; %1 to save over previously compiled blocks, 0 to skip
+recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
 %% set up values for 'align to stim'
@@ -55,13 +55,13 @@ PC_name = getenv('computername');
 
 switch PC_name
     case 'RD0366' %Maryse
-        info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
-        save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks';
+        %info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
+        %save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks';
         %info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
         %save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
-        %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
-        %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks';
-        info_filename = 'Info_NxDD070420F2';
+        info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks';
+        info_filename = 'Info';
         ops_filename = 'Maryse_ops2.mat';
          
     case 'TAKESIANLAB2P' %2P computer
@@ -74,7 +74,7 @@ switch PC_name
         save_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob\Compiled Blocks';
         info_filename = 'Info_widefield_YD111219M1';
         
-         case 'RD-6-TAK2' %Esther's computer
+    case 'RD-6-TAK2' %Esther's computer
         info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';
         save_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob\Compiled Blocks';
         info_filename = 'Info_widefield_YD111219M1';

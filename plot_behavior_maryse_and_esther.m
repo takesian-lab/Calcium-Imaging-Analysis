@@ -58,7 +58,7 @@ title(plotTitle)
 %1. plot psychometric curve with adjustments for trials where the lick was too early
 %2. plot S-shaped curve over psychometric curve
 
-%% Plot 2 - Reaction time vs. frequency (Esther)
+% Plot 2 - Reaction time vs. frequency (Esther)
 
 %Calculate average reaction time per frequency
 reaction_timesPerFrequency_STD = nan(1,length(uniqueFrequencies));

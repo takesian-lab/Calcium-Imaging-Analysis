@@ -60,7 +60,20 @@ trials=sort_nat(trials);
 Tosca_Run_number = num2str(setup.Tosca_run);
 Tosca_Session = num2str(setup.Tosca_session);
 mouseID = char(setup.mousename);
-b=setup.Tosca_run;
+
+%Find behaveblock run number that is equal to Tosca_Run_number
+A = length(Tosca_Run_number) + length('.txt') - 1;
+B = length('.txt');
+behaveblock_runNumbers = {};
+for i = 1:length(behaveblock)
+    behaveblock_runNumbers{i} = behaveblock{i}(1,end-A:end-B);
+end
+    
+b = find(strcmp(behaveblock_runNumbers,Tosca_Run_number));
+if isempty(b) || length(b) > 1 %Run not found or more than one run equals run #
+    error('Check Tosca run number.')
+end
+
 [Data,Params] = tosca_read_run(behaveblock{b}); %Load block meta-data%%%HACK!!!!!
 try
     %     loco_data = dlmread([mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt']); %locomotor data
@@ -148,7 +161,11 @@ for t=1:length(Data) %Hypothesis is trial 00 is generated abberantly, so start o
                 if setup.stim_protocol == 13
                     targetFreq(t) = Data{t}.Target_kHz;
                 elseif setup.stim_protocol == 9
-                    targretFreq = s.cue.Signal.FMSweep.Rate_oct_s;
+                    try
+                        targetFreq = s.cue.Signal.FMSweep.Rate_oct_s;
+                    catch
+                        targetFreq = nan;
+                    end
                 elseif setup.stim_protocol == 7
                     targetFreq=s.cue.Signal.Waveform.Frequency_kHz;
                 else
@@ -181,11 +198,11 @@ for t=1:length(Data) %Hypothesis is trial 00 is generated abberantly, so start o
         % Use this information to find which locomotor timestamps
         % correspond to each trial
         
-        %         when does each loco trial start:
+        % when does each loco trial start:
 %         t_starts = find(loco_data(:,2)==1); %trial starts
      
             try
-                locTrial_idx{t} =mark_loco(t)+1 : mark_loco(t+1)-1;
+                locTrial_idx{t} = mark_loco(t)+1 : mark_loco(t+1)-1;
             catch
                 locTrial_idx{t} = mark_loco(t)+1 : length(loco_data.t);
             end
@@ -217,7 +234,7 @@ for t=1:length(Data) %Hypothesis is trial 00 is generated abberantly, so start o
             loco_trace_activity =[];
             
             
-         
+    
             for j = 1:length(zero_loc)
                 if j == 1
                     loc_add = zero_loc{1,j}(:);
@@ -354,7 +371,7 @@ for t=1:length(Data) %Hypothesis is trial 00 is generated abberantly, so start o
     block.New_sound_times = New_sound_times;
     block.start_time = start_time;
     block.lick_time = licks;
-    % block.Tosca_times = Tosca_times;
+    block.Tosca_times = Tosca_times;
     block.Outcome =  cell2mat(b_Outcome);
     block.trialType = cell2mat(trialType);
     block.TargetFreq = targetFreq;

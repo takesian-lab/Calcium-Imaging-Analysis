@@ -121,14 +121,11 @@ end
 
 %Plot locomotor activity
 if ~ismissing(block.setup.Tosca_path)
-    if isfield(block, 'locomotion_data')
-        loco_data = block.locomotion_data;
-    else
-        loco_data = block.loco_data;
-    end
-    
+    loco_time = block.loco_times;
+    loco_speed = block.loco_activity;
+        
     subplot(3,4,9:12); hold on %loco
-    plot(loco_data(:,1), loco_data(:,3));
+    plot(loco_time, loco_speed);
     title('Locomotor activity')
     ylabel('Activity (cm/s)')
     xlim([0 timestamp(Z)])

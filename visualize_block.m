@@ -33,14 +33,19 @@ if ismissing(block.setup.Tosca_path)
 else
 
     %% Plot locomotor activity
-   
 
-    if isfield(block, 'locomotion_data')
-        loco_data = block.locomotion_data;
-    else
-        loco_data = block.loco_data;
+    %THIS IS TEMPORARILY MESSED UP
+    if isfield(block, 'loco_activity')
+        loco_time = block.loco_times;
+        loco_speed = block.loco_activity;
+%     elseif isfield(block, 'locomotion_data')
+%         loco_time = block.locomotion_data(:,1);
+%         loco_speed = block.locomotion_data(:,3);
+%     else
+%         loco_time = block.loco_data(:,1);
+%         loco_speed = block.loco_data(:,3);
     end
-    
+        
     if isfield(block, 'active_time')
         active_time = block.active_time;
     end
@@ -50,7 +55,7 @@ else
     subplot(2,1,1); hold on
     title('Locomotor activity')
     ylabel('Activity (cm/s)')
-    plot(loco_data(:,1), loco_data(:,3)); hold on
+    plot(loco_time, loco_speed); hold on
     hline(0.7);
 
     subplot(2,1,2); hold on
@@ -58,7 +63,7 @@ else
     xlabel('Seconds')
     set(gca, 'ytick', [0 1])
     if isfield(block, 'active_time') 
-        plot(loco_data(:,1), active_time > 0); hold on;
+        plot(loco_time, active_time > 0); hold on;
     end
     suptitle(block.setup.block_supname)
    
@@ -239,7 +244,7 @@ else
             xlabel(timeUnit)
             xlim([0 timestamp(Z)])
             if ~ismissing(block.setup.Tosca_path)
-                plot(loco_data(:,1), loco_data(:,3));
+                plot(loco_time, loco_speed);
             end
             suptitle(block.setup.block_supname)
         end

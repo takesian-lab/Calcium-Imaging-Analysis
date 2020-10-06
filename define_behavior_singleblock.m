@@ -320,6 +320,7 @@ for m = 1:length(Data)
         warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])
         break;
     end
+end
 
 %% Check for tosca trials that are errors, and remove them from the data
 

@@ -62,11 +62,16 @@ Tosca_Session = num2str(setup.Tosca_session);
 mouseID = char(setup.mousename);
 
 %Find behaveblock run number that is equal to Tosca_Run_number
-A = length(Tosca_Run_number) + length('.txt') - 1;
-B = length('.txt');
+nDigits = length(Tosca_Run_number);
+desiredString = ['Run' Tosca_Run_number '.txt'];
 behaveblock_runNumbers = {};
 for i = 1:length(behaveblock)
-    behaveblock_runNumbers{i} = behaveblock{i}(1,end-A:end-B);
+    s_index = strfind(behaveblock{i},desiredString); 
+    if isempty(s_index)
+        behaveblock_runNumbers{i} = nan;
+    else
+        behaveblock_runNumbers{i} = behaveblock{i}(1,s_index+3:s_index+3+nDigits-1);
+    end
 end
     
 b = find(strcmp(behaveblock_runNumbers,Tosca_Run_number));

@@ -102,12 +102,12 @@ xlim([x(1)-1 x(end)+1])
 %% Plot 3 - Locomotion and licks
 
 %Get locomotor activity
-loco_activity = abs(block.loco_data.speed); %uncorrected
-loco_times = block.loco_data.t - block.loco_data.t(1); %uncorrected
+%loco_activity = abs(block.loco_data.speed); %uncorrected
+%loco_times = block.loco_data.t - block.loco_data.t(1); %uncorrected
 
 %eventually we want to get it from this after Carolyn's fix
-% loco_activity = block.loco_activity;
-% loco_times = block.loco_times;
+loco_activity = block.loco_activity;
+loco_times = block.loco_times;
 
 ymax = round(1.05*max(loco_activity)); %Determine how high the graph ylim should be
 

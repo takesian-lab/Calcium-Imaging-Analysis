@@ -113,7 +113,7 @@ catch
 end
 %% Read data from the run
 Var1=[]; Var2=[];
-inblock=trials(contains(trials,['Run' num2str(b) '-'])); %% added hyphen to eliminate double digit spurious entries...
+inblock=trials(contains(trials,['Run' Tosca_Run_number '-'])); %% added hyphen to eliminate double digit spurious entries...
         trialcount=0;
         if length(inblock)>length(Data)
             inblock=inblock(1:end-1);%Hypothesis is trial 00 is generated abberantly, so start on trial 1
@@ -338,12 +338,11 @@ k = find(error_trials>0);
 block.errors = k;
 if ~isempty(k)
     warning(['Found ' num2str(length(k)) ' error(s) out of ' num2str(length(error_trials)) ' Tosca trials'])
-end
-
-New_sound_times(:,k)=[];
-if setup.stim_protocol>=2
-    V1(:,k)=[];
-    V2(:,k)=[];
+    New_sound_times(:,k)=[];
+    if setup.stim_protocol>=2
+        V1(:,k)=[];
+        V2(:,k)=[];
+    end
 end
 
 Var1=[Var1,V1];
@@ -356,7 +355,7 @@ Var2=[Var2,V2];
 block.New_sound_times = New_sound_times;
 block.start_time = start_time;
 block.lick_time = licks;
-% block.Tosca_times = Tosca_times;
+block.Tosca_times = Tosca_times;
 block.Outcome =  cell2mat(b_Outcome);
 block.trialType = cell2mat(trialType);
 block.TargetFreq = targetFreq;

@@ -87,6 +87,15 @@ try
     tloco = loco_data.t(loco_data.ch > 0); % times of trial markers in locomotion data
     mark_loco = find(loco_data.ch>0);
     ntr = length(Data);% number of trials
+    %Make sure number of trials from Data matches number of Tosca text files
+    %Added by Maryse Oct. 7
+    inblock=trials(contains(trials,['Run' Tosca_Run_number '-']));
+    ntr_txt = length(inblock);
+    if ntr_txt < ntr
+        warning([num2str(ntr - ntr_txt) ' less Tosca trial(s) than recorded in Data.']);
+        ntr = ntr_txt;
+    end
+    %
     ttr = NaN(ntr, 1);
     for k = 1:ntr
         tr = tosca_read_trial(Params, Data, k);
@@ -205,7 +214,7 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
         %         t_starts = find(loco_data(:,2)==1); %trial starts
         
         try
-            locTrial_idx{t} =mark_loco(t)+1 : mark_loco(t+1)-1;
+            locTrial_idx{t} = mark_loco(t)+1 : mark_loco(t+1)-1;
         catch
             locTrial_idx{t} = mark_loco(t)+1 : length(loco_data.t);
         end
@@ -235,7 +244,7 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
                 loco_trace_times = [loco_trace_times; loc_add];
                 activity_add = activity_trial{1,j}(:);
                 loco_trace_activity =[loco_trace_activity;activity_add];
-            end
+                end
             loco_trace_activity=abs(loco_trace_activity);
         end
         
@@ -342,7 +351,7 @@ error_trials=cell2mat(error_trials);
 k = find(error_trials>0);
 block.errors = k;
 if ~isempty(k)
-    warning(['Found ' num2str(length(k)) ' error(s) out of ' num2str(length(error_trials)) ' Tosca trials'])
+    %warning(['Found ' num2str(length(k)) ' error(s) out of ' num2str(length(error_trials)) ' Tosca trials'])
     New_sound_times(:,k)=[];
     if setup.stim_protocol>=2
         V1(:,k)=[];

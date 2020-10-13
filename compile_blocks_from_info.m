@@ -72,12 +72,12 @@ switch PC_name
     case 'RD0332' %Carolyn
        info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
         save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
-        info_filename = 'Info_VxDD033120F2';
+        info_filename = 'Info_VxDD062420M3';
         
     case 'RD-6-TAK2' %Esther's computer
         info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';
         save_path = 'D:\test';
-        info_filename = 'Info_NxDC030220M3';
+        info_filename = 'Info_VxDD053120M2';
         
     case 'RD0386' %Wisam
         % INSERT PATHS HERE

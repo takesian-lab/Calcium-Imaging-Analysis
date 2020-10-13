@@ -231,7 +231,7 @@ elseif stim_protocol == 10 %Noiseburst ITI
     V1 = block.parameters.variable1;
     stim_names = {'70dB', '0dB'};
     if length(unique(V1)) == 2 %Some versions of noisburst ITI had multiple dB levels
-        warning('Version of noiseburst ITI with multiple dB levels. Sound vs. No Sound not plotted.')
+%         warning('Version of noiseburst ITI with multiple dB levels. Sound vs. No Sound not plotted.')
         plotAirOrH20 = 1;
     end
 else %Use same format to plot sound blocks where blank/sham stim were included

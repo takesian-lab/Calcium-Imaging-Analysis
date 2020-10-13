@@ -342,7 +342,7 @@ error_trials=cell2mat(error_trials);
 k = find(error_trials>0);
 block.errors = k;
 if ~isempty(k)
-    warning(['Found ' num2str(length(k)) ' error(s) out of ' num2str(length(error_trials)) ' Tosca trials'])
+%     warning(['Found ' num2str(length(k)) ' error(s) out of ' num2str(length(error_trials)) ' Tosca trials'])
     New_sound_times(:,k)=[];
     if setup.stim_protocol>=2
         V1(:,k)=[];

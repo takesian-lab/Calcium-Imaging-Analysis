@@ -1,4 +1,4 @@
-function [loco_cor_cell] = visualize_locomotor(block)
+function [loco_cor_cell, mean_active, mean_inactive] = visualize_locomotor(block)
 % Carolyn 5/29/2020
 
 
@@ -82,77 +82,6 @@ locoTrace_up = interp1(v, locoTrace, vr);
 % threshold the locomotor trace
 locoTrace_up(locoTrace_up<block.setup.constant.locoThresh)=0;
 
-%% look at detrended gcamp and locomotor trace on same graph, same scale
-
-% get traces that align with locoStart to locoEnd
-
-% count = 0;
-% subplot (2,1,1)
-% for i =1;%:20;%size(DF_F0,1)
-%     y = DF_F0_loco(i,:)+count;
-%     plot(smooth(y,10)); hold on
-%     count = count+3;
-% end
-% subplot(2,1,2)
-%      plot(smooth(locoTrace_up(1,:),10))
-
-%% Plot locomotor trace (now, thresholded), against gcamp signal (detrended)
-% Make the first axes in its figure
-% figure;
-% x = locoTrace_up;
-% x2 = 1:numel(locoTrace_up);
-% for i = 1:size(DF_F0_loco,1)
-%     y= DF_F0_loco(i,:);
-%
-%     if redcell(i) ==1
-%          subplot(8, 5, i);
-%
-% %     scatter(x,y,'ro');
-%     mygca(i) = gca;
-% %     yb = scatstat1(x,y,15,@median);
-% %     plot(x,yb,'ro')
-% % x = 1:50;
-% % y = -0.3*x + 2*randn(1,50);
-% p = polyfit(x,y,1);
-% f = polyval(p,x);
-% plot(x,y,'o',x,f,'-')
-% legend('data','linear fit')
-%     else
-%          hAx(i)=subplot(8, 8, i);
-% %          scatter(x,y,'go');
-%            mygca(i) = gca;
-%            p = polyfit(x,y,1);
-% f = polyval(p,x);
-% plot(x,y,'o',x,f,'-')
-% legend('data','linear fit')
-%     end
-% end
-% yl = cell2mat(get(mygca, 'Ylim'))
-% ylnew = [min(yl(:,1)) max(yl(:,2))];
-% set(mygca, 'Ylim', ylnew)
-
-% scatterhist(locoTrace_up,DF_F0_loco(1,:));
-
-%%
-% % find data associated with running versus data associated with not running
-%
-% noloco_boutIDX =locoTrace_up==0;
-% loco_boutIDX = ~noloco_boutIDX;
-%
-% for i = 1:size(DF_F0_loco,1)
-%     mean_loco(i) = mean(DF_F0_loco(i,loco_boutIDX));
-%     mean_noloco(i) =mean(DF_F0_loco(i,noloco_boutIDX));
-% end
-%
-% mLoco = mean(mean_loco);
-% semLoco = std(mean_loco)./sqrt(numel(mean_loco));
-%
-%
-% % scatter(x,mean_loco); hold on
-% % scatter(x2, mean_noloco)
-%
-% mnoLoco =  mean(mean_noloco);
-% semnoLoco = std(mean_noloco)./sqrt(numel(mean_noloco));
 %% do the correlation  - not actually z-scored, I just didnt change the name of the variables
 figure;
 
@@ -190,6 +119,10 @@ for i = 1:size(DF_F0_loco,1)
     title(['cell number ',num2str(block.cell_number(i))])
     % max_lag_diff = lags_diff(idx_diff);
     %     end
+end
+A=exist('loco_cor_cell');
+if A==0
+    loco_cor_cell = NaN;
 end
 %% trace in response to loco onset/offset
 % loco_trace_filt = smooth(locoTrace_up,10);
@@ -261,10 +194,13 @@ inactive_traces = df_f(:,inacttrial,:);
 %avg across cells
 for i = 1:size(df_f,1)
     a = squeeze(mean(active_traces(i,:,:),2));
+    i
     a_err = squeeze(std(active_traces(i,:,:),0,2)/sqrt(size(active_traces,2)));
     b = squeeze(mean(inactive_traces(i,:,:),2));
     b_err = squeeze(std(inactive_traces(i,:,:),0,2)/sqrt(size(inactive_traces,2)));
     x = 1:size(active_traces,3);
+    mean_active(i,:) = a(:);
+    mean_inactive(i,:) = b(:);
     
     
     figure;

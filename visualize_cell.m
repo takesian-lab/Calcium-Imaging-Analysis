@@ -120,18 +120,21 @@ if Z < 15000 && isfield(block, 'Sound_Time') %Don't plot red lines if there is t
 end
 
 %Plot locomotor activity
-if ~ismissing(block.setup.Tosca_path)
-    loco_time = block.loco_times;
-    loco_speed = block.loco_activity;
-        
-    subplot(3,4,9:12); hold on %loco
-    plot(loco_time, loco_speed);
-    title('Locomotor activity')
-    ylabel('Activity (cm/s)')
-    xlim([0 timestamp(Z)])
-    xlabel('Time (s)')
+try
+    if ~ismissing(block.setup.Tosca_path)
+        loco_time = block.loco_times;
+        loco_speed = block.loco_activity;
+
+        subplot(3,4,9:12); hold on %loco
+        plot(loco_time, loco_speed);
+        title('Locomotor activity')
+        ylabel('Activity (cm/s)')
+        xlim([0 timestamp(Z)])
+        xlabel('Time (s)')
+    end
+catch
+    disp('Loco data not plotted. Recompile block to get latest loco data.')
 end
-  
     
 %% Plot graphs according to stim presentation
 

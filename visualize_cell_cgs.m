@@ -1,4 +1,4 @@
-function visualize_cell(block, cellnum) 
+function visualize_cell_cgs(block, cellnum) 
 % This function allows you to preview the stimulus-evoked responses from
 % a single cell (neuron) or selection of cells from a block
 %
@@ -120,21 +120,18 @@ if Z < 15000 && isfield(block, 'Sound_Time') %Don't plot red lines if there is t
 end
 
 %Plot locomotor activity
-try
-    if ~ismissing(block.setup.Tosca_path)
-        loco_time = block.loco_times;
-        loco_speed = block.loco_activity;
-
-        subplot(3,4,9:12); hold on %loco
-        plot(loco_time, loco_speed);
-        title('Locomotor activity')
-        ylabel('Activity (cm/s)')
-        xlim([0 timestamp(Z)])
-        xlabel('Time (s)')
-    end
-catch
-    disp('Loco data not plotted. Recompile block to get latest loco data.')
+if ~ismissing(block.setup.Tosca_path)
+    loco_time = block.loco_times;
+    loco_speed = block.loco_activity;
+        
+    subplot(3,4,9:12); hold on %loco
+    plot(loco_time, loco_speed);
+    title('Locomotor activity')
+    ylabel('Activity (cm/s)')
+    xlim([0 timestamp(Z)])
+    xlabel('Time (s)')
 end
+  
     
 %% Plot graphs according to stim presentation
 
@@ -146,14 +143,15 @@ for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
         for c = 1:length(current_cells)
             row_nums(c) = find(all_cell_numbers == current_cells(c));
         end
-    
+    % individual cells
         if length(current_cells) == 1
             F7_cell = squeeze(F7_stim(row_nums,:,:));
             F7_baseline = F7_cell(:,1:nBaselineFrames); %baseline for each trial
             F7_df_f = (F7_cell-nanmean(F7_baseline,2))./nanmean(F7_baseline,2); %(total-mean)/mean
-            ebar = std(F7_df_f,1);
+            ebar = std(F7_df_f,1)./sqrt(size(F7_df_f,1));
             spks_cell = squeeze(spks_stim(row_nums,:,:));
-            ebar_spks = std(spks_cell,1);
+            ebar_spks = std(spks_cell,1)./sqrt(size(spks_cell,1));
+    % average the cells 
         elseif length(current_cells) > 1
             F7_cells = F7_stim(row_nums,:,:);
             F7_baselines = F7_cells(:,:,1:nBaselineFrames);
@@ -169,7 +167,8 @@ for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
         %DF_F average
         subplot(2,2,1)
         total_mean = nanmean(F7_df_f);
-        shadedErrorBar(1:length(total_mean),total_mean,ebar);
+%         total_sem = F7_df_f
+        shadedErrorBar(1:length(total_mean),smooth(total_mean,3),smooth(ebar,3));
         set(gca, 'XTick', x_in_seconds)
         set(gca, 'XTickLabel', x_label_in_seconds)
         xlabel('Time (s)')
@@ -272,7 +271,7 @@ if plotAirOrH20
                 F7_cell = squeeze(F7_stim(row_nums,V1 == stimValues(v),:));
                 F7_baseline = F7_cell(:,1:nBaselineFrames); %baseline for each trial
                 F7_df_f = (F7_cell-nanmean(F7_baseline,2))./nanmean(F7_baseline,2); %(total-mean)/mean
-                ebar = std(F7_df_f,1);
+                ebar = std(F7_df_f,1)./sqrt(size(F7_df_f,1));
                 spks_cell = squeeze(spks_stim(row_nums,V1 == stimValues(v),:));
                 ebar_spks = std(spks_cell,1);
             elseif length(current_cells) > 1
@@ -291,7 +290,7 @@ if plotAirOrH20
             %DF_F average
             subplot(4,2,1+q)
             total_mean = nanmean(F7_df_f);
-            shadedErrorBar(1:length(total_mean),total_mean,ebar);
+            shadedErrorBar(1:length(total_mean),smooth(total_mean,3),smooth(ebar,3));
             set(gca, 'XTick', x_in_seconds)
             set(gca, 'XTickLabel', x_label_in_seconds)
             xlabel('Time (s)')
@@ -409,6 +408,7 @@ if plotReceptiveField
         for v = 1:length(V2_stim) %Intensities
             for vv = 1:length(V1_stim) %Frequencies
                 
+                % this is where I would put active/inactive trials...
                 stim_rows = intersect(find(V1 == V1_stim(vv)), find(V2 == V2_stim(v)));
                 V1_list(count) = V1_stim(vv);
                 V2_list(count) = V2_stim(v);
@@ -417,7 +417,7 @@ if plotReceptiveField
                     F7_cell = squeeze(F7_stim(row_nums,stim_rows,:));
                     F7_baseline = F7_cell(:,1:nBaselineFrames); %baseline for each trial
                     F7_df_f = (F7_cell-nanmean(F7_baseline,2))./nanmean(F7_baseline,2); %(total-mean)/mean
-                    ebar = std(F7_df_f,1);
+                    ebar = std(F7_df_f,1)./sqrt(size(F7_df_f,1));
                     spks_cell = squeeze(spks_stim(row_nums,stim_rows,:));
                     ebar_spks = std(spks_cell,1);
                     F7_df_f_mat(count,:) = nanmean(F7_df_f);
@@ -489,7 +489,7 @@ if plotReceptiveField
                     total_mean = nanmean(F7_df_f_mat(mat_rows,:));
                     ebar = std(F7_df_f_mat,1); %recompute error bar for this part - not sure the best way to do this
                 end
-                shadedErrorBar(1:length(total_mean),total_mean,ebar);
+                shadedErrorBar(1:length(total_mean),smooth(total_mean,3),smooth(ebar,3));
                 set(gca, 'XTick', x_in_seconds)
                 set(gca, 'XTickLabel', x_label_in_seconds)
                 xlim([0 trial_duration_in_frames])

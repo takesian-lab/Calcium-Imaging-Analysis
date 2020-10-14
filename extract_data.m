@@ -15,9 +15,10 @@ columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number'
     'GCaMP Trough Amplitude', 'GCaMP T1', 'GCaMP Trough Latency', 'GCaMP Trough Width',...
     'Spike Peak Amplitude', 'Spike P1', 'Spike Peak Latency', 'Spike Peak Width',...
     'Spike Trough Amplitude', 'Spike T1', 'Spike Trough Latency', 'Spike Trough Width'};
-    
+
 dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
 STDlevel = 2;
+sort_active =1;
 
 %% Load data
 cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
@@ -57,10 +58,11 @@ for b = 1:length(uniqueBlocks)
     baseline_length = block.setup.constant.baseline_length; %seconds
     framerate = block.setup.framerate;
     nBaselineFrames = baseline_length*framerate; %frames
-
+    
     data1 = [data1; block_cellList(:,1:7)];
     stim_v1 = block.parameters.variable1';
     stim_v2 = block.parameters.variable2';
+    
     
     for c = 1:size(block_cellList,1)
         cellNumber = block_cellList{c,6};
@@ -74,8 +76,19 @@ for b = 1:length(uniqueBlocks)
         
         %Eliminate 0dB trials -> If they exist we could potentially use
         %them to confirm above-baseline responses
-        F7_df_f(stim_v2 == 0,:) = [];
-        spks(stim_v2 == 0,:) = [];
+        %if desired, remove active trials here too
+        if sort_active==1
+            r=find(stim_v2 == 0)
+            rr= find(block.active_trials==1)
+            ru = union(r,rr)
+            F7_df_f(ru,:) = [];
+            spks(ru,:) = [];
+        else
+            F7_df_f(stim_v2 == 0,:) = [];
+            spks(stim_v2 == 0,:) = [];
+        end
+        
+  
         
         %Get averaged & smoothed response
         avg_F7_df_f = smooth(mean(F7_df_f),3)';
@@ -96,10 +109,10 @@ for b = 1:length(uniqueBlocks)
                 end
             end
         end
-                
+        
         raster_F = [raster_F; avg_F7_df_f];
         raster_spks = [raster_spks; avg_spks];
-
+        
         %Compute latencies, width, and amplitude
         figure; hold on
         for i = 1:2
@@ -124,12 +137,12 @@ for b = 1:length(uniqueBlocks)
                 [p2_latency] = find(response(1, peak_latency:end) <= peak_threshold, 1, 'first');
                 p1 = response(p1_latency);
                 p2 = response(peak_latency + p2_latency - 1);
-
+                
                 %Adjust for baseline
                 peak_latency = peak_latency + nBaselineFrames;
                 p1_latency = p1_latency + nBaselineFrames;
                 p2_latency = p2_latency + peak_latency - 1;
-
+                
                 %Width
                 peak_width = p2_latency - p1_latency;
             else
@@ -146,7 +159,7 @@ for b = 1:length(uniqueBlocks)
             if ~isempty(p1_latency);    peak_data(2) = p1_latency;      else;   p1_latency = nan;   end
             if ~isempty(peak_latency);  peak_data(3) = peak_latency;    else;   peak_latency = nan; end
             if ~isempty(peak_width);    peak_data(4) = peak_width;      else;   peak_width = nan;   end
-                        
+            
             %TROUGH COMPUTATIONS
             trough_data = nan(1,4);
             [trough, trough_latency] = min(response);
@@ -155,12 +168,12 @@ for b = 1:length(uniqueBlocks)
                 [t2_latency] = find(response(1, trough_latency:end) >= trough_threshold, 1, 'first');
                 t1 = response(t1_latency);
                 t2 = response(trough_latency + t2_latency - 1);
-
+                
                 %Adjust for baseline
                 trough_latency = trough_latency + nBaselineFrames;
                 t1_latency = t1_latency + nBaselineFrames;
                 t2_latency = t2_latency + trough_latency - 1;
-
+                
                 %Width
                 trough_width = t2_latency - t1_latency;
             else
@@ -172,13 +185,13 @@ for b = 1:length(uniqueBlocks)
                 trough_latency = nan;
                 trough_width = nan;
             end
-
+            
             %Store
             if ~isempty(trough);            trough_data(1) = trough;            else;   trough = nan;           end
             if ~isempty(t1_latency);        trough_data(2) = t1_latency;        else;   t1_latency = nan;       end
             if ~isempty(trough_latency);    trough_data(3) = trough_latency;    else;   trough_latency = nan;   end
             if ~isempty(trough_width);      trough_data(4) = trough_width;      else;   trough_width = nan;     end
-                
+            
             %Auto-determined activity (inhibited/sustained/activated)
             if isnan(peak) && isnan(trough)
                 activity = 'none';
@@ -203,7 +216,7 @@ for b = 1:length(uniqueBlocks)
             else
                 activity = 'undetermined';
             end
-                
+            
             autoActivity{count,i} = activity;
             
             %Plot
@@ -234,8 +247,8 @@ for b = 1:length(uniqueBlocks)
                 data2(count,1:8) = [peak_data, trough_data]; %GCaMP
             elseif i == 2
                 data2(count,9:16) = [peak_data, trough_data]; %Spikes
-            end  
-
+            end
+            
         end
         count = count + 1;
     end

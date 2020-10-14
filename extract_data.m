@@ -16,9 +16,9 @@ columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number'
     'Spike Peak Amplitude', 'Spike P1', 'Spike Peak Latency', 'Spike Peak Width',...
     'Spike Trough Amplitude', 'Spike T1', 'Spike Trough Latency', 'Spike Trough Width'};
 
-dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
+dataType = 'RF'; %To look at one stim type at a time. Leave empty to look at all
 STDlevel = 2;
-sort_active =1;
+sort_active = 1;
 
 %% Load data
 cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
@@ -77,18 +77,30 @@ for b = 1:length(uniqueBlocks)
         %Eliminate 0dB trials -> If they exist we could potentially use
         %them to confirm above-baseline responses
         %if desired, remove active trials here too
-        if sort_active==1
-            r=find(stim_v2 == 0)
-            rr= find(block.active_trials==1)
-            ru = union(r,rr)
-            F7_df_f(ru,:) = [];
-            spks(ru,:) = [];
-        else
-            F7_df_f(stim_v2 == 0,:) = [];
-            spks(stim_v2 == 0,:) = [];
-        end
+        try
+            if dataType == 'FM' | 'RF' | 'noiseburstITI';
+                if sort_active==1
+                    r=find(stim_v2 == 0)
+                    rr= find(block.active_trials==1);
+                    ru = union(r,rr);
+                    F7_df_f(ru,:) = [];
+                    spks(ru,:) = [];
+                else
+                    F7_df_f(stim_v2 == 0,:) = [];
+                    spks(stim_v2 == 0,:) = [];
+                end
+            end
+                catch
+                    if sort_active==1
+                        rr= find(block.active_trials==1);
+                        F7_df_f(rr,:) = [];
+                        spks(rr,:) = [];
+                    end
+            end
+       
+    
         
-  
+        
         
         %Get averaged & smoothed response
         avg_F7_df_f = smooth(mean(F7_df_f),3)';

@@ -1,4 +1,4 @@
-function [block] = align_to_stim(block)
+function [block] = align_to_stim(block, sound_time_delay)
 % DOCUMENTATION IN PROGRESS
 % 
 % This function pulls out the trial windows for each sound presentation
@@ -40,6 +40,13 @@ disp('Aligning to stim...');
 %define sound window
 setup = block.setup;
 Sound_Time = block.Sound_Time;
+
+%Used for Maryse's behavior stim
+if nargin == 2
+    Sound_Time = Sound_Time + sound_time_delay;
+    block.setup.constant.after_stim = 3;
+    setup.constant.after_stim = 3;
+end
 
 % loop through each stim-presenation
 for time=1:length(Sound_Time)
@@ -97,7 +104,7 @@ for time=1:length(Sound_Time)
         F_stim(k,time,:) =  block.F(k,closest_frame_before:closest_frame_after);
         Fneu_stim(k,time,:) = block.Fneu(k,closest_frame_before:closest_frame_after);
         spks_stim(k,time,:) = block.spks(k,closest_frame_before:closest_frame_after);
-        
+
         %df/f
 %         baseline_mean = mean(F7(closest_frame_before:closest_frame_sound));
 %         F7_dfF_stim(k,time,:) = (bsxfun(@minus, raw_trace(k,time,:),baseline_mean))./baseline_mean;

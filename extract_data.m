@@ -16,14 +16,17 @@ columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number'
     'Spike Peak Amplitude', 'Spike P1', 'Spike Peak Latency', 'Spike Peak Width',...
     'Spike Trough Amplitude', 'Spike T1', 'Spike Trough Latency', 'Spike Trough Width'};
 
-dataType = 'RF'; %To look at one stim type at a time. Leave empty to look at all
+dataType = 'water'; %To look at one stim type at a time. Leave empty to look at all
 STDlevel = 2;
-sort_active = 1;
+sort_active = 0;
+plot_graphs = 0;
+save_data = 1;
 
 %% Load data
 cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
 blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
-cellList_filename = 'ResponsiveCells';
+save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
+cellList_filename = 'Copy of ResponsiveCells';
 
 cd(cellList_path)
 cellList = importfile(cellList_filename);
@@ -67,6 +70,9 @@ for b = 1:length(uniqueBlocks)
     for c = 1:size(block_cellList,1)
         cellNumber = block_cellList{c,6};
         cellIndex = find(block.cell_number == cellNumber);
+        if isempty(cellIndex)
+            error(['Cell number ' num2str(cellNumber) ' not found.'])
+        end
         
         %Cell-specific response to sound
         F7 = squeeze(block.aligned_stim.F7_stim(cellIndex,:,:));
@@ -78,9 +84,9 @@ for b = 1:length(uniqueBlocks)
         %them to confirm above-baseline responses
         %if desired, remove active trials here too
         try
-            if dataType == 'FM' | 'RF' | 'noiseburstITI';
+            if dataType == 'FM' | 'RF' | 'NoiseITI';
                 if sort_active==1
-                    r=find(stim_v2 == 0)
+                    r=find(stim_v2 == 0);
                     rr= find(block.active_trials==1);
                     ru = union(r,rr);
                     F7_df_f(ru,:) = [];
@@ -103,12 +109,14 @@ for b = 1:length(uniqueBlocks)
         
         
         %Get averaged & smoothed response
-        avg_F7_df_f = smooth(mean(F7_df_f),3)';
-        avg_spks = smooth(mean(spks),3)';
+        avg_F7_df_f = smooth(nanmean(F7_df_f),3)';
+        avg_spks = smooth(nanmean(spks),3)';
         
         %Store raster
+        %If trial isn't the same length as raster, make them equal size by
+        %adding nans at the end
         if count ~= 1
-            if length(avg_F7_df_f) ~= size(raster_F,2)
+            if length(avg_F7_df_f) ~= size(raster_F,2) %assuming F and spks will be same dim
                 dim = max([length(avg_F7_df_f),size(raster_F,2)]);
                 while length(avg_F7_df_f) < dim
                     avg_F7_df_f = [avg_F7_df_f, nan];
@@ -117,7 +125,10 @@ for b = 1:length(uniqueBlocks)
                     avg_spks = [avg_spks, nan];
                 end
                 while size(raster_F,2) < dim
-                    raster_f = [raster_F, nan(size(raster_F,1),1)];
+                    raster_F = [raster_F, nan(size(raster_F,1),1)];
+                end
+                while size(raster_spks,2) < dim
+                    raster_spks = [raster_spks, nan(size(raster_spks,1),1)];
                 end
             end
         end
@@ -126,7 +137,7 @@ for b = 1:length(uniqueBlocks)
         raster_spks = [raster_spks; avg_spks];
         
         %Compute latencies, width, and amplitude
-        figure; hold on
+        if plot_graphs == 1; figure; hold on; end
         for i = 1:2
             if i == 1
                 y = avg_F7_df_f;
@@ -232,23 +243,25 @@ for b = 1:length(uniqueBlocks)
             autoActivity{count,i} = activity;
             
             %Plot
-            subplot(1,2,i); hold on
-            plot(y)
-            hline(mean(baseline), 'k')
-            hline(peak_threshold, 'r')
-            hline(trough_threshold, 'c')
-            scatter(peak_latency, peak, 'o', 'r')
-            scatter(p1_latency, p1, 'o', 'r')
-            scatter(p2_latency, p2, 'o', 'r')
-            scatter(trough_latency, trough, 'o', 'c')
-            scatter(t1_latency, t1, 'o', 'c')
-            scatter(t2_latency, t2, 'o', 'c')
-            vline(nBaselineFrames, 'k')
-            xlabel('Frames')
-            ylabel(units)
-            title(activity)
-            if i == 2
-                suptitle(strcat(block.setup.block_supname, ' Cell ', num2str(cellNumber)))
+            if plot_graphs == 1
+                subplot(1,2,i); hold on
+                plot(y)
+                hline(nanmean(baseline), 'k')
+                hline(peak_threshold, 'r')
+                hline(trough_threshold, 'c')
+                scatter(peak_latency, peak, 'o', 'r')
+                scatter(p1_latency, p1, 'o', 'r')
+                scatter(p2_latency, p2, 'o', 'r')
+                scatter(trough_latency, trough, 'o', 'c')
+                scatter(t1_latency, t1, 'o', 'c')
+                scatter(t2_latency, t2, 'o', 'c')
+                vline(nBaselineFrames, 'k')
+                xlabel('Frames')
+                ylabel(units)
+                title(activity)
+                if i == 2
+                    suptitle(strcat(block.setup.block_supname, ' Cell ', num2str(cellNumber)))
+                end
             end
             
             %Convert to seconds and store data
@@ -267,6 +280,9 @@ for b = 1:length(uniqueBlocks)
 end
 
 ExtractedData = struct;
+ExtractedData.DataType = dataType;
+ExtractedData.STDlevel = STDlevel;
+ExtractedData.Sort_Active = sort_active;
 ExtractedData.ColumnHeaders = columnHeaders;
 ExtractedData.AutoActivity = autoActivity;
 ExtractedData.NominalData = data1;
@@ -275,4 +291,136 @@ ExtractedData.Calcium_Raster = raster_F;
 ExtractedData.Spikes_Raster = raster_spks;
 
 %% Save
-%save('extractedData.mat', 'ExtractedData');
+if save_data == 1
+    cd(save_path)
+    save(['extractedData_' dataType '.mat'], 'ExtractedData');
+end
+
+%% Plot sorted rasters
+
+%Plot by activity type and peak/trough amplitude
+
+Cells = {'VIP', 'NDNF'};
+A = {'activated', 'sustained', 'inhibited'};
+
+cellList = [ExtractedData.NominalData{:,1}]'; %Modify
+activityList = [ExtractedData.AutoActivity(:,1)]; %Modify
+
+for c = 1:2
+    currentCells = strcmp(cellList,Cells{c});
+    
+    resorted_raster_F = [];
+    resorted_raster_spks = [];
+    average_F = [];
+    average_spks = [];
+    
+    for i = 1:length(A)
+        currentActivity = A{i};
+        activeRows = strcmp(activityList, currentActivity);
+        currentRows = and(currentCells, activeRows);
+
+        %find rows in current activity type and sort by amplitude and/or latency   
+        current_raster_F = ExtractedData.Calcium_Raster(currentRows,:);
+        current_raster_spks = ExtractedData.Spikes_Raster(currentRows,:);
+
+        %Store average for plots
+        if size(current_raster_F,1) == 1
+            %Edge case where n = 1 cell
+            average_F(i,:) = current_raster_F;
+            average_spks(i,:) = current_raster_spks;
+        else
+            average_F(i,:) = nanmean(current_raster_F);
+            average_spks(i,:) = nanmean(current_raster_spks);
+        end
+        
+        if i == 1 || i == 2 %Peaks for activated and sustained
+            current_gcamp_amplitude = ExtractedData.NumericalData(currentRows,1);
+            current_spike_amplitude = ExtractedData.NumericalData(currentRows,9);
+        elseif i == 3 %Troughs for inhibited
+            current_gcamp_amplitude = ExtractedData.NumericalData(currentRows,1);
+            current_spike_amplitude = ExtractedData.NumericalData(currentRows,9);
+        end
+
+        [~, gcamp_sort_ind] = sort(current_gcamp_amplitude, 'descend');
+        [~, spike_sort_ind] = sort(current_spike_amplitude, 'descend');
+
+        %SORT BOTH BY GCAMP (so they match)
+        resorted_raster_F = [resorted_raster_F; current_raster_F(gcamp_sort_ind,:)];
+        resorted_raster_spks = [resorted_raster_spks; current_raster_spks(gcamp_sort_ind,:)];
+        
+    end
+    if c == 1
+        VIP_raster_F = resorted_raster_F;
+        VIP_raster_spks = resorted_raster_spks;
+        VIP_average_F = average_F;
+        VIP_average_spks = average_spks;
+    elseif c == 2
+        NDNF_raster_F = resorted_raster_F;
+        NDNF_raster_spks = resorted_raster_spks;
+        NDNF_average_F = average_F;
+        NDNF_average_spks = average_spks;
+    end
+end
+
+figure; hold on
+suptitle(ExtractedData.DataType)
+
+subplot(6,2,1); hold all
+plot(VIP_average_F', 'LineWidth', 2)
+legend(A)
+xlabel('Frames')
+ylabel('DF/F')
+title('VIP DF/F')
+
+subplot(6,2,2); hold all
+plot(VIP_average_spks', 'LineWidth', 2)
+legend(A)
+xlabel('Frames')
+ylabel('Spikes')
+title('VIP Spikes') 
+
+subplot(6,2,[3,5])
+imagesc(VIP_raster_F)
+ylabel('Cells')
+%xlabel('Frames')
+h = colorbar;
+set(get(h,'label'),'string','DF/F');
+caxis([0, 1]);
+
+subplot(6,2,[4,6])
+imagesc(VIP_raster_spks)
+ylabel('Cells')
+%xlabel('Frames')
+h = colorbar;
+set(get(h,'label'),'string','Spikes');
+caxis([0, 100]);
+
+subplot(6,2,7)
+plot(NDNF_average_F', 'LineWidth', 2)
+legend(A)
+xlabel('Frames')
+ylabel('DF/F')
+title('NDNF DF/F')
+
+subplot(6,2,8)
+plot(NDNF_average_spks', 'LineWidth', 2)
+legend(A)
+xlabel('Frames')
+ylabel('Spikes')
+title('NDNF Spikes')
+
+subplot(6,2,[9,11])
+imagesc(NDNF_raster_F)
+ylabel('Cells')
+xlabel('Frames')
+h = colorbar;
+set(get(h,'label'),'string','DF/F');
+caxis([0, 1]);
+
+subplot(6,2,[10,12])
+imagesc(NDNF_raster_spks)
+ylabel('Cells')
+xlabel('Frames')
+h = colorbar;
+set(get(h,'label'),'string','Spikes');
+caxis([0, 100]);

@@ -16,7 +16,7 @@ columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number'
     'Spike Peak Amplitude', 'Spike P1', 'Spike Peak Latency', 'Spike Peak Width',...
     'Spike Trough Amplitude', 'Spike T1', 'Spike Trough Latency', 'Spike Trough Width'};
 
-dataType = 'RF'; %To look at one stim type at a time. Leave empty to look at all
+dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
 STDlevel = 2;
 sort_active = 1;
 
@@ -80,7 +80,7 @@ for b = 1:length(uniqueBlocks)
         try
             if dataType == 'FM' | 'RF' | 'noiseburstITI';
                 if sort_active==1
-                    r=find(stim_v2 == 0)
+                    r=find(stim_v2 == 0);
                     rr= find(block.active_trials==1);
                     ru = union(r,rr);
                     F7_df_f(ru,:) = [];

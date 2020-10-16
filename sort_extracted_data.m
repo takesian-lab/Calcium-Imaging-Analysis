@@ -106,7 +106,7 @@ end
 
 % make single matrix of avg numerical data
 nacheck = 'NaN';
-for i = 1;%1:length(stimTypes)
+for i = 1:length(stimTypes)
     for j=1:length(Match.([stimTypes{i}]).numerical)
         x = isempty(Match.([stimTypes{i}]).numerical{j,1});
         if x==1
@@ -115,8 +115,44 @@ for i = 1;%1:length(stimTypes)
             meanval(j,i) = NaN;
         else
             meanval(j,i)=nanmean(Match.([stimTypes{i}]).numerical{j,1}(:));
-            
         end
     end
 end
 
+% CGS needs to fix this,but it will work for the purposes of APAN
+z = find(meanval==0);
+meanval(z)=-1000;
+
+%graph - 
+data = meanval;
+
+[nr,nc] = size(data);
+% ax(1) = subplot(2,1,1); 
+% imagesc(data); 
+% ax(2) = subplot(2,1,2); 
+pcolor([data nan(nr,1); nan(1,nc+1)]);
+shading flat;
+set(gca, 'ydir', 'reverse');
+set(ax, 'clim', [0 1]);
+
+
+% %% try making circles...
+% 
+% 
+% v = [1:7];
+% vv = repelem(v,[size(meanval,1)],[1]);
+% w = [1:size(meanval,1)];
+% ww=repelem(w,[size(meanval,2)],[1]);
+% 
+% A=vv(:);
+% B=ww(:);
+% centers(:,1)=A;
+% centers(:,2)=B;
+% centers = centers+1000;
+% radii = meanval(:);
+% radii = radii+1000;
+% 
+% viscircles(centers,radii)
+% 
+% centers = ;
+% 

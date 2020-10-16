@@ -108,7 +108,7 @@ end
 nacheck = 'NaN';
 for i = 1:length(stimTypes)
     for j=1:length(Match.([stimTypes{i}]).numerical)
-        x = isempty(Match.([stimTypes{i}]).numerical{j,1});
+        x = isempty(Match.([stimTypes{i}] ).numerical{j,1});
         if x==1
             meanval(j,i) = -1000;
         elseif isequal(Match.([stimTypes{i}]).numerical{j,1},nacheck);
@@ -120,8 +120,8 @@ for i = 1:length(stimTypes)
 end
 
 % CGS needs to fix this,but it will work for the purposes of APAN
-z = find(meanval==0);
-meanval(z)=-1000;
+z = find(meanval==-1000);
+meanval(z)=0;
 
 %graph - 
 data = meanval;
@@ -135,24 +135,6 @@ shading flat;
 set(gca, 'ydir', 'reverse');
 set(ax, 'clim', [0 1]);
 
-
-% %% try making circles...
-% 
-% 
-% v = [1:7];
-% vv = repelem(v,[size(meanval,1)],[1]);
-% w = [1:size(meanval,1)];
-% ww=repelem(w,[size(meanval,2)],[1]);
-% 
-% A=vv(:);
-% B=ww(:);
-% centers(:,1)=A;
-% centers(:,2)=B;
-% centers = centers+1000;
-% radii = meanval(:);
-% radii = radii+1000;
-% 
-% viscircles(centers,radii)
-% 
-% centers = ;
-% 
+save_path = ('\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020');
+ cd(save_path)
+    save(['MatchedData.mat'], 'meanval');

@@ -18,78 +18,105 @@ matchList = importfile(matchFile);
 matchList(1,:) = []; %Remove header
 Match.info = matchList;
 
-%% find the cells that are responsive and are matched
-mouseID = [matchList{:,1}];
+%% pull out unique mice, FOV, and cell numbers
+mouseID = [matchList{:,1}]';
 uniquemice = unique(mouseID);
+count=1;
+for i = 1: length(uniquemice)
+    mr(i,:) = strcmp(mouseID,uniquemice(i))';
+    rows =  find(mr(i,:)==1);
+    mouserow{i} = rows;
+    fov = [matchList{rows,2}];
+    FOVlist{i} = unique(fov);
+end
 
-count=1
-for i = 1:length(uniquemice);
-    %find FOVs
-    for j = 1:length(matchList);
-        if matchList{j,1} == uniquemice(i);
-            FOV(count) = matchList{j,2};
-            count = count+1;
+for i = 1:length(uniquemice)
+    for k = 1:length(FOVlist{1,i}(:))
+        count=1;
+        numf = num2str(FOVlist{1,i}(k));
+        for j = 1:length(mouserow{1,i}(:))
+            rr = mouserow{1,i}(1,j);
+            if matchList{rr,2} == FOVlist{1,i}(k)
+                Rowlist.([uniquemice(i)]).(['FOV' numf])(count) = rr;
+                count = count+1;
+            end
         end
-        FOVlist = unique(FOV);
-        % run through each mouse/FOV to build the cell ID matrix
-        for m = 1:length(stimTypes);
-            stimcolumn = m+2;
-            cellcheck = matchList{j,stimcolumn};
-                                    cells(j,m) = cellcheck; %testing what I have
-            for k = 1:length(FOVlist);
+    end
+end
+
+%% find the cells that were included in the receptive ExtractData set
+
+%look at the rows that correspond to a single mouse
+
+for i = 1:length(uniquemice)%loop through mice
+    for k = 1:length(FOVlist{1,i}(:))%loop through FOV
+        numf = num2str(FOVlist{1,i}(k));
+        rw =  Rowlist.([uniquemice(i)]).(['FOV' numf])(:)
+        for q = 1:length(rw) %only look at rows that = mouse and FOV of interest
+            for s = 1:length(stimTypes) %one stimtype at a time
+                ss = s+2; %the first two columns are mouse id and FOV
                 
-                %find each cell number on the sheet....
-%                 if matchList{j,1} == uniquemice(i);  if matchList{j,2}==FOVlist(k);
-                        %                         cellcheck = matchList{j,stimcolumn};
-                        %                         cells(j,m) = cellcheck; %testing what I have
-%                     end
-%                 end
+                %pull out data that matches the stim type
+                nomdat = Data.([stimTypes{s}]).NominalData;
+                autodat = Data.([stimTypes{s}]).AutoActivity;
+                numdat = Data.([stimTypes{s}]).NumericalData;
+                caRast = Data.([stimTypes{s}]).Calcium_Raster;
+                sRast = Data.([stimTypes{s}]).Spikes_Raster;
                 
-                %check if the cell is in the responsive cell dataset
-                nomdat = Data.([stimTypes{m}]).NominalData;
-                autodat = Data.([stimTypes{m}]).AutoActivity;
-                numdat = Data.([stimTypes{m}]).NumericalData;
-                caRast = Data.([stimTypes{m}]).Calcium_Raster;
-                sRast = Data.([stimTypes{m}]).Spikes_Raster;
-                
-                
-                for n = 1:length(nomdat);
+                % find the cell in this row...
+                cellnum = matchList{rw(q),ss};
+          
+                % find see if this cell is in the Extracted data
+                for n = 1:length(nomdat)
                     if nomdat{n,2} == uniquemice(i);
-                        if nomdat{n,3}==FOVlist(k);
+                        if nomdat{n,3}==FOVlist{1,i}(k);
                             if autodat{n,1}~('none');
                                 rcell = nomdat{n,6};
-                                
-                                try
-                                    if cellcheck ==rcell
-                                        Match.([stimTypes{m}]).numerical{j,1} = numdat(n,:);
-                                        Match.([stimTypes{m}]).Calcium_Raster{j,1} = caRast(n,:);
-                                        Match.([stimTypes{m}]).Spikes_Raster{j,1} = sRast(n,:);
-                                    end
-                                catch
-                                    if cellcheck == 'NaN'
-                                        Match.([stimTypes{m}]).numerical{j,1} = 'NaN';
-                                        Match.([stimTypes{m}]).Calcium_Raster{j,1} = 'NaN';
-                                        Match.([stimTypes{m}]).Spikes_Raster{j,1} = 'NaN';
-                                    end
-                                    
-                                end
                             end
-                            
-                            
                         end
                     end
-                    
+                    A = exist('rcell');
+                    if A ==1
+                        try
+                            if cellnum ==rcell
+                                Match.([stimTypes{s}]).numerical{rw(q),1} = numdat(n,:);
+                                Match.([stimTypes{s}]).Calcium_Raster{rw(q),1} = caRast(n,:);
+                                Match.([stimTypes{s}]).Spikes_Raster{rw(q),1} = sRast(n,:);
+                            end
+                        catch
+                            if cellnum == 'NaN'
+                                Match.([stimTypes{s}]).numerical{rw(q),1} = 'NaN';
+                                Match.([stimTypes{s}]).Calcium_Raster{rw(q),1} = 'NaN';
+                                Match.([stimTypes{s}]).Spikes_Raster{rw(q),1} = 'NaN';
+                            end
+                        end
+                    end
+                    clear rcell
                 end
-                
-                
             end
             
         end
-        
     end
 end
 
 
 
 
+%% plot data - in progress
+
+% make single matrix of avg numerical data
+nacheck = 'NaN';
+for i = 1;%1:length(stimTypes)
+    for j=1:length(Match.([stimTypes{i}]).numerical)
+        x = isempty(Match.([stimTypes{i}]).numerical{j,1});
+        if x==1
+            meanval(j,i) = -1000;
+        elseif isequal(Match.([stimTypes{i}]).numerical{j,1},nacheck);
+            meanval(j,i) = NaN;
+        else
+            meanval(j,i)=nanmean(Match.([stimTypes{i}]).numerical{j,1}(:));
+            
+        end
+    end
+end
 

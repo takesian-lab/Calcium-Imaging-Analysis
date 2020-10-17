@@ -16,6 +16,7 @@ columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number'
     'Spike Peak Amplitude', 'Spike P1', 'Spike Peak Latency', 'Spike Peak Width',...
     'Spike Trough Amplitude', 'Spike T1', 'Spike Trough Latency', 'Spike Trough Width'};
 
+
 dataType = 'water'; %To look at one stim type at a time. Leave empty to look at all
 STDlevel = 2;
 sort_active = 0;

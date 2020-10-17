@@ -15,8 +15,9 @@ end
 
 %load matching cells
 matchList = importfile(matchFile);
-matchList(1,:) = []; %Remove header
 Match.info = matchList;
+matchList(1,:) = []; %Remove header
+
 
 %% pull out unique mice, FOV, and cell numbers
 mouseID = [matchList{:,1}]';

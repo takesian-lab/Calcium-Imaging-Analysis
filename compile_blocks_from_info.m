@@ -61,7 +61,7 @@ switch PC_name
         %save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
         %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
         %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks';
-        info_filename = 'Info_NxDB092719M2';
+        info_filename = 'Info_VxDC030520M4';
         ops_filename = 'Maryse_ops2.mat';
          
     case 'TAKESIANLAB2P' %2P computer

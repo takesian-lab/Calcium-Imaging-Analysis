@@ -20,18 +20,18 @@ columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number'
     'GCaMP Peak AUC', 'GCaMP Trough AUC', 'Spike Peak AUC', 'Spike Trough AUC', 'Combined GCaMP AUC', 'Combined Spike AUC'};
 
 
-dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
+dataType = 'air'; %To look at one stim type at a time. Leave empty to look at all
 STDlevel = 2;
 AUC_F_level = 0.05;
 AUC_spks_level = 5;
 sort_active = 0;
-plot_graphs = 1;
-save_data = 0;
+plot_graphs = 0;
+save_data = 1;
 
 %% Load data
 cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
 blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
-save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS';
+save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS\Inactive';
 cellList_filename = 'Responsive Cells v2';
 
 cd(cellList_path)

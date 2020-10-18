@@ -26,6 +26,7 @@ AUC_spks_level = 5;
 sort_active = 0;
 plot_graphs = 1;
 save_data = 0;
+analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
 
 %% Load data
 cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
@@ -96,9 +97,13 @@ for b = 1:length(uniqueBlocks)
                     ru = union(r,rr);
                     F7_df_f(ru,:) = [];
                     spks(ru,:) = [];
+                    stim_v1(ru,:) = [];
+                    stim_v2(ru,:) = [];
                 else
                     F7_df_f(stim_v2 == 0,:) = [];
                     spks(stim_v2 == 0,:) = [];
+                    stim_v1(stim_v2 == 0,:) = [];
+                    stim_v2(stim_v2 == 0,:) = [];
                 end
             end
                 catch
@@ -106,12 +111,50 @@ for b = 1:length(uniqueBlocks)
                         rr= find(block.active_trials==1);
                         F7_df_f(rr,:) = [];
                         spks(rr,:) = [];
+                        stim_v1(rr,:) = [];
+                        stim_v2(rr,:) = [];
                     end
             end
        
         %Get averaged & smoothed response
-        avg_F7_df_f = smooth(nanmean(F7_df_f),3)';
-        avg_spks = smooth(nanmean(spks),3)';
+        if analyze_by_stim_condition %check if each condition is active, then concatenate and keep only active conditions
+           
+            F7_by_Stim = [];
+            spks_by_Stim = [];
+            
+            unique_stim_v1 = unique(stim_v1);
+            unique_stim_v2 = unique(stim_v2);
+            for v = 1:length(unique_stim_v1) %frequencies
+                for vv = 1:length(unique_stim_v2) %intensities
+                    stim_rows = intersect(find(stim_v1 == unique_stim_v1(v)), find(stim_v2 == unique_stim_v2(vv)));
+                    F7_temp = F7_df_f(stim_rows,:);
+                    spks_temp = spks(stim_rows,:);
+                    F7_temp_smoothed = smooth(nanmean(F7_temp),3)';
+                    spks_temp_smoothed = smooth(nanmean(spks_temp),3)';
+                    
+                    if checkIfActive(F7_temp_smoothed, nBaselineFrames, STDlevel, AUC_level, 0)
+                        F7_by_Stim = [F7_by_Stim; F7_temp];
+                    end
+                    if checkIfActive(spks_temp_smoothed, nBaselineFrames, STDlevel, AUC_level, 0)
+                        spks_by_Stim = [spks_by_Stim; spks_temp];
+                    end
+                end
+            end
+            avg_F7_df_f = smooth(nanmean(F7_by_Stim),3)';
+            avg_spks = smooth(nanmean(spks_by_Stim),3)';
+            
+            %Give it another chance 
+            if isempty(F7_by_Stim)
+                avg_F7_df_f = smooth(nanmean(F7_df_f),3)';
+            end
+            if isempty(spks_by_Stim)
+                 avg_spks = smooth(nanmean(spks),3)';
+            end
+        else   
+            avg_F7_df_f = smooth(nanmean(F7_df_f),3)';
+            avg_spks = smooth(nanmean(spks),3)';
+        end
+
         
         %Store raster
         %If trial isn't the same length as raster, make them equal size by
@@ -425,6 +468,17 @@ for c = 1:2
         NDNF_raster_spks = resorted_raster_spks;
         NDNF_average_F = average_F;
         NDNF_average_spks = average_spks;
+    end
+end
+
+smoothCurves = 1;
+
+if smoothCurves
+    for s = 1:size(VIP_average_F,1)
+        VIP_average_F(s,:) = smooth(VIP_average_F(s,:));
+    end
+    for s = 1:size(NDNF_average_F,1)
+        NDNF_average_F(s,:) = smooth(NDNF_average_F(s,:));
     end
 end
 

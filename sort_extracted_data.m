@@ -78,6 +78,7 @@ for i = 9;%:length(uniquemice)%loop through mice
                     end
 %                     A = exist('rcell');
 %                     if A ==1
+rw(q)
                         try
                             if cellnum ==rcell
                                 Match.([stimTypes{s}]).numerical{rw(q),1} = numdat(n,:);

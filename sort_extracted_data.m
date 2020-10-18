@@ -1,11 +1,11 @@
 % load extracted data
 stimTypes = {'FM','RF','SAM','SAMfreq','NoiseITI','water','air'};
-data_path = ('\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020');
-matchFile = ('Matching cells');
+data_path = ('\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS\Inactive');
+matchFile = ('Matched Cells v2');
 cd(data_path)
 
 for i=1:length(stimTypes)
-    s = stimTypes{1,i}
+    s = stimTypes{1,i};
     name = strcat('extractedData_', s, '.mat');
     load(name)
     Data.([s])=ExtractedData;
@@ -49,12 +49,12 @@ end
 
 %look at the rows that correspond to a single mouse
 
-for i = 1:length(uniquemice)%loop through mice
+for i = 9;%:length(uniquemice)%loop through mice
     for k = 1:length(FOVlist{1,i}(:))%loop through FOV
         numf = num2str(FOVlist{1,i}(k));
         rw =  Rowlist.([uniquemice(i)]).(['FOV' numf])(:)
         for q = 1:length(rw) %only look at rows that = mouse and FOV of interest
-            for s = 1:length(stimTypes) %one stimtype at a time
+            for s = 1;%:length(stimTypes) %one stimtype at a time
                 ss = s+2; %the first two columns are mouse id and FOV
                 
                 %pull out data that matches the stim type
@@ -76,8 +76,8 @@ for i = 1:length(uniquemice)%loop through mice
 %                             end
                         end
                     end
-                    A = exist('rcell');
-                    if A ==1
+%                     A = exist('rcell');
+%                     if A ==1
                         try
                             if cellnum ==rcell
                                 Match.([stimTypes{s}]).numerical{rw(q),1} = numdat(n,:);
@@ -91,7 +91,7 @@ for i = 1:length(uniquemice)%loop through mice
                                 Match.([stimTypes{s}]).Spikes_Raster{rw(q),1} = 'NaN';
                             end
                         end
-                    end
+%                     end
                     clear rcell
                 end
             end
@@ -99,6 +99,7 @@ for i = 1:length(uniquemice)%loop through mice
         end
     end
 end
+display('done sorting...')
 
 
 

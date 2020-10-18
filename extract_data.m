@@ -14,14 +14,20 @@ columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number'
     'GCaMP Peak Amplitude', 'GCaMP P1', 'GCaMP Peak Latency', 'GCaMP Peak Width',...
     'GCaMP Trough Amplitude', 'GCaMP T1', 'GCaMP Trough Latency', 'GCaMP Trough Width',...
     'Spike Peak Amplitude', 'Spike P1', 'Spike Peak Latency', 'Spike Peak Width',...
-    'Spike Trough Amplitude', 'Spike T1', 'Spike Trough Latency', 'Spike Trough Width'};
+    'Spike Trough Amplitude', 'Spike T1', 'Spike Trough Latency', 'Spike Trough Width'...
+    'Combined GCaMP Amplitude', 'Combined GCaMP L1', 'Combined GCamP L2', 'Combined GCamP Width',...
+    'Combined Spike Amplitude', 'Combined Spike L1', 'Combined Spike L2', 'Combined Spike Width'};
 
+<<<<<<< HEAD
 
 dataType = 'water'; %To look at one stim type at a time. Leave empty to look at all
+=======
+dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
+>>>>>>> parent of e2e1215... Revert "Update extract_datat"
 STDlevel = 2;
 sort_active = 0;
-plot_graphs = 0;
-save_data = 1;
+plot_graphs = 1;
+save_data = 0;
 
 %% Load data
 cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
@@ -45,7 +51,7 @@ end
 
 data1 = {}; %Nominal data
 autoActivity = cell(size(cellList,1),2); %Auto-determined activity (inhibited/sustained/activated)
-data2 = nan(size(cellList,1),16); %Numerical data
+data2 = nan(size(cellList,1),24); %Numerical data
 raster_F = [];
 raster_spks = [];
 
@@ -160,12 +166,12 @@ for b = 1:length(uniqueBlocks)
                 [p1_latency] = find(response >= peak_threshold, 1, 'first');
                 [p2_latency] = find(response(1, peak_latency:end) <= peak_threshold, 1, 'first');
                 p1 = response(p1_latency);
-                p2 = response(peak_latency + p2_latency - 1);
+                p2 = response(peak_latency + p2_latency - 2);
                 
                 %Adjust for baseline
                 peak_latency = peak_latency + nBaselineFrames;
                 p1_latency = p1_latency + nBaselineFrames;
-                p2_latency = p2_latency + peak_latency - 1;
+                p2_latency = p2_latency + peak_latency - 2;
                 
                 %Width
                 peak_width = p2_latency - p1_latency;
@@ -191,12 +197,12 @@ for b = 1:length(uniqueBlocks)
                 [t1_latency] = find(response <= trough_threshold, 1, 'first');
                 [t2_latency] = find(response(1, trough_latency:end) >= trough_threshold, 1, 'first');
                 t1 = response(t1_latency);
-                t2 = response(trough_latency + t2_latency - 1);
+                t2 = response(trough_latency + t2_latency - 2);
                 
                 %Adjust for baseline
                 trough_latency = trough_latency + nBaselineFrames;
                 t1_latency = t1_latency + nBaselineFrames;
-                t2_latency = t2_latency + trough_latency - 1;
+                t2_latency = t2_latency + trough_latency - 2;
                 
                 %Width
                 trough_width = t2_latency - t1_latency;
@@ -269,10 +275,20 @@ for b = 1:length(uniqueBlocks)
             peak_data = peak_data./framerate;
             trough_data = trough_data./framerate;
             
+            if isequal(activity, 'activated') || isequal(activity, 'sustained')
+                combined_data = peak_data;
+            elseif isequal(activity, 'inhibited')
+                combined_data = trough_data;
+            else
+                combined_data = nan(1,4);
+            end
+            
             if i == 1
                 data2(count,1:8) = [peak_data, trough_data]; %GCaMP
+                data2(count,17:20) = combined_data; %GCaMP
             elseif i == 2
                 data2(count,9:16) = [peak_data, trough_data]; %Spikes
+                data2(count,21:24) = combined_data; %Spikes
             end
             
         end

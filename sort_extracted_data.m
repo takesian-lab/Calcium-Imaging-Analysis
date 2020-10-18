@@ -71,9 +71,9 @@ for i = 1:length(uniquemice)%loop through mice
                 for n = 1:length(nomdat)
                     if nomdat{n,2} == uniquemice(i);
                         if nomdat{n,3}==FOVlist{1,i}(k);
-                            if autodat{n,1}~('none');
+%                             if autodat{n,1}~('none');
                                 rcell = nomdat{n,6};
-                            end
+%                             end
                         end
                     end
                     A = exist('rcell');

@@ -14,14 +14,19 @@ columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number'
     'GCaMP Peak Amplitude', 'GCaMP P1', 'GCaMP Peak Latency', 'GCaMP Peak Width',...
     'GCaMP Trough Amplitude', 'GCaMP T1', 'GCaMP Trough Latency', 'GCaMP Trough Width',...
     'Spike Peak Amplitude', 'Spike P1', 'Spike Peak Latency', 'Spike Peak Width',...
-    'Spike Trough Amplitude', 'Spike T1', 'Spike Trough Latency', 'Spike Trough Width'};
+    'Spike Trough Amplitude', 'Spike T1', 'Spike Trough Latency', 'Spike Trough Width'...
+    'Combined GCaMP Amplitude', 'Combined GCaMP L1', 'Combined GCamP L2', 'Combined GCamP Width',...
+    'Combined Spike Amplitude', 'Combined Spike L1', 'Combined Spike L2', 'Combined Spike Width'...
+    'GCaMP Peak AUC', 'GCaMP Trough AUC', 'Spike Peak AUC', 'Spike Trough AUC', 'Combined GCaMP AUC', 'Combined Spike AUC'};
 
 
-dataType = 'air'; %To look at one stim type at a time. Leave empty to look at all
+dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
 STDlevel = 2;
-sort_active = 1; % set to 1 if only looking at inactive trials
-plot_graphs = 0;
-save_data = 1;
+AUC_F_level = 0.05;
+AUC_spks_level = 5;
+sort_active = 0;
+plot_graphs = 1;
+save_data = 0;
 
 %% Load data
 cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
@@ -45,7 +50,7 @@ end
 
 data1 = {}; %Nominal data
 autoActivity = cell(size(cellList,1),2); %Auto-determined activity (inhibited/sustained/activated)
-data2 = nan(size(cellList,1),16); %Numerical data
+data2 = nan(size(cellList,1),30); %Numerical data
 raster_F = [];
 raster_spks = [];
 
@@ -106,10 +111,6 @@ for b = 1:length(uniqueBlocks)
                     end
             end
        
-    
-        
-        
-        
         %Get averaged & smoothed response
         avg_F7_df_f = smooth(nanmean(F7_df_f),3)';
         avg_spks = smooth(nanmean(spks),3)';
@@ -144,8 +145,10 @@ for b = 1:length(uniqueBlocks)
             if i == 1
                 y = avg_F7_df_f;
                 units = 'DF/f';
+                AUC_level = AUC_F_level;
             elseif i == 2
                 y = avg_spks;
+                AUC_level = AUC_spks_level;
                 units = 'Deconvolved spikes';
             end
             
@@ -159,14 +162,25 @@ for b = 1:length(uniqueBlocks)
             [peak, peak_latency] = max(response);
             if peak >= peak_threshold %only store data if peak is above threshold
                 [p1_latency] = find(response >= peak_threshold, 1, 'first');
-                [p2_latency] = find(response(1, peak_latency:end) <= peak_threshold, 1, 'first');
+                [p2_latency] = find(response(1, peak_latency:end) <= peak_threshold, 1, 'first') - 2;
                 p1 = response(p1_latency);
-                p2 = response(peak_latency + p2_latency - 1);
+                p2 = response(peak_latency + p2_latency);
+                
+                %AUC
+                if isempty(p2_latency)
+                    p2_latency_temp = length(response);
+                else
+                    p2_latency_temp = p2_latency + peak_latency;
+                end
+                peak_trace = response(1,p1_latency:p2_latency_temp);
+                peak_trace(peak_trace < peak_threshold) = peak_threshold;
+                peak_trace_no_nan = peak_trace(~isnan(peak_trace)); %trapz function does not work on nas
+                aup = trapz(abs(peak_trace_no_nan - peak_threshold)); %Area under peak above threshold
                 
                 %Adjust for baseline
                 peak_latency = peak_latency + nBaselineFrames;
                 p1_latency = p1_latency + nBaselineFrames;
-                p2_latency = p2_latency + peak_latency - 1;
+                p2_latency = p2_latency + peak_latency;
                 
                 %Width
                 peak_width = p2_latency - p1_latency;
@@ -178,7 +192,9 @@ for b = 1:length(uniqueBlocks)
                 p2_latency = nan;
                 peak_latency = nan;
                 peak_width = nan;
+                aup = nan;
             end
+            
             %Store
             if ~isempty(peak);          peak_data(1) = peak;            else;   peak = nan;         end
             if ~isempty(p1_latency);    peak_data(2) = p1_latency;      else;   p1_latency = nan;   end
@@ -190,14 +206,25 @@ for b = 1:length(uniqueBlocks)
             [trough, trough_latency] = min(response);
             if trough <= trough_threshold %only store data if trough is below threshold
                 [t1_latency] = find(response <= trough_threshold, 1, 'first');
-                [t2_latency] = find(response(1, trough_latency:end) >= trough_threshold, 1, 'first');
+                [t2_latency] = find(response(1, trough_latency:end) >= trough_threshold, 1, 'first') - 2;
                 t1 = response(t1_latency);
-                t2 = response(trough_latency + t2_latency - 1);
+                t2 = response(trough_latency + t2_latency);
+                
+                %AUC
+                if isempty(t2_latency)
+                    t2_latency_temp = length(response);
+                else
+                    t2_latency_temp = t2_latency + trough_latency;
+                end
+                trough_trace = response(1,t1_latency:t2_latency_temp);
+                trough_trace(trough_trace > trough_threshold) = trough_threshold;
+                trough_trace_no_nan = trough_trace(~isnan(trough_trace));
+                aat = trapz(abs(trough_trace_no_nan - trough_threshold)); %Area above trough and below threshold
                 
                 %Adjust for baseline
                 trough_latency = trough_latency + nBaselineFrames;
                 t1_latency = t1_latency + nBaselineFrames;
-                t2_latency = t2_latency + trough_latency - 1;
+                t2_latency = t2_latency + trough_latency;
                 
                 %Width
                 trough_width = t2_latency - t1_latency;
@@ -209,6 +236,7 @@ for b = 1:length(uniqueBlocks)
                 t2_latency = nan;
                 trough_latency = nan;
                 trough_width = nan;
+                aat = nan;
             end
             
             %Store
@@ -218,28 +246,39 @@ for b = 1:length(uniqueBlocks)
             if ~isempty(trough_width);      trough_data(4) = trough_width;      else;   trough_width = nan;     end
             
             %Auto-determined activity (inhibited/sustained/activated)
+            if ~isnan(aup)&& aup >= AUC_level; aup_pass = true; else; aup_pass = false; end
+            if ~isnan(aat)&& aat >= AUC_level; aat_pass = true; else; aat_pass = false; end
+            
+            activity = 'none';
+            
             if isnan(peak) && isnan(trough)
                 activity = 'none';
-            elseif isnan(peak) && ~isnan(trough)
-                activity = 'inhibited';
-            elseif ~isnan(peak) && isnan(trough)
+            elseif ~aat_pass && ~aup_pass
+                activity = 'none';
+            elseif isnan(peak) && ~isnan(trough) && aat_pass
+                 activity = 'inhibited';
+            elseif ~isnan(peak) && isnan(trough) && aup_pass
                 if peak_latency > 40 || isempty(p2_latency)
                     activity = 'sustained';
                 else
                     activity = 'activated';
                 end
             elseif ~isnan(peak) && ~isnan(trough)
-                if trough_latency < peak_latency
+                if (trough_latency < peak_latency) && aat_pass
                     activity = 'inhibited';
-                else
+                elseif (peak_latency < trough_latency) && aat_pass && ~aup_pass
+                    activity = 'inhibited';
+                elseif aup_pass
                     if peak_latency > 40 || isempty(p2_latency)
                         activity = 'sustained';
                     else
                         activity = 'activated';
                     end
+                else
+                    activity = 'none';
                 end
             else
-                activity = 'undetermined';
+                activity = 'none';
             end
             
             autoActivity{count,i} = activity;
@@ -260,7 +299,16 @@ for b = 1:length(uniqueBlocks)
                 vline(nBaselineFrames, 'k')
                 xlabel('Frames')
                 ylabel(units)
-                title(activity)
+                if strcmp(activity, 'activated') || strcmp(activity, 'sustained')
+                    title([activity ' -  AUC: ' num2str(aup)])
+                    plot(p1_latency:(nBaselineFrames + p2_latency_temp), peak_trace, 'g')
+                elseif strcmp(activity, 'inhibited')
+                    title([activity ' - AUC: ' num2str(aat)])
+                    plot(t1_latency:(nBaselineFrames + t2_latency_temp), trough_trace, 'g')
+                else
+                    title(activity)
+                end
+                
                 if i == 2
                     suptitle(strcat(block.setup.block_supname, ' Cell ', num2str(cellNumber)))
                 end
@@ -270,10 +318,28 @@ for b = 1:length(uniqueBlocks)
             peak_data = peak_data./framerate;
             trough_data = trough_data./framerate;
             
+            %For storing combined data, only keep trough OR peak data in one column
+            if isequal(activity, 'activated') || isequal(activity, 'sustained')
+                combined_data = peak_data;
+                combined_auc = aup;
+            elseif isequal(activity, 'inhibited')
+                combined_data = trough_data;
+                combined_auc = aat;
+            else
+                combined_data = nan(1,4);
+                combined_auc = nan;
+            end
+            
             if i == 1
                 data2(count,1:8) = [peak_data, trough_data]; %GCaMP
+                data2(count,17:20) = combined_data; %GCaMP
+                data2(count,25:26) = [aup, aat];
+                data2(count,29) = combined_auc;
             elseif i == 2
                 data2(count,9:16) = [peak_data, trough_data]; %Spikes
+                data2(count,21:24) = combined_data; %Spikes
+                data2(count,27:28) = [aup, aat]; 
+                data2(count,30) = combined_auc;
             end
             
         end
@@ -388,7 +454,7 @@ ylabel('Cells')
 %xlabel('Frames')
 h = colorbar;
 set(get(h,'label'),'string','DF/F');
-caxis([0, 1]);
+caxis([-1, 1]);
 
 subplot(6,2,[4,6])
 imagesc(VIP_raster_spks)
@@ -418,7 +484,7 @@ ylabel('Cells')
 xlabel('Frames')
 h = colorbar;
 set(get(h,'label'),'string','DF/F');
-caxis([0, 1]);
+caxis([-1, 1]);
 
 subplot(6,2,[10,12])
 imagesc(NDNF_raster_spks)

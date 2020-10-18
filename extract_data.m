@@ -21,20 +21,48 @@ columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number'
     'Combined Spike Amplitude', 'Combined Spike L1', 'Combined Spike L2', 'Combined Spike Width'...
     'GCaMP Peak AUC', 'GCaMP Trough AUC', 'Spike Peak AUC', 'Spike Trough AUC', 'Combined GCaMP AUC', 'Combined Spike AUC'};
 
-dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
-STDlevel = 2;
-AUC_F_level = 0.05;
-AUC_spks_level = 5;
-sort_active = 1;
-plot_graphs = 0;
-save_data = 1;
-analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
+%% Environment
+
+PC_name = getenv('computername');
+
+switch PC_name
+    case 'RD0366' %Maryse
+        cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
+        blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
+        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData MET';
+        cellList_filename = 'ResponsiveCells';
+        
+        dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
+        STDlevel = 2;
+        AUC_F_level = 0.05;
+        AUC_spks_level = 5;
+        sort_active = 1;
+        plot_graphs = 0;
+        save_data = 1;
+        analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
+
+    case 'RD0332' %Carolyn
+        cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
+        blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
+        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS\Inactive';
+        cellList_filename = 'Responsive cells v2';
+        
+        dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
+        STDlevel = 2;
+        AUC_F_level = 0.05;
+        AUC_spks_level = 5;
+        sort_active = 1;
+        plot_graphs = 0;
+        save_data = 1;
+        analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
+        
+    otherwise
+        disp('Computer does not match known users')
+        return
+end
+
 
 %% Load data
-cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
-blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
-save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS\Inactive';
-cellList_filename = 'Responsive cells v2';
 
 cd(cellList_path)
 cellList = importfile(cellList_filename);

@@ -27,8 +27,7 @@ save_data = 1;
 cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
 blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
 save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
-cellList_filename = 'Matching cells';
-dataTypes = {'FM','RF','SAM','SAMfreq','NoiseITI','water','air'};%order of stim on cellList_filename
+cellList_filename = 'Copy of ResponsiveCells';
 
 cd(cellList_path)
 cellList = importfile(cellList_filename);
@@ -39,10 +38,10 @@ cellList(1,:) = []; %Remove header
 cd(blocks_path)
 
 %Look at only one stim type at a time
-% dataTypes = [cellList{:,4}]';
-% if ~isempty(dataType)
-%     cellList = cellList(strcmp(dataTypes, dataType),:);
-% end
+dataTypes = [cellList{:,4}]';
+if ~isempty(dataType)
+    cellList = cellList(strcmp(dataTypes, dataType),:);
+end
 
 data1 = {}; %Nominal data
 autoActivity = cell(size(cellList,1),2); %Auto-determined activity (inhibited/sustained/activated)

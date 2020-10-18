@@ -17,17 +17,17 @@ columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number'
     'Spike Trough Amplitude', 'Spike T1', 'Spike Trough Latency', 'Spike Trough Width'};
 
 
-dataType = 'water'; %To look at one stim type at a time. Leave empty to look at all
+dataType = 'air'; %To look at one stim type at a time. Leave empty to look at all
 STDlevel = 2;
-sort_active = 0;
+sort_active = 1; % set to 1 if only looking at inactive trials
 plot_graphs = 0;
 save_data = 1;
 
 %% Load data
 cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
 blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
-save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
-cellList_filename = 'Copy of ResponsiveCells';
+save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS';
+cellList_filename = 'Responsive Cells v2';
 
 cd(cellList_path)
 cellList = importfile(cellList_filename);
@@ -58,7 +58,7 @@ count = 1;
 for b = 1:length(uniqueBlocks)
     currentBlock = uniqueBlocks{b};
     block_cellList = cellList(strcmp(blocks, currentBlock),:);
-    load(currentBlock)
+    load(currentBlock);
     baseline_length = block.setup.constant.baseline_length; %seconds
     framerate = block.setup.framerate;
     nBaselineFrames = baseline_length*framerate; %frames
@@ -70,6 +70,7 @@ for b = 1:length(uniqueBlocks)
     
     for c = 1:size(block_cellList,1)
         cellNumber = block_cellList{c,6};
+        if cellNumber~='NaN'
         cellIndex = find(block.cell_number == cellNumber);
         if isempty(cellIndex)
             error(['Cell number ' num2str(cellNumber) ' not found.'])
@@ -277,6 +278,7 @@ for b = 1:length(uniqueBlocks)
             
         end
         count = count + 1;
+    end
     end
 end
 

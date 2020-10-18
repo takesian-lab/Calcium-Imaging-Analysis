@@ -19,16 +19,14 @@ columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number'
     'Combined Spike Amplitude', 'Combined Spike L1', 'Combined Spike L2', 'Combined Spike Width'...
     'GCaMP Peak AUC', 'GCaMP Trough AUC', 'Spike Peak AUC', 'Spike Trough AUC', 'Combined GCaMP AUC', 'Combined Spike AUC'};
 
-
 dataType = 'air'; %To look at one stim type at a time. Leave empty to look at all
 STDlevel = 2;
 AUC_F_level = 0.05;
 AUC_spks_level = 5;
-sort_active = 0;
+sort_active = 1;
 plot_graphs = 0;
 save_data = 1;
-
-
+analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
 %% Load data
 cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
 blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
@@ -74,53 +72,94 @@ for b = 1:length(uniqueBlocks)
     stim_v2 = block.parameters.variable2';
     
     
+    % identify trials to remove (running trials or zero sound trials)
+    if strcmp(dataType,'RF') | strcmp(dataType,'RF')
+        if sort_active==1
+            r=find(stim_v2 == 0); %find 0dB trials
+            rr= find(block.active_trials==1);%find active trials
+            ru = union(r,rr);%put the two lists together
+            remove = ru; %Making a variable that will be the same across all stim.
+            stim_v1(remove,:) = [];
+            stim_v2(remove,:) = [];
+        else
+            remove=find(stim_v2 == 0);
+            stim_v1(stim_v2 == 0,:) = [];
+            stim_v2(stim_v2 == 0,:) = [];
+        end
+    elseif strcmp(dataType,'NoiseITI')
+        try % this will go through Noiseburst ITI trials with 0dB
+            if sort_active==1
+                r=find(stim_v1 == 0); %find 0dB trials
+                rr= find(block.active_trials==1);%find active trials
+                ru = union(r,rr);%put the two lists together
+                remove = ru;
+                stim_v1(remove,:) = [];
+                stim_v2(remove,:) = [];
+            else
+            remove=find(stim_v1 == 0);
+            stim_v1(stim_v1 == 0,:) = [];
+            stim_v2(stim_v1 == 0,:) = [];
+            end
+        catch % noiseburst strial before we did ITI style
+            if sort_active==1
+                remove= find(block.active_trials==1);%find active trials
+            end
+        end
+    elseif strcmp(dataType,'water') | strcmp(dataType,'air')
+        if sort_active==1
+                r=find(stim_v1 == 0); %find catch trials
+                rr= find(block.active_trials==1);%find active trials
+                ru = union(r,rr);%put the two lists together
+                remove = ru;
+                stim_v1(remove,:) = [];
+            else
+            remove=find(stim_v1 == 0);
+            stim_v1(stim_v1 == 0,:) = [];
+        end
+    else % this should be SAM and SAMfreq
+        if sort_active==1
+            remove= find(block.active_trials==1);%find active trials
+            stim_v1(remove,:) = [];
+            stim_v2(remove,:) = [];
+        end
+    end
+    
+    check = exist('remove');
+    if check==1
+    testRemove{b,:} = remove(:);
+    end
+    
+    
     for c = 1:size(block_cellList,1)
         cellNumber = block_cellList{c,6};
         if cellNumber~='NaN'
-        cellIndex = find(block.cell_number == cellNumber);
-        if isempty(cellIndex)
-            error(['Cell number ' num2str(cellNumber) ' not found.'])
-        end
-        
-        %Cell-specific response to sound
-        F7 = squeeze(block.aligned_stim.F7_stim(cellIndex,:,:));
-        F7_baseline = F7(:,1:nBaselineFrames); %baseline for each trial
-        F7_df_f = (F7-nanmean(F7_baseline,2))./nanmean(F7_baseline,2); %(total-mean)/mean
-        spks = squeeze(block.aligned_stim.spks_stim(cellIndex,:,:));
-        
-        %Eliminate 0dB trials -> If they exist we could potentially use
-        %them to confirm above-baseline responses
-        %if desired, remove active trials here too
-        try
-            if dataType == 'FM' | 'RF' | 'NoiseITI';
-                if sort_active==1
-                    r=find(stim_v2 == 0);
-                    rr= find(block.active_trials==1);
-                    ru = union(r,rr);
-                    F7_df_f(ru,:) = [];
-                    spks(ru,:) = [];
-                    stim_v1(ru,:) = [];
-                    stim_v2(ru,:) = [];
-                else
-                    F7_df_f(stim_v2 == 0,:) = [];
-                    spks(stim_v2 == 0,:) = [];
-                    stim_v1(stim_v2 == 0,:) = [];
-                    stim_v2(stim_v2 == 0,:) = [];
-                end
+            cellIndex = find(block.cell_number == cellNumber);
+            if isempty(cellIndex)
+                error(['Cell number ' num2str(cellNumber) ' not found.'])
             end
-                catch
-                    if sort_active==1
-                        rr= find(block.active_trials==1);
-                        F7_df_f(rr,:) = [];
-                        spks(rr,:) = [];
-                        stim_v1(rr,:) = [];
-                        stim_v2(rr,:) = [];
-                    end
-            end
-       
+            
+            %Cell-specific response to sound
+            F7 = squeeze(block.aligned_stim.F7_stim(cellIndex,:,:));
+            F7_baseline = F7(:,1:nBaselineFrames); %baseline for each trial
+            F7_df_f = (F7-nanmean(F7_baseline,2))./nanmean(F7_baseline,2); %(total-mean)/mean
+            spks = squeeze(block.aligned_stim.spks_stim(cellIndex,:,:));
+            
+            %Eliminate 0dB trials -> If they exist we could potentially use
+            %them to confirm above-baseline responses
+            %if desired, remove active trials here too. They were
+            %identified for the whole block above. Now we're taking
+            %them out of each trace.
+            
+           try
+                            F7_df_f(remove,:) = [];
+                            spks(remove,:) = [];
+           end
+        
+    
+        
         %Get averaged & smoothed response
         if analyze_by_stim_condition %check if each condition is active, then concatenate and keep only active conditions
-           
+            
             F7_by_Stim = [];
             spks_by_Stim = [];
             
@@ -131,32 +170,55 @@ for b = 1:length(uniqueBlocks)
                     stim_rows = intersect(find(stim_v1 == unique_stim_v1(v)), find(stim_v2 == unique_stim_v2(vv)));
                     F7_temp = F7_df_f(stim_rows,:);
                     spks_temp = spks(stim_rows,:);
-                    F7_temp_smoothed = smooth(nanmean(F7_temp),3)';
-                    spks_temp_smoothed = smooth(nanmean(spks_temp),3)';
                     
-                    if checkIfActive(F7_temp_smoothed, nBaselineFrames, STDlevel, AUC_level, 0)
-                        F7_by_Stim = [F7_by_Stim; F7_temp];
+                    %                         if size(F7_temp,1)>1
+                    %                         F7_temp_smoothed = smooth(nanmean(F7_temp),3)';
+                    %                         else  F7_temp_smoothed = smooth(F7_temp)';
+                    %                         end
+                    
+                    %                         if size(spks_temp,1)>1
+                    %                             spks_temp_smoothed = smooth(nanmean(spks_temp),3)';
+                    %                         else spks_temp = smooth(spks_temp)';
+                    %                         end
+                    if size(F7_temp,1)>1
+                        F7_temp_smoothed = smooth(nanmean(F7_temp),3)';
+                        if checkIfActive(F7_temp_smoothed, nBaselineFrames, STDlevel, AUC_F_level, 0)
+                            F7_by_Stim = [F7_by_Stim; F7_temp];
+                        end
                     end
-                    if checkIfActive(spks_temp_smoothed, nBaselineFrames, STDlevel, AUC_level, 0)
-                        spks_by_Stim = [spks_by_Stim; spks_temp];
+                    
+                    if size(spks_temp,1)>1
+                        spks_temp_smoothed = smooth(nanmean(spks_temp),3)';
+                        try
+                            if checkIfActive(spks_temp_smoothed, nBaselineFrames, STDlevel, AUC_spks_level, 0)
+                                spks_by_Stim = [spks_by_Stim; spks_temp];
+                            end
+                        catch avg_spks = smooth(nanmean(spks),3)';
+                        end
                     end
                 end
             end
             avg_F7_df_f = smooth(nanmean(F7_by_Stim),3)';
             avg_spks = smooth(nanmean(spks_by_Stim),3)';
             
-            %Give it another chance 
-            if isempty(F7_by_Stim)
+            %Give it another chance
+            if isempty(F7_by_Stim) | size(F7_temp,1)==1
                 avg_F7_df_f = smooth(nanmean(F7_df_f),3)';
             end
-            if isempty(spks_by_Stim)
-                 avg_spks = smooth(nanmean(spks),3)';
+            if isempty(spks_by_Stim) | size(spks_temp,1)==1
+                avg_spks = smooth(nanmean(spks),3)';
             end
-        else   
+%             if size(F7_temp,1)==1
+%                 avg_F7_df_f = smooth(nanmean(F7_df_f),3)';
+%             end
+%             if size(spks_temp,1)==1
+%                 avg_spks = smooth(nanmean(spks),3)';
+%             end
+        else
             avg_F7_df_f = smooth(nanmean(F7_df_f),3)';
             avg_spks = smooth(nanmean(spks),3)';
         end
-
+        
         
         %Store raster
         %If trial isn't the same length as raster, make them equal size by
@@ -251,14 +313,19 @@ for b = 1:length(uniqueBlocks)
                 [t1_latency] = find(response <= trough_threshold, 1, 'first');
                 [t2_latency] = find(response(1, trough_latency:end) >= trough_threshold, 1, 'first') - 2;
                 t1 = response(t1_latency);
+                try
                 t2 = response(trough_latency + t2_latency);
+                t2_latency_temp = t2_latency + trough_latency;
+                catch
+                    t2_latency_temp = length(response);
+                end
                 
                 %AUC
-                if isempty(t2_latency)
-                    t2_latency_temp = length(response);
-                else
-                    t2_latency_temp = t2_latency + trough_latency;
-                end
+%                 if isempty(t2_latency) 
+%                     t2_latency_temp = length(response);
+%                 else
+%                     t2_latency_temp = t2_latency + trough_latency;
+%                 end
                 trough_trace = response(1,t1_latency:t2_latency_temp);
                 trough_trace(trough_trace > trough_threshold) = trough_threshold;
                 trough_trace_no_nan = trough_trace(~isnan(trough_trace));
@@ -299,7 +366,7 @@ for b = 1:length(uniqueBlocks)
             elseif ~aat_pass && ~aup_pass
                 activity = 'none';
             elseif isnan(peak) && ~isnan(trough) && aat_pass
-                 activity = 'inhibited';
+                activity = 'inhibited';
             elseif ~isnan(peak) && isnan(trough) && aup_pass
                 if peak_latency > 40 || isempty(p2_latency)
                     activity = 'sustained';
@@ -381,7 +448,7 @@ for b = 1:length(uniqueBlocks)
             elseif i == 2
                 data2(count,9:16) = [peak_data, trough_data]; %Spikes
                 data2(count,21:24) = combined_data; %Spikes
-                data2(count,27:28) = [aup, aat]; 
+                data2(count,27:28) = [aup, aat];
                 data2(count,30) = combined_auc;
             end
             
@@ -390,6 +457,8 @@ for b = 1:length(uniqueBlocks)
     end
     end
 end
+
+
 
 ExtractedData = struct;
 ExtractedData.DataType = dataType;
@@ -430,11 +499,11 @@ for c = 1:2
         currentActivity = A{i};
         activeRows = strcmp(activityList, currentActivity);
         currentRows = and(currentCells, activeRows);
-
-        %find rows in current activity type and sort by amplitude and/or latency   
+        
+        %find rows in current activity type and sort by amplitude and/or latency
         current_raster_F = ExtractedData.Calcium_Raster(currentRows,:);
         current_raster_spks = ExtractedData.Spikes_Raster(currentRows,:);
-
+        
         %Store average for plots
         if size(current_raster_F,1) == 1
             %Edge case where n = 1 cell
@@ -452,10 +521,10 @@ for c = 1:2
             current_gcamp_amplitude = ExtractedData.NumericalData(currentRows,1);
             current_spike_amplitude = ExtractedData.NumericalData(currentRows,9);
         end
-
+        
         [~, gcamp_sort_ind] = sort(current_gcamp_amplitude, 'descend');
         [~, spike_sort_ind] = sort(current_spike_amplitude, 'descend');
-
+        
         %SORT BOTH BY GCAMP (so they match)
         resorted_raster_F = [resorted_raster_F; current_raster_F(gcamp_sort_ind,:)];
         resorted_raster_spks = [resorted_raster_spks; current_raster_spks(gcamp_sort_ind,:)];
@@ -500,7 +569,7 @@ plot(VIP_average_spks', 'LineWidth', 2)
 legend(A)
 xlabel('Frames')
 ylabel('Spikes')
-title('VIP Spikes') 
+title('VIP Spikes')
 
 subplot(6,2,[3,5])
 imagesc(VIP_raster_F)

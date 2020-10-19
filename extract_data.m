@@ -603,91 +603,111 @@ for b = 1:length(uniqueBlocks)
             resorted_raster_F = [resorted_raster_F; current_raster_F(gcamp_sort_ind,:)];
             resorted_raster_spks = [resorted_raster_spks; current_raster_spks(gcamp_sort_ind,:)];
             
-            CellsInOrder.([Cells{c}]).([A{i}]) = cellnumbers_A ;
+            %Save cell order
+        cellOrder_not_sorted = find(currentRows);
+        cellOrder = [cellOrder; cellOrder_not_sorted(gcamp_sort_ind)];
+       CellsInOrder.([Cells{c}]).([A{i}]) = cellnumbers_A ;
+        
         end
         if c == 1
-            VIP_raster_F = resorted_raster_F;
-            VIP_raster_spks = resorted_raster_spks;
-            VIP_average_F = average_F;
-            VIP_average_spks = average_spks;
-        elseif c == 2
-            NDNF_raster_F = resorted_raster_F;
-            NDNF_raster_spks = resorted_raster_spks;
-            NDNF_average_F = average_F;
-            NDNF_average_spks = average_spks;
-        end
+        VIP_raster_F = resorted_raster_F;
+        VIP_raster_spks = resorted_raster_spks;
+        VIP_average_F = average_F;
+        VIP_average_spks = average_spks;
+        VIP_cell_order = cellOrder;
+    elseif c == 2
+        NDNF_raster_F = resorted_raster_F;
+        NDNF_raster_spks = resorted_raster_spks;
+        NDNF_average_F = average_F;
+        NDNF_average_spks = average_spks;
+        NDNF_cell_order = cellOrder;
     end
-    
-    smoothCurves = 1;
-    
-    if smoothCurves
-        for s = 1:size(VIP_average_F,1)
-            VIP_average_F(s,:) = smooth(VIP_average_F(s,:));
-        end
-        for s = 1:size(NDNF_average_F,1)
-            NDNF_average_F(s,:) = smooth(NDNF_average_F(s,:));
-        end
+end
+
+smoothCurves = 1;
+
+if smoothCurves
+    for s = 1:size(VIP_average_F,1)
+        VIP_average_F(s,:) = smooth(VIP_average_F(s,:));
     end
-    
-    figure; hold on
-    suptitle(ExtractedData.DataType)
-    
-    subplot(6,2,1); hold all
-    plot(VIP_average_F', 'LineWidth', 2)
-    legend(A)
-    xlabel('Frames')
-    ylabel('DF/F')
-    title('VIP DF/F')
-    
-    subplot(6,2,2); hold all
-    plot(VIP_average_spks', 'LineWidth', 2)
-    legend(A)
-    xlabel('Frames')
-    ylabel('Spikes')
-    title('VIP Spikes')
-    
-    subplot(6,2,[3,5])
-    imagesc(VIP_raster_F(:,1:end-1))
-    ylabel('Cells')
-    %xlabel('Frames')
-    h = colorbar;
-    set(get(h,'label'),'string','DF/F');
-    caxis([-0.5, 1]);
-    
-    subplot(6,2,[4,6])
-    imagesc(VIP_raster_spks(:,1:end-1))
-    ylabel('Cells')
-    %xlabel('Frames')
-    h = colorbar;
-    set(get(h,'label'),'string','Spikes');
-    caxis([0, 100]);
-    
-    subplot(6,2,7)
-    plot(NDNF_average_F', 'LineWidth', 2)
-    legend(A)
-    xlabel('Frames')
-    ylabel('DF/F')
-    title('NDNF DF/F')
-    
-    subplot(6,2,8)
-    plot(NDNF_average_spks', 'LineWidth', 2)
-    legend(A)
-    xlabel('Frames')
-    ylabel('Spikes')
-    title('NDNF Spikes')
-    
-    subplot(6,2,[9,11])
-    imagesc(NDNF_raster_F(:,1:end-1))
-    ylabel('Cells')
-    xlabel('Frames')
-    h = colorbar;
-    set(get(h,'label'),'string','DF/F');
-    caxis([-0.5, 1]);
-    
-    subplot(6,2,[10,12])
-    imagesc(NDNF_raster_spks(:,1:end-1))
-    ylabel('Cells')
-    xlabel('Frames')
-    h = colorbar;
-    set(get(h,'label'),'string','Spikes');
-    caxis([0, 100]);
+    for s = 1:size(NDNF_average_F,1)
+        NDNF_average_F(s,:) = smooth(NDNF_average_F(s,:));
+    end
+end
+
+figure; hold on
+suptitle(ExtractedData.DataType)
+
+subplot(6,2,1); hold all
+plot(VIP_average_F', 'LineWidth', 2)
+legend(A)
+xlabel('Frames')
+ylabel('DF/F')
+title('VIP DF/F')
+
+subplot(6,2,2); hold all
+plot(VIP_average_spks', 'LineWidth', 2)
+legend(A)
+xlabel('Frames')
+ylabel('Spikes')
+title('VIP Spikes')
+
+subplot(6,2,[3,5])
+imagesc(VIP_raster_F(:,1:end-1))
+ylabel('Cells')
+%xlabel('Frames')
+h = colorbar;
+set(get(h,'label'),'string','DF/F');
+caxis([-0.5, 1]);
+
+subplot(6,2,[4,6])
+imagesc(VIP_raster_spks(:,1:end-1))
+ylabel('Cells')
+%xlabel('Frames')
+h = colorbar;
+set(get(h,'label'),'string','Spikes');
+caxis([0, 100]);
+
+subplot(6,2,7)
+plot(NDNF_average_F', 'LineWidth', 2)
+legend(A)
+xlabel('Frames')
+ylabel('DF/F')
+title('NDNF DF/F')
+
+subplot(6,2,8)
+plot(NDNF_average_spks', 'LineWidth', 2)
+legend(A)
+xlabel('Frames')
+ylabel('Spikes')
+title('NDNF Spikes')
+
+subplot(6,2,[9,11])
+imagesc(NDNF_raster_F(:,1:end-1))
+ylabel('Cells')
+xlabel('Frames')
+h = colorbar;
+set(get(h,'label'),'string','DF/F');
+caxis([-0.5, 1]);
+
+subplot(6,2,[10,12])
+imagesc(NDNF_raster_spks(:,1:end-1))
+ylabel('Cells')
+xlabel('Frames')
+h = colorbar;
+set(get(h,'label'),'string','Spikes');
+caxis([0, 100]);
+
+%% Helper script
+
+removeOutlier = 1;
+
+outlier = 123;
+
+if removeOutlier
+    ExtractedData.AutoActivity(outlier,:) = [];
+    ExtractedData.NominalData(outlier,:) = [];
+    ExtractedData.NumericalData(outlier,:) = [];
+    ExtractedData.Calcium_Raster(outlier,:) = [];
+    ExtractedData.Spikes_Raster(outlier,:) = [];
+end

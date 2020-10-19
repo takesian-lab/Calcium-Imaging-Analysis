@@ -19,7 +19,7 @@ columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number'
     'Combined Spike Amplitude', 'Combined Spike L1', 'Combined Spike L2', 'Combined Spike Width'...
     'GCaMP Peak AUC', 'GCaMP Trough AUC', 'Spike Peak AUC', 'Spike Trough AUC', 'Combined GCaMP AUC', 'Combined Spike AUC'};
 
-dataType = 'air'; %To look at one stim type at a time. Leave empty to look at all
+dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
 STDlevel = 2;
 AUC_F_level = 0.05;
 AUC_spks_level = 5;

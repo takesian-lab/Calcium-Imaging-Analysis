@@ -10,6 +10,8 @@
 
 %% Set up
 
+clear all
+
 columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number', 'Activity', 'Auto-Activity GCamP', 'Auto-Activity Spikes',...
     'GCaMP Peak Amplitude', 'GCaMP P1', 'GCaMP Peak Latency', 'GCaMP Peak Width',...
     'GCaMP Trough Amplitude', 'GCaMP T1', 'GCaMP Trough Latency', 'GCaMP Trough Width',...
@@ -19,19 +21,49 @@ columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number'
     'Combined Spike Amplitude', 'Combined Spike L1', 'Combined Spike L2', 'Combined Spike Width'...
     'GCaMP Peak AUC', 'GCaMP Trough AUC', 'Spike Peak AUC', 'Spike Trough AUC', 'Combined GCaMP AUC', 'Combined Spike AUC'};
 
-dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
-STDlevel = 2;
-AUC_F_level = 0.05;
-AUC_spks_level = 5;
-sort_active = 1;
-plot_graphs = 0;
-save_data = 1;
-analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
+%% Environment
+
+PC_name = getenv('computername');
+
+switch PC_name
+    case 'RD0366' %Maryse
+        cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
+        blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
+        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData MET';
+        cellList_filename = 'ResponsiveCells';
+        
+        dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
+        STDlevel = 2;
+        AUC_F_level = 0.05;
+        AUC_spks_level = 5;
+        sort_active = 1;
+        plot_graphs = 0;
+        save_data = 1;
+        analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
+
+    case 'RD0332' %Carolyn
+        cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
+        blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
+        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS\Inactive';
+        cellList_filename = 'Responsive cells v2';
+        
+        dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
+        STDlevel = 2;
+        AUC_F_level = 0.05;
+        AUC_spks_level = 5;
+        sort_active = 1;
+        plot_graphs = 0;
+        save_data = 1;
+        analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
+        
+    otherwise
+        disp('Computer does not match known users')
+        return
+end
+
+
+
 %% Load data
-cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
-blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
-save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS\Inactive';
-cellList_filename = 'Responsive Cells v2';
 
 cd(cellList_path)
 cellList = importfile(cellList_filename);
@@ -44,7 +76,7 @@ cd(blocks_path)
 %Look at only one stim type at a time
 dataTypes = [cellList{:,4}]';
 if ~isempty(dataType)
-    cellList = cellList(strcmp(dataTypes, dataType),:);
+    cellList = cellList(strcmpi(dataTypes, dataType),:);
 end
 
 data1 = {}; %Nominal data
@@ -61,7 +93,7 @@ count = 1;
 
 for b = 1:length(uniqueBlocks)
     currentBlock = uniqueBlocks{b};
-    block_cellList = cellList(strcmp(blocks, currentBlock),:);
+    block_cellList = cellList(strcmpi(blocks, currentBlock),:);
     load(currentBlock);
     baseline_length = block.setup.constant.baseline_length; %seconds
     framerate = block.setup.framerate;
@@ -73,7 +105,7 @@ for b = 1:length(uniqueBlocks)
     
     
     % identify trials to remove (running trials or zero sound trials)
-    if strcmp(dataType,'RF') | strcmp(dataType,'RF')
+    if strcmpi(dataType,'RF') | strcmpi(dataType,'RF')
         if sort_active==1
             r=find(stim_v2 == 0); %find 0dB trials
             rr= find(block.active_trials==1);%find active trials
@@ -86,7 +118,7 @@ for b = 1:length(uniqueBlocks)
             stim_v1(stim_v2 == 0,:) = [];
             stim_v2(stim_v2 == 0,:) = [];
         end
-    elseif strcmp(dataType,'NoiseITI')
+    elseif strcmpi(dataType,'NoiseITI')
         try % this will go through Noiseburst ITI trials with 0dB
             if sort_active==1
                 r=find(stim_v1 == 0); %find 0dB trials
@@ -105,7 +137,7 @@ for b = 1:length(uniqueBlocks)
                 remove= find(block.active_trials==1);%find active trials
             end
         end
-    elseif strcmp(dataType,'water') | strcmp(dataType,'air')
+    elseif strcmpi(dataType,'water') | strcmpi(dataType,'air')
         if sort_active==1
                 r=find(stim_v1 == 0); %find catch trials
                 rr= find(block.active_trials==1);%find active trials
@@ -132,7 +164,12 @@ for b = 1:length(uniqueBlocks)
     
     for c = 1:size(block_cellList,1)
         cellNumber = block_cellList{c,6};
-        if cellNumber~='NaN'
+        if cellNumber == 'NaN'
+            raster_F = [raster_F; nan(1,75)];
+            raster_spks = [raster_spks; nan(1,75)];            
+            autoActivity{count,1} = 'NaN';
+            autoActivity{count,2} = 'NaN';
+        elseif cellNumber ~= 'NaN'
             cellIndex = find(block.cell_number == cellNumber);
             if isempty(cellIndex)
                 error(['Cell number ' num2str(cellNumber) ' not found.'])
@@ -409,10 +446,10 @@ for b = 1:length(uniqueBlocks)
                 vline(nBaselineFrames, 'k')
                 xlabel('Frames')
                 ylabel(units)
-                if strcmp(activity, 'activated') || strcmp(activity, 'sustained')
+                if strcmpi(activity, 'activated') || strcmpi(activity, 'sustained')
                     title([activity ' -  AUC: ' num2str(aup)])
                     plot(p1_latency:(nBaselineFrames + p2_latency_temp), peak_trace, 'g')
-                elseif strcmp(activity, 'inhibited')
+                elseif strcmpi(activity, 'inhibited')
                     title([activity ' - AUC: ' num2str(aat)])
                     plot(t1_latency:(nBaselineFrames + t2_latency_temp), trough_trace, 'g')
                 else
@@ -453,17 +490,18 @@ for b = 1:length(uniqueBlocks)
             end
             
         end
-        count = count + 1;
-    end
+        end
+    count = count + 1;
     end
 end
-
-
 
 ExtractedData = struct;
 ExtractedData.DataType = dataType;
 ExtractedData.STDlevel = STDlevel;
+ExtractedData.AUC_F_level = AUC_F_level;
+ExtractedData.AUC_spks_level = AUC_spks_level;
 ExtractedData.Sort_Active = sort_active;
+ExtractedData.Analyze_By_Stim_Condition = analyze_by_stim_condition;
 ExtractedData.ColumnHeaders = columnHeaders;
 ExtractedData.AutoActivity = autoActivity;
 ExtractedData.NominalData = data1;
@@ -474,7 +512,8 @@ ExtractedData.Spikes_Raster = raster_spks;
 %% Save
 if save_data == 1
     cd(save_path)
-    save(['extractedData_' dataType '.mat'], 'ExtractedData');
+    d = datestr(now,'yyyymmdd-HHMMSS');
+    save(['extractedData_' dataType '_' d '.mat'], 'ExtractedData');
 end
 
 %% Plot sorted rasters
@@ -488,7 +527,7 @@ cellList = [ExtractedData.NominalData{:,1}]'; %Modify
 activityList = [ExtractedData.AutoActivity(:,1)]; %Modify
 
 for c = 1:2
-    currentCells = strcmp(cellList,Cells{c});
+    currentCells = strcmpi(cellList,Cells{c});
     
     resorted_raster_F = [];
     resorted_raster_spks = [];
@@ -497,7 +536,7 @@ for c = 1:2
     
     for i = 1:length(A)
         currentActivity = A{i};
-        activeRows = strcmp(activityList, currentActivity);
+        activeRows = strcmpi(activityList, currentActivity);
         currentRows = and(currentCells, activeRows);
         
         %find rows in current activity type and sort by amplitude and/or latency
@@ -572,15 +611,15 @@ ylabel('Spikes')
 title('VIP Spikes')
 
 subplot(6,2,[3,5])
-imagesc(VIP_raster_F)
+imagesc(VIP_raster_F(:,1:end-1))
 ylabel('Cells')
 %xlabel('Frames')
 h = colorbar;
 set(get(h,'label'),'string','DF/F');
-caxis([-1, 1]);
+caxis([-0.5, 1]);
 
 subplot(6,2,[4,6])
-imagesc(VIP_raster_spks)
+imagesc(VIP_raster_spks(:,1:end-1))
 ylabel('Cells')
 %xlabel('Frames')
 h = colorbar;
@@ -602,15 +641,15 @@ ylabel('Spikes')
 title('NDNF Spikes')
 
 subplot(6,2,[9,11])
-imagesc(NDNF_raster_F)
+imagesc(NDNF_raster_F(:,1:end-1))
 ylabel('Cells')
 xlabel('Frames')
 h = colorbar;
 set(get(h,'label'),'string','DF/F');
-caxis([-1, 1]);
+caxis([-0.5, 1]);
 
 subplot(6,2,[10,12])
-imagesc(NDNF_raster_spks)
+imagesc(NDNF_raster_spks(:,1:end-1))
 ylabel('Cells')
 xlabel('Frames')
 h = colorbar;

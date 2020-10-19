@@ -1,6 +1,8 @@
 % load extracted data
-stimTypes = {'FM','RF','SAM','SAMfreq','NoiseITI','water','air'};
+% stimTypes = {'FM','RF','SAM','SAMfreq','NoiseITI','water','air'};
+stimTypes = {'FM','RF','SAM','SAMfreq','NoiseITI'};
 data_path = ('\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS\Inactive');
+save_path = ('\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS\Inactive');
 matchFile = ('Matched Cells v2');
 cd(data_path)
 
@@ -48,13 +50,14 @@ end
 %% find the cells that were included in the receptive ExtractData set
 
 %look at the rows that correspond to a single mouse
-
-for i = 1:length(uniquemice)%loop through mice
+tic
+for i =1:length(uniquemice)%loop through mice\
+   toc
     for k = 1:length(FOVlist{1,i}(:))%loop through FOV
         numf = num2str(FOVlist{1,i}(k));
-        rw =  Rowlist.([uniquemice(i)]).(['FOV' numf])(:)
+        rw =  Rowlist.([uniquemice(i)]).(['FOV' numf])(:);
         for q = 1:length(rw) %only look at rows that = mouse and FOV of interest
-            for s = 1;%:length(stimTypes) %one stimtype at a time
+            for s = 1:length(stimTypes) %one stimtype at a time
                 ss = s+2; %the first two columns are mouse id and FOV
                 
                 %pull out data that matches the stim type
@@ -69,8 +72,8 @@ for i = 1:length(uniquemice)%loop through mice
           
                 % find see if this cell is in the Extracted data
                 for n = 1:length(nomdat)
-                    if nomdat{n,2} == uniquemice(i);
-                        if nomdat{n,3}==FOVlist{1,i}(k);
+                    if nomdat{n,2} == uniquemice(i); 
+                        if nomdat{n,3} == FOVlist{1,i}(k);
 %                             if autodat{n,1}~('none');
                                 rcell = nomdat{n,6};
 %                             end
@@ -78,7 +81,7 @@ for i = 1:length(uniquemice)%loop through mice
                     end
 %                     A = exist('rcell');
 %                     if A ==1
-rw(q)
+
                         try
                             if cellnum ==rcell
                                 Match.([stimTypes{s}]).numerical{rw(q),1} = numdat(n,:);
@@ -138,6 +141,6 @@ shading flat;
 set(gca, 'ydir', 'reverse');
 set(ax, 'clim', [0 1]);
 
-save_path = ('\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020');
- cd(save_path)
-    save(['MatchedData.mat'], 'meanval');
+save_path = ('\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS\Inactive');
+cd(save_path)
+save(['MatchedData_all.mat'], 'Match');

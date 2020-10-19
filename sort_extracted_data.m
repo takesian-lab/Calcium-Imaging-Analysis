@@ -49,7 +49,7 @@ end
 
 %look at the rows that correspond to a single mouse
 
-for i = 9;%:length(uniquemice)%loop through mice
+for i = 1:length(uniquemice)%loop through mice
     for k = 1:length(FOVlist{1,i}(:))%loop through FOV
         numf = num2str(FOVlist{1,i}(k));
         rw =  Rowlist.([uniquemice(i)]).(['FOV' numf])(:)

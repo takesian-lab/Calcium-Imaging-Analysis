@@ -549,6 +549,7 @@ for c = 1:2
     resorted_raster_spks = [];
     average_F = [];
     average_spks = [];
+    cellOrder = [];
     
     for i = 1:length(A)
         currentActivity = A{i};
@@ -584,17 +585,23 @@ for c = 1:2
         resorted_raster_F = [resorted_raster_F; current_raster_F(gcamp_sort_ind,:)];
         resorted_raster_spks = [resorted_raster_spks; current_raster_spks(gcamp_sort_ind,:)];
         
+        %Save cell order
+        cellOrder_not_sorted = find(currentRows);
+        cellOrder = [cellOrder; cellOrder_not_sorted(gcamp_sort_ind)];
+        
     end
     if c == 1
         VIP_raster_F = resorted_raster_F;
         VIP_raster_spks = resorted_raster_spks;
         VIP_average_F = average_F;
         VIP_average_spks = average_spks;
+        VIP_cell_order = cellOrder;
     elseif c == 2
         NDNF_raster_F = resorted_raster_F;
         NDNF_raster_spks = resorted_raster_spks;
         NDNF_average_F = average_F;
         NDNF_average_spks = average_spks;
+        NDNF_cell_order = cellOrder;
     end
 end
 
@@ -671,3 +678,17 @@ xlabel('Frames')
 h = colorbar;
 set(get(h,'label'),'string','Spikes');
 caxis([0, 100]);
+
+%% Helper script
+
+removeOutlier = 1;
+
+outlier = 123;
+
+if removeOutlier
+    ExtractedData.AutoActivity(outlier,:) = [];
+    ExtractedData.NominalData(outlier,:) = [];
+    ExtractedData.NumericalData(outlier,:) = [];
+    ExtractedData.Calcium_Raster(outlier,:) = [];
+    ExtractedData.Spikes_Raster(outlier,:) = [];
+end

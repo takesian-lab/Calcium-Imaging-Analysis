@@ -1,4 +1,4 @@
-function [loco_cor_cell, mean_active, mean_inactive] = visualize_locomotor(block)
+function [loco_cor_cell] = visualize_locomotor(block)
 % Carolyn 5/29/2020
 
 
@@ -14,9 +14,9 @@ function [loco_cor_cell, mean_active, mean_inactive] = visualize_locomotor(block
 %Random H20 = 9
 %Noiseburst_ITI = 10
 %Random air puff = 11
-run_redcell = 0;
-std_level = 1.5;
-std_level_byStim = 1.5;
+% run_redcell = 0;
+% std_level = 1.5;
+% std_level_byStim = 1.5;
 
 
 
@@ -37,7 +37,7 @@ end
 
 locoTrace = block.loco_activity;
 locoTime = block.loco_times;
-redcell = block.redcell;
+% redcell = block.redcell;
 
 
 
@@ -46,6 +46,7 @@ redcell = block.redcell;
 % note:the loco-trace is on a slightly different scale as the Ca-trace.
 % This will be corrected below
 count = 0;
+figure;
 subplot (2,1,1)
 for i = 1:size(DF_F0_dt,1) % plot first 10 traces
     timestamp = block.timestamp;
@@ -83,13 +84,11 @@ locoTrace_up = interp1(v, locoTrace, vr);
 locoTrace_up(locoTrace_up<block.setup.constant.locoThresh)=0;
 
 %% do the correlation  - not actually z-scored, I just didnt change the name of the variables
-figure;
-
 z_locoTrace = locoTrace_up;
 % z_DF_F0 = (DF_F0_loco);
 z_locoDiff = zscore(diff(locoTrace_up));
 
-
+figure;
 count = 1;
 for i = 1:size(DF_F0_loco,1)
     %     if redcell(i)==1
@@ -112,11 +111,11 @@ for i = 1:size(DF_F0_loco,1)
     rr(i,:)=r(1,2);
     % pp(i,:)=p(1,2)
     
-    figure;
+%     figure;
     
     
-    plot(lags,coef,'-b')
-    title(['cell number ',num2str(block.cell_number(i))])
+    plot(lags,coef,'-b'); hold on
+    title(['Mouse ',block.setup.mousename, 'FOV',num2str(block.setup.FOV) ])
     % max_lag_diff = lags_diff(idx_diff);
     %     end
 end
@@ -171,67 +170,67 @@ end
 % scatter(lags,coef)
 %% plot loco vs non loco trials
 
-actIDX = block.active_trials;
-stimTrace = block.aligned_stim.F7_stim;
-baseline = block.setup.constant.baseline_length * block.setup.framerate;
-base_frames = stimTrace(:,:,1:baseline);
-mean_base_frames = mean(base_frames,3);
-for i = 1:size(stimTrace,1)
-    for j = 1:size(stimTrace,2)
-        ftemp = stimTrace(i,j,:);
-        btemp = mean_base_frames(i,j);
-        dftemp = (ftemp-btemp)/btemp;
-        df_f(i,j,:) = dftemp;
-    end
-end
-
-% now pull out the loco/non loco trials
-acttrial = find(actIDX==1);
-inacttrial =find(actIDX~=1);
-active_traces = df_f(:,acttrial,:);
-inactive_traces = df_f(:,inacttrial,:);
-
-%avg across cells
-for i = 1:size(df_f,1)
-    a = squeeze(mean(active_traces(i,:,:),2));
-    i
-    a_err = squeeze(std(active_traces(i,:,:),0,2)/sqrt(size(active_traces,2)));
-    b = squeeze(mean(inactive_traces(i,:,:),2));
-    b_err = squeeze(std(inactive_traces(i,:,:),0,2)/sqrt(size(inactive_traces,2)));
-    x = 1:size(active_traces,3);
-    mean_active(i,:) = a(:);
-    mean_inactive(i,:) = b(:);
-    
-    
-    figure;
-    subplot(3,1,1)
-    shadedErrorBar(x,smooth(a,10),smooth(a_err,5),'lineprops','-g'); hold on
-    shadedErrorBar(x,smooth(b,10),smooth(b_err,5),'lineprops','-m'); hold on
-    vline(baseline)
-    
-    active_cell(i,:,:) =a;
-    inactive_cell(i,:,:) = b;
-    title(['cell number ',num2str(block.cell_number(i))])
-    legend('active','inactive')
-    
-    subplot(3,1,2)
-    imagesc(squeeze(active_traces(i,:,:)))
-    vline(baseline)
-    %         set(gca, 'XTick', x_in_seconds)
-    %         set(gca, 'XTickLabel', x_label_in_seconds)
-    xlabel('frames')
-    xlim([0 size(active_traces,3)])
-    ylabel('Trials')
-    
-    subplot(3,1,3)
-    imagesc(squeeze(inactive_traces(i,:,:)))
-    vline(baseline)
-    %         set(gca, 'XTick', x_in_seconds)
-    %         set(gca, 'XTickLabel', x_label_in_seconds)
-    xlabel('frames')
-    xlim([0 size(active_traces,3)])
-    ylabel('Trials')
-end
+% actIDX = block.active_trials;
+% stimTrace = block.aligned_stim.F7_stim;
+% baseline = block.setup.constant.baseline_length * block.setup.framerate;
+% base_frames = stimTrace(:,:,1:baseline);
+% mean_base_frames = mean(base_frames,3);
+% for i = 1:size(stimTrace,1)
+%     for j = 1:size(stimTrace,2)
+%         ftemp = stimTrace(i,j,:);
+%         btemp = mean_base_frames(i,j);
+%         dftemp = (ftemp-btemp)/btemp;
+%         df_f(i,j,:) = dftemp;
+%     end
+% end
+% 
+% % now pull out the loco/non loco trials
+% acttrial = find(actIDX==1);
+% inacttrial =find(actIDX~=1);
+% active_traces = df_f(:,acttrial,:);
+% inactive_traces = df_f(:,inacttrial,:);
+% 
+% %avg across cells
+% for i = 1:size(df_f,1)
+%     a = squeeze(mean(active_traces(i,:,:),2));
+%     i
+%     a_err = squeeze(std(active_traces(i,:,:),0,2)/sqrt(size(active_traces,2)));
+%     b = squeeze(mean(inactive_traces(i,:,:),2));
+%     b_err = squeeze(std(inactive_traces(i,:,:),0,2)/sqrt(size(inactive_traces,2)));
+%     x = 1:size(active_traces,3);
+%     mean_active(i,:) = a(:);
+%     mean_inactive(i,:) = b(:);
+%     
+%     
+%     figure;
+%     subplot(3,1,1)
+%     shadedErrorBar(x,smooth(a,10),smooth(a_err,5),'lineprops','-g'); hold on
+%     shadedErrorBar(x,smooth(b,10),smooth(b_err,5),'lineprops','-m'); hold on
+%     vline(baseline)
+%     
+%     active_cell(i,:,:) =a;
+%     inactive_cell(i,:,:) = b;
+%     title(['cell number ',num2str(block.cell_number(i))])
+%     legend('active','inactive')
+%     
+%     subplot(3,1,2)
+%     imagesc(squeeze(active_traces(i,:,:)))
+%     vline(baseline)
+%     %         set(gca, 'XTick', x_in_seconds)
+%     %         set(gca, 'XTickLabel', x_label_in_seconds)
+%     xlabel('frames')
+%     xlim([0 size(active_traces,3)])
+%     ylabel('Trials')
+%     
+%     subplot(3,1,3)
+%     imagesc(squeeze(inactive_traces(i,:,:)))
+%     vline(baseline)
+%     %         set(gca, 'XTick', x_in_seconds)
+%     %         set(gca, 'XTickLabel', x_label_in_seconds)
+%     xlabel('frames')
+%     xlim([0 size(active_traces,3)])
+%     ylabel('Trials')
+% end
 
 
 

@@ -30,9 +30,10 @@ switch PC_name
         cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
         blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
         save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData MET';
-        cellList_filename = 'ResponsiveCells';
+        cellList_filename = 'Responsive cells v2';
         
-        dataType = 'RF'; %To look at one stim type at a time. Leave empty to look at all
+
+        dataType = 'Air'; %To look at one stim type at a time. Leave empty to look at all
         STDlevel = 2;
         AUC_F_level = 0.05;
         AUC_spks_level = 5;
@@ -82,8 +83,8 @@ end
 data1 = {}; %Nominal data
 autoActivity = cell(size(cellList,1),2); %Auto-determined activity (inhibited/sustained/activated)
 data2 = nan(size(cellList,1),30); %Numerical data
-raster_F = [];
-raster_spks = [];
+raster_F = nan(size(cellList,1),76);
+raster_spks = nan(size(cellList,1),76);
 
 %Loop through all cells in each block
 blocks = [cellList{:,5}]';
@@ -165,14 +166,25 @@ for b = 1:length(uniqueBlocks)
     for c = 1:size(block_cellList,1)
         cellNumber = block_cellList{c,6};
         if cellNumber == 'NaN'
-            raster_F = [raster_F; nan(1,75)];
-            raster_spks = [raster_spks; nan(1,75)];            
+            raster_F(count,:) = nan;
+            raster_spks(count,:) = nan;  
+            autoActivity{count,1} = 'NaN';
+            autoActivity{count,2} = 'NaN';
+        elseif isempty(stim_v1)
+            raster_F(count,:) = nan;
+            raster_spks(count,:) = nan;       
             autoActivity{count,1} = 'NaN';
             autoActivity{count,2} = 'NaN';
         elseif cellNumber ~= 'NaN'
             cellIndex = find(block.cell_number == cellNumber);
             if isempty(cellIndex)
-                error(['Cell number ' num2str(cellNumber) ' not found.'])
+                warning(['Cell number ' num2str(cellNumber) ' not found.'])
+                raster_F(count,:) = nan;
+                raster_spks(count,:) = nan;            
+                autoActivity{count,1} = 'NaN';
+                autoActivity{count,2} = 'NaN';
+                count = count + 1;
+                continue;
             end
             
             %Cell-specific response to sound
@@ -260,26 +272,32 @@ for b = 1:length(uniqueBlocks)
         %Store raster
         %If trial isn't the same length as raster, make them equal size by
         %adding nans at the end
-        if count ~= 1
-            if length(avg_F7_df_f) ~= size(raster_F,2) %assuming F and spks will be same dim
-                dim = max([length(avg_F7_df_f),size(raster_F,2)]);
-                while length(avg_F7_df_f) < dim
-                    avg_F7_df_f = [avg_F7_df_f, nan];
-                end
-                while length(avg_spks) < dim
-                    avg_spks = [avg_spks, nan];
-                end
-                while size(raster_F,2) < dim
-                    raster_F = [raster_F, nan(size(raster_F,1),1)];
-                end
-                while size(raster_spks,2) < dim
-                    raster_spks = [raster_spks, nan(size(raster_spks,1),1)];
-                end
-            end
-        end
+%         if count ~= 1
+%             if length(avg_F7_df_f) ~= size(raster_F,2) %assuming F and spks will be same dim
+%                 dim = max([length(avg_F7_df_f),size(raster_F,2)]);
+%                 while length(avg_F7_df_f) < dim
+%                     avg_F7_df_f = [avg_F7_df_f, nan];
+%                 end
+%                 while length(avg_spks) < dim
+%                     avg_spks = [avg_spks, nan];
+%                 end
+%                 while size(raster_F,2) < dim
+%                     raster_F = [raster_F, nan(size(raster_F,1),1)];
+%                 end
+%                 while size(raster_spks,2) < dim
+%                     raster_spks = [raster_spks, nan(size(raster_spks,1),1)];
+%                 end
+%             end
+%         end
         
-        raster_F = [raster_F; avg_F7_df_f];
-        raster_spks = [raster_spks; avg_spks];
+        if isempty(avg_F7_df_f)
+            avg_F7_df_f = nan(1,76);
+        end
+        if isempty(avg_spks)
+            avg_spks = nan(1,76);
+        end
+        raster_F(count,1:length(avg_F7_df_f)) = avg_F7_df_f;
+        raster_spks(count,1:length(avg_spks)) = avg_spks;
         
         %Compute latencies, width, and amplitude
         if plot_graphs == 1; figure; hold on; end

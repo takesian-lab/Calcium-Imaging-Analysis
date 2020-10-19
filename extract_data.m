@@ -32,7 +32,7 @@ switch PC_name
         save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData MET';
         cellList_filename = 'ResponsiveCells';
         
-        dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
+        dataType = 'RF'; %To look at one stim type at a time. Leave empty to look at all
         STDlevel = 2;
         AUC_F_level = 0.05;
         AUC_spks_level = 5;
@@ -47,7 +47,7 @@ switch PC_name
         save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS\Inactive';
         cellList_filename = 'Responsive cells v2';
         
-        dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
+        dataType = 'RF'; %To look at one stim type at a time. Leave empty to look at all
         STDlevel = 2;
         AUC_F_level = 0.05;
         AUC_spks_level = 5;
@@ -105,7 +105,7 @@ for b = 1:length(uniqueBlocks)
     
     
     % identify trials to remove (running trials or zero sound trials)
-    if strcmpi(dataType,'RF') | strcmpi(dataType,'RF')
+    if strcmpi(dataType,'FM') | strcmpi(dataType,'RF')
         if sort_active==1
             r=find(stim_v2 == 0); %find 0dB trials
             rr= find(block.active_trials==1);%find active trials
@@ -512,8 +512,9 @@ ExtractedData.Spikes_Raster = raster_spks;
 %% Save
 if save_data == 1
     cd(save_path)
-    d = datestr(now,'yyyymmdd-HHMMSS');
-    save(['extractedData_' dataType '_' d '.mat'], 'ExtractedData');
+%     d = datestr(now,'yyyymmdd-HHMMSS');
+%     save(['extractedData_' dataType '_' d '.mat'], 'ExtractedData');
+    save(['extractedData_' dataType '.mat'], 'ExtractedData');
 end
 
 %% Plot sorted rasters

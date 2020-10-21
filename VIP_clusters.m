@@ -9,12 +9,17 @@ datapath =('\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF
 cd(datapath)
 load('MatchedData.mat');
 
+NDNFidx = 1:336;
+VIPidx = 337:607;
+
+
+
 %% Trying out different cluster #'s to see what might be best
 tryclusters = 8; %how many clusters do you want to try
    for tt = 1:tryclusters;
 
 clusters = tt;
-idx = kmeans(meanval,clusters) %index of clusters
+idx = kmeans(gcamp_AUC(VIPidx,:),clusters); %index of clusters
 
 %pull out clustered rows
 for i = 1:clusters
@@ -27,7 +32,7 @@ count=1;
     for j= 1:clusters %loop through cluster
         clustrow = krow{j}
         for k = 1:length(clustrow)
-            clustmap(count,:) = meanval(clustrow(k),:); %this will be the graph of the now grouped data
+            clustmap(count,:) = gcamp_AUC(clustrow(k),:); %this will be the graph of the now grouped data
             count=count+1;
         end
         clusterlength(j) = length(clustrow); %I am making lines where each cluster ends
@@ -39,7 +44,7 @@ count=1;
     end
     
    figure;
-   clims = [-1 1]
+   clims = [-10 20]
    imagesc(clustmap, clims); hold on
    h= hline(lines,'-m');
    title(['Number of clusters =  ',num2str(clusters)])

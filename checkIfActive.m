@@ -1,9 +1,15 @@
-function isActive = checkIfActive(y, nBaselineFrames, STDlevel, AUC_level, plotFigure)
+function [isActive, activity] = checkIfActive(y, nBaselineFrames, STDlevel, AUC_level, plotFigure)
 
     baseline = y(1,1:nBaselineFrames);
     peak_threshold = nanmean(baseline) + STDlevel*std(baseline);
     trough_threshold = nanmean(baseline) - STDlevel*std(baseline);
     response = y(1,nBaselineFrames+1:end);
+    
+    if sum(baseline) == 0 %No activity in baseline
+        isActive = 0;
+        activity = 'none';
+        return
+    end
 
     %PEAK COMPUTATIONS
     peak_data = nan(1,4);
@@ -97,7 +103,7 @@ function isActive = checkIfActive(y, nBaselineFrames, STDlevel, AUC_level, plotF
     if ~isnan(aup)&& aup >= AUC_level; aup_pass = true; else; aup_pass = false; end
     if ~isnan(aat)&& aat >= AUC_level; aat_pass = true; else; aat_pass = false; end
 
-    activity = 'none';
+    activity = 'undetermined'; %If it somehow makes it through the conditions without being classified
 
     if isnan(peak) && isnan(trough)
         activity = 'none';
@@ -129,7 +135,7 @@ function isActive = checkIfActive(y, nBaselineFrames, STDlevel, AUC_level, plotF
         activity = 'none';
     end
 
-    if ~strcmp(activity, 'none')
+    if ~strcmp(activity, 'undetermined') && ~strcmp(activity, 'none')
         isActive = 1;
     else
         isActive = 0;	

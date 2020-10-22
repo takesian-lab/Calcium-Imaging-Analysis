@@ -21,7 +21,6 @@ columnHeaders = {'Group', 'Mouse ID', 'FOV', 'Data type', 'Block', 'Cell Number'
     'Combined Spike Amplitude', 'Combined Spike L1', 'Combined Spike L2', 'Combined Spike Width'...
     'GCaMP Peak AUC', 'GCaMP Trough AUC', 'Spike Peak AUC', 'Spike Trough AUC', 'Combined GCaMP AUC', 'Combined Spike AUC'};
 
-RF_columnHeaders = {'CF', 'Threshold', 'BW10', 'BW20'};
 
 %% Environment
 
@@ -40,7 +39,7 @@ switch PC_name
         AUC_spks_level = 5;
         sort_active = 1;  % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
         plot_graphs = 0; %Plot one graph for each cell
-        plot_RF = 1; %Plot receptive fields for each cell
+        plot_RF = 0; %Plot receptive fields for each cell
         save_data = 1;
         analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
         
@@ -91,6 +90,12 @@ RF_F = nan(8,8,size(cellList,1));
 RF_isResponsive_F = nan(8,8,size(cellList,1));
 RF_spks = nan(8,8,size(cellList,1));
 RF_isResponsive_spks = nan(8,8,size(cellList,1));
+sp_F = nan(size(cellList,1),1);
+sp_spks = nan(size(cellList,1),1);
+sp_by_int_F = nan(size(cellList,1),8);
+sp_by_int_spks = nan(size(cellList,1),8);
+sp_by_freq_F = nan(size(cellList,1),8);
+sp_by_freq_spks = nan(size(cellList,1),8);
 
 %Loop through all cells in each block
 blocks = [cellList{:,5}]';
@@ -238,8 +243,7 @@ for b = 1:length(uniqueBlocks)
                     stimMat_v1(v,vv) = unique_stim_v1(v);
                     stimMat_v2(v,vv) = unique_stim_v2(vv);
                     RF_F(v,vv,count) = nanmean(F7_temp_smoothed(1,nBaselineFrames:response_window_in_frames));
-                    RF_spks(v,vv,count) = nanmean(spks_temp_smoothed(1,nBaselineFrames:response_window_in_frames));
-                end
+                    RF_spks(v,vv,count) = nanmean(spks_temp_smoothed(1,nBaselineFrames:response_window_in_frames));              end
             end
             
             if plot_RF
@@ -263,6 +267,10 @@ for b = 1:length(uniqueBlocks)
                 suptitle(strcat(block.setup.block_supname, ' Cell ', num2str(cellNumber)))
             end
             
+            %Compute tuning sparseness
+            [sp_F(count), sp_by_int_F(count,:), sp_by_freq_F(count,:)] = compute_tuning_sparseness(RF_F(:,:,count), 0);
+            [sp_spks(count), sp_by_int_spks(count,:), sp_by_freq_spks(count,:)] = compute_tuning_sparseness(RF_spks(:,:,count), 0);  
+                    
             if isempty(F7_by_Stim)
                 avg_F7_df_f = smooth(nanmean(F7_df_f),3)'; %Take all trials
             elseif size(F7_by_Stim,1) == 1
@@ -526,6 +534,12 @@ end
     ExtractedData.RF_isResponsive_F = RF_isResponsive_F;
     ExtractedData.RF_spks = RF_spks;
     ExtractedData.RF_isResponsive_spks = RF_isResponsive_spks;
+    ExtractedData.Sp_by_int_F = sp_by_int_F;
+    ExtractedData.Sp_by_int_spks = sp_by_int_spks;
+    ExtractedData.Sp_F = sp_F;
+    ExtractedData.Sp_spks = sp_spks;
+    ExtractedData.Sp_by_freq_F = sp_by_freq_F;
+    ExtractedData.Sp_by_freq_spks = sp_by_freq_spks;
     
     %% Save
     if save_data == 1
@@ -688,7 +702,7 @@ caxis([0, 100]);
 
 removeOutlier = 0;
 
-outlier = 268;
+outlier = 240;
 
 if removeOutlier
     ExtractedData.AutoActivity(outlier,:) = [];
@@ -700,4 +714,16 @@ if removeOutlier
     ExtractedData.RF_isResponsive_F(:,:,outlier) = [];
     ExtractedData.RF_spks(:,:,outlier) = [];
     ExtractedData.RF_isResponsive_spks(:,:,outlier) = [];
+    ExtractedData.Sp_by_int_F(outlier,:) = [];
+    ExtractedData.Sp_by_int_spks(outlier,:) = [];
+    ExtractedData.Sp_F(outlier,:) = [];
+    ExtractedData.Sp_spks(outlier,:) = [];
+    ExtractedData.Sp_by_freq_F(outlier,:) = [];
+    ExtractedData.Sp_by_freq_spks(outlier,:) = [];
 end
+
+%%
+a_Sp_by_int_F_mean = nanmean(ExtractedData.Sp_by_int_F,2);
+a_Sp_by_freq_F_mean = nanmean(ExtractedData.Sp_by_freq_F,2);
+a_Sp_by_int_spks_mean = nanmean(ExtractedData.Sp_by_int_spks,2);
+a_Sp_by_freq_spks_mean = nanmean(ExtractedData.Sp_by_freq_spks,2);

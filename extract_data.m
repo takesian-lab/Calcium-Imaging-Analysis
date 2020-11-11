@@ -33,7 +33,7 @@ switch PC_name
         cellList_filename = 'Responsive cells v2';
         
         
-        dataType = 'Air'; %To look at one stim type at a time. Leave empty to look at all
+        dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
         STDlevel = 2;
         AUC_F_level = 0.05;
         AUC_spks_level = 5;
@@ -43,18 +43,18 @@ switch PC_name
         analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
         
     case 'RD0332' %Carolyn
-        cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS';
-        blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
-        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS\Inactive_receptivecell only';
-        cellList_filename = 'ResponsiveCellsOnly';
+        cellList_path = 'Z:\Carolyn\2P Imaging data\SSRI response stimuli pilot\VxDD062420M3';
+        blocks_path = 'Z:\Carolyn\2P Imaging data\SSRI response stimuli pilot\compiled blocks';
+        save_path = 'Z:\Carolyn\2P Imaging data\SSRI response stimuli pilot\VxDD062420M3\extracted';
+        cellList_filename = 'VxDD062420M3_postFLX';
         
-        dataType = 'SAM'; %To look at one stim type at a time. Leave empty to look at all
-        STDlevel = 1;
+        dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
+        STDlevel = 2;
         AUC_F_level = 0.05;
         AUC_spks_level = 5;
         sort_active = 0; % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
         plot_graphs = 0;
-        save_data = 1;
+        save_data = 0;
         analyze_by_stim_condition = 0; %determine if cell is active based on individual stim conditions
         
     otherwise

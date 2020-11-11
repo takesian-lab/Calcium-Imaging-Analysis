@@ -7,10 +7,10 @@
 %% load the matched data
 datapath =('\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020');
 cd(datapath)
-load('MatchedData.mat');
+load('MatchedData_all.mat');
 
-NDNFidx = 1:336;
-VIPidx = 337:607;
+NDNFidx = 1:210;
+VIPidx = 211:305;
 
 
 

@@ -33,13 +33,13 @@ switch PC_name
         cellList_filename = 'Responsive cells v2';
         
         
-        dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
+        dataType = 'water'; %To look at one stim type at a time. Leave empty to look at all
         STDlevel = 2;
         AUC_F_level = 0.05;
         AUC_spks_level = 5;
-        sort_active = 1;
+        sort_active = 1;  % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
         plot_graphs = 0;
-        save_data = 1;
+        save_data = 0;
         analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
         
     case 'RD0332' %Carolyn
@@ -178,8 +178,16 @@ for b = 1:length(uniqueBlocks)
         end
         
         
+        store_stim_v1 = stim_v1;
+        store_stim_v2 = stim_v2;
+
         for c = 1:size(block_cellList,1)
             cellNumber = block_cellList{c,6};
+
+            %when we remove inf below stim might change so refresh it with original stim list
+            stim_v1 = store_stim_v1;
+            stim_v2 = store_stim_v2;
+            
             if cellNumber == 'NaN'
                 raster_F(count,:) = nan;
                 raster_spks(count,:) = nan;
@@ -208,6 +216,7 @@ for b = 1:length(uniqueBlocks)
                 F7_df_f = (F7-nanmean(F7_baseline,2))./nanmean(F7_baseline,2); %(total-mean)/mean
                 spks = squeeze(block.aligned_stim.spks_stim(cellIndex,:,:));
                 
+        
                 %Eliminate 0dB trials -> If they exist we could potentially use
                 %them to confirm above-baseline responses
                 %if desired, remove active trials here too. They were
@@ -219,7 +228,13 @@ for b = 1:length(uniqueBlocks)
                     spks(remove,:) = [];
                 end
                 
-                
+                %Eliminate trials with infinite values
+                [inf_rows,~] = find(isinf(F7_df_f));
+                remove_inf = unique(inf_rows);
+                F7_df_f(remove_inf,:) = [];
+                spks(remove_inf,:) = [];
+                stim_v1(remove_inf,:) = [];
+                stim_v2(remove_inf,:) = [];
                 
                 %Get averaged & smoothed response
                 if analyze_by_stim_condition %check if each condition is active, then concatenate and keep only active conditions
@@ -246,7 +261,8 @@ for b = 1:length(uniqueBlocks)
                             %                         end
                             if size(F7_temp,1)>1
                                 F7_temp_smoothed = smooth(nanmean(F7_temp),3)';
-                                if checkIfActive(F7_temp_smoothed, nBaselineFrames, STDlevel, AUC_F_level, 0)
+                                [active, activity] = checkIfActive(F7_temp_smoothed, nBaselineFrames, STDlevel, AUC_F_level, 0);
+                                if active
                                     F7_by_Stim = [F7_by_Stim; F7_temp];
                                 end
                             end
@@ -254,7 +270,8 @@ for b = 1:length(uniqueBlocks)
                             if size(spks_temp,1)>1
                                 spks_temp_smoothed = smooth(nanmean(spks_temp),3)';
                                 try
-                                    if checkIfActive(spks_temp_smoothed, nBaselineFrames, STDlevel, AUC_spks_level, 0)
+                                    [active, activity] = checkIfActive(spks_temp_smoothed, nBaselineFrames, STDlevel, AUC_spks_level, 0);
+                                    if active
                                         spks_by_Stim = [spks_by_Stim; spks_temp];
                                     end
                                 catch avg_spks = smooth(nanmean(spks),3)';
@@ -559,6 +576,7 @@ for b = 1:length(uniqueBlocks)
     
     cellList = [ExtractedData.NominalData{:,1}]'; %Modify
     activityList = [ExtractedData.AutoActivity(:,1)]; %Modify
+    cellOrder = [];
     
     for c = 1:2 %ndnf vs vip
         currentCells = strcmpi(cellList,Cells{c});
@@ -604,12 +622,11 @@ for b = 1:length(uniqueBlocks)
             resorted_raster_spks = [resorted_raster_spks; current_raster_spks(gcamp_sort_ind,:)];
             
             %Save cell order
-%         cellOrder_not_sorted = find(currentRows);
-%         cellOrder = [cellOrder; cellOrder_not_sorted(gcamp_sort_ind)];
-        
-       CellsInOrder.([Cells{c}]).([A{i}]) = cellnumbers_A(gcamp_sort_ind);
-        
+        cellOrder_not_sorted = find(currentRows);
+        cellOrder = [cellOrder; cellOrder_not_sorted(gcamp_sort_ind)];
+        CellsInOrder.([Cells{c}]).([A{i}]) = cellnumbers_A ;
         end
+        
         if c == 1
         VIP_raster_F = resorted_raster_F;
         VIP_raster_spks = resorted_raster_spks;

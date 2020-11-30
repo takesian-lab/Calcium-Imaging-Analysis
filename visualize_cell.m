@@ -476,6 +476,14 @@ if plotReceptiveField
                 end
             end
             
+            %artificial ylim if no max was found
+            if max_spks == 0
+                max_spks = 10;
+            end
+            if max_df_f == 0
+                max_df_f = 1;
+            end
+            
             figure; hold on
             for p = 1:length(V_stim)
                 mat_rows = V_list == V_stim(p);
@@ -542,6 +550,11 @@ if plotReceptiveField
             max_df_f = max(max(F7_df_f_mat,[], 1)) + max(max(ebar_mat,[], 1));
             max_spks = max(max(spks_mat,[], 1));
 
+            %artificial ylim if no spikes
+            if isnan(max_spks)
+                max_spks = 10;
+            end
+            
             %DF_F average
             figure; hold on
             for p = 1:nPlots

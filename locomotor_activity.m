@@ -2,9 +2,9 @@
 function [loco_data,active_time] = locomotor_activity(loco_data,filename,setup)
 % read_loco= [mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.loco.txt'];
 %loco_data = dlmread(read_loco);%locomotor data
-r=loco_data.t(:);% I am only looking at column 1
-r=r(:,1)-r(1,1);
-B=r;
+% r=loco_data.t(:);% I am only looking at column 1
+% r=r(:,1)-r(1,1);
+% B=r;
 
 
 % loco_timedif=diff(r);%difference between time stamps
@@ -19,7 +19,7 @@ B=r;
 M = csvread(filename, 1,0);
 time_zero=find(M(:,2)>3,1,'first')-1;%time on VoltageRecording that corresponds with t=0 on locomotor data
 time_zero=time_zero./1000;
-B=r;
+B=loco_data.t(:);
 % B=B*1000; %change sec to msec
 % B(B==0)=time_zero;%Put loco timescale on Voltage recording timescale
 

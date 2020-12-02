@@ -2,10 +2,10 @@
 
 %% Load block and assign variables
 
-%Load block file
-disp('Load block file')
-[block_filename,block_filepath] = uigetfile('.mat');
-load(block_filename)
+% %Load block file
+% disp('Load block file')
+% [block_filename,block_filepath] = uigetfile('.mat');
+% load(block_filename)
 
 %Block data
 mousename = char(block.setup.mousename);
@@ -18,7 +18,7 @@ response_window_in_frames = response_window*framerate; %Same as above in frames
 %Stimulus data
 stim_v1 = block.parameters.variable1'; %target frequency per trial
 stim_v2 = block.parameters.variable2'; %nontarget (alternating) frequency per trial
-holdingPeriod = block.holdingPeriod'; %holdiner period per trial
+%holdingPeriod = block.holdingPeriod'; %holdiner period per trial
 target = unique(stim_v1);
 nontargets = unique(stim_v2);
 

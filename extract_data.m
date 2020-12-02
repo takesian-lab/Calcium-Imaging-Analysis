@@ -622,9 +622,16 @@ for b = 1:length(uniqueBlocks)
             resorted_raster_spks = [resorted_raster_spks; current_raster_spks(gcamp_sort_ind,:)];
             
             %Save cell order
+
+%         cellOrder_not_sorted = find(currentRows);
+%         cellOrder = [cellOrder; cellOrder_not_sorted(gcamp_sort_ind)];
+        
+       CellsInOrder.([Cells{c}]).([A{i}]) = cellnumbers_A(gcamp_sort_ind);
+
         cellOrder_not_sorted = find(currentRows);
         cellOrder = [cellOrder; cellOrder_not_sorted(gcamp_sort_ind)];
         CellsInOrder.([Cells{c}]).([A{i}]) = cellnumbers_A ;
+        
         end
         
         if c == 1

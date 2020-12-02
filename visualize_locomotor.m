@@ -1,4 +1,4 @@
-function [loco_cor_cell] = visualize_locomotor(block)
+function [loco_cor_cell] = visualize_locomotor(block, cellnum)
 % Carolyn 5/29/2020
 
 
@@ -27,11 +27,12 @@ F = block.F; %fluoresence
 Fneu = block.Fneu; % neuropil
 F7 = F - block.setup.constant.neucoeff * Fneu; % neuropil corrected trace
 
-for k = 1:size(F7,1)
-    baseline_Fo = mean(F7(k,:),2);
-    DF_F0(k,:) = F7(k,:)-baseline_Fo./baseline_Fo;
-    locdetrend_temp = locdetrend(F7(k,:),1,[300 10]);
-    DF_F0_dt(k,:) = locdetrend_temp'./(F7(k,:)-locdetrend_temp');
+for k = 1:length(cellnum)
+    cellidx = find(block.cell_number==cellnum(k));;
+    baseline_Fo = mean(F7(cellidx,:),2);
+    DF_F0(k,:) = F7(cellidx,:)-baseline_Fo./baseline_Fo;
+    locdetrend_temp = locdetrend(F7(cellidx,:),1,[300 10]);
+    DF_F0_dt(k,:) = locdetrend_temp'./(F7(cellidx,:)-locdetrend_temp');
     %              DF_F0_dt(k,:) = F7(k,:);
 end
 
@@ -54,6 +55,7 @@ for i = 1:size(DF_F0_dt,1) % plot first 10 traces
     count = count+3;
     plot(timestamp,smooth(y,10)), hold on
 end
+v = vline(block.Sound_Time(~isnan(block.parameters.variable1)),'k-');
 subplot(2,1,2)
 plot(locoTime,locoTrace)
 

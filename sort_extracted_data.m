@@ -116,18 +116,22 @@ for i = 1:length(stimTypes)
     for j=1:length(Match.([stimTypes{i}]).numerical)
         x = isempty(Match.([stimTypes{i}] ).numerical{j,1});
         if x==1
-            meanval(j,i) = -1000;
+            gcamp_amp(j,i) = NaN;
+            gcamp_AUC(j,i)=NaN;
         elseif isequal(Match.([stimTypes{i}]).numerical{j,1},nacheck);
-            meanval(j,i) = NaN;
+            gcamp_amp(j,i) = NaN;
+            gcamp_AUC(j,i)=NaN;
         else
-            meanval(j,i)=nanmean(Match.([stimTypes{i}]).numerical{j,1}(:));
+            gcamp_amp(j,i)=Match.([stimTypes{i}]).numerical{j,1}(1,1);
+            gcamp_amp(j,i)=Match.([stimTypes{i}]).numerical{j,1}(1,29);
         end
     end
 end
 
+
 % CGS needs to fix this,but it will work for the purposes of APAN
-z = find(meanval==-1000);
-meanval(z)=0;
+% z = find(meanval==-1000);
+% meanval(z)=0;
 
 %graph - 
 data = meanval;

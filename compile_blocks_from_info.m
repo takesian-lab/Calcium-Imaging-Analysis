@@ -26,7 +26,7 @@
 %% Load Info.mat and change user-specific options
 
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
-recompile = 0; %1 to save over previously compiled blocks, 0 to skip
+recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
 %% set up values for 'align to stim'
@@ -35,13 +35,13 @@ checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 constant.baseline_length = 0.5;
 
 % How many seconds after stim should we look at?
-constant.after_stim = 2.5;
+constant.after_stim = 7;
 
 % Define (in seconds) where to look for the response peak?
-constant.response_window = 1.5;
+constant.response_window = 3;
 
 % define where to look for locomotor responses, in sec?
-constant.locowindow = 1.5;
+constant.locowindow = 3;
 
 %minimum amout of time (sec) that mouse is moving to be considered active
 constant.locoThresh = 0.8;
@@ -70,14 +70,14 @@ switch PC_name
         info_filename = 'Info';    
         
     case 'RD0332' %Carolyn
-       info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
-        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
-        info_filename = 'Info_rerunapan';
+       info_path = 'Z:\Carolyn\2P Imaging data\SSRI response stimuli pilot\Info Sheets';
+        save_path = 'Z:\Carolyn\2P Imaging data\SSRI response stimuli pilot\compiled blocks';
+        info_filename = 'Info_VxDD062420M3';
         
     case 'RD-6-TAK2' %Esther's computer
-        info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';
-        save_path = 'D:\test';
-        info_filename = 'Info_VxDD053120M2';
+        info_path = '\\apollo\research\ENT\Takesian Lab\Nick\Microglia Project\COVID_timeline';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Nick\Microglia Project\COVID_timeline\Compiled blocks\widefield_intrinsic';
+        info_filename = 'Info_widefield_intrinsic_forCarolyn';
         
     case 'RD0386' %Wisam
         % INSERT PATHS HERE

@@ -89,6 +89,12 @@ else
             compiled_blocks_path = 'Z:\Nick\Microglia Project\COVID_timeline\Compiled blocks\widefield_intrinsic';
             save_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Widefield';
             info_filename = 'Info_widefield_intrinsic_forCarolyn';
+        case 'RD-6-TAK2' %Carolyn
+            info_path = '\\apollo\research\ENT\Takesian Lab\Nick\Microglia Project\COVID_timeline';
+            %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
+            compiled_blocks_path = '\\apollo\research\ENT\Takesian Lab\Nick\Microglia Project\COVID_timeline\Compiled blocks\widefield_intrinsic';
+            save_path = '\\apollo\research\ENT\Takesian Lab\Nick\Microglia Project\COVID_timeline\Widefield analysis\LD031920F3\Intrinsic';
+            info_filename = 'Info_widefield_intrinsic_forCarolyn';
         case 'RD0386' %Wisam
             % INSERT PATHS HERE
             info_filename = 'Info';
@@ -130,7 +136,7 @@ for i=1:length(data.setup.Imaging_sets)
     Full_Tile_Mean = mean(mean(imageData.Cropped_Imaging_Data,1),2);
     Full_Tile_Mean_Detrend = locdetrend(Full_Tile_Mean(1,1,:),1,detrend_filter); %
     timestamp = block.timestamp; %change this number
-   block.adjusted_times(:)= block.Sound_Time(:)-adjust_factor; % this '5' accounts for an apparent 500 ms shift in the data
+    block.adjusted_times(:)= block.Sound_Time(:)-adjust_factor; % this '5' accounts for an apparent 500 ms shift in the data
     figure;
     hold on;
     
@@ -164,7 +170,7 @@ for i=1:length(data.setup.Imaging_sets)
     total_average = 1;
     Sound_Time = block.Sound_Time(:);
     
-     for y = 1:size(Sound_Time,1)
+    for y = 1:size(Sound_Time,1)
         before = Sound_Time(y)-block.setup.constant.baseline_length;
         after = Sound_Time(y)+block.setup.constant.after_stim;
         sound = Sound_Time(y);
@@ -184,13 +190,13 @@ for i=1:length(data.setup.Imaging_sets)
         smooth_All_Images= smooth(average);
         all_trials(:,y) = smooth_All_Images;
     end
-
+    
     mean_across_all_trials = mean(all_trials,2);
     pause;
     
     
     figure;
-   plot(1:length(average), squeeze(mean_across_all_trials),'k')
+    plot(1:length(average), squeeze(mean_across_all_trials),'k')
     title(sprintf('Mean Response, all Trials', i));
     
     %AT added 4/15/20 to center window around peak response across window
@@ -201,12 +207,12 @@ for i=1:length(data.setup.Imaging_sets)
     parameters.adjusted_times_est = block.Sound_Time+estimated_time;
     
     %  repeat this average trace around sound
-     clear all_trials baseline_mean average smooth_All_Images
+    clear all_trials baseline_mean average smooth_All_Images
     total_average = 1;
     Sound_Time = parameters.adjusted_times_est(:);
     
     for y = 1:size(Sound_Time,1)
-         before = Sound_Time(y)-block.setup.constant.baseline_length;
+        before = Sound_Time(y)-block.setup.constant.baseline_length;
         after = Sound_Time(y)+block.setup.constant.after_stim;
         sound = Sound_Time(y);
         [c closest_frame_before] = min(abs(timestamp(:,1)-before));
@@ -228,7 +234,7 @@ for i=1:length(data.setup.Imaging_sets)
     
     mean_across_all_trials = mean(all_trials,2);
     figure;
-   plot(1:length(average), squeeze(mean_across_all_trials),'k')
+    plot(1:length(average), squeeze(mean_across_all_trials),'k')
     title(sprintf('Mean Response after adjustment,all Trials', i));
     
     mean_across_all_trials = mean(all_trials,2);
@@ -418,23 +424,23 @@ rejoin_tiles=[];
 %loop through
 
 
- for f=1:length(parameters.frequencies)
-      numF=num2str(round(parameters.frequencies(f)))
-      for lv=1:length(parameters.levels);
-          numLV=num2str(parameters.levels(lv))
-          
-          rejoin_tiles=[];
-          for ll=1:loops
-              loop_num=num2str(ll)
-              
-              mm=avgTrace.(['Tile' loop_num]){f,lv};
-              rejoin_tiles=double(cat(1, rejoin_tiles, mm));
-          end
-          fieldName = matlab.lang.makeValidName(['kHz' numF ]); %Replace invalid characters from fieldname, like -
-          stimAverages.(fieldName){lv}=rejoin_tiles;
-          clear rejoin_tiles
-      end
-  end
+for f=1:length(parameters.frequencies)
+    numF=num2str(round(parameters.frequencies(f)))
+    for lv=1:length(parameters.levels);
+        numLV=num2str(parameters.levels(lv))
+        
+        rejoin_tiles=[];
+        for ll=1:loops
+            loop_num=num2str(ll)
+            
+            mm=avgTrace.(['Tile' loop_num]){f,lv};
+            rejoin_tiles=double(cat(1, rejoin_tiles, mm));
+        end
+        fieldName = matlab.lang.makeValidName(['kHz' numF ]); %Replace invalid characters from fieldname, like -
+        stimAverages.(fieldName){lv}=rejoin_tiles;
+        clear rejoin_tiles
+    end
+end
 %    clear mm avgTrace
 
 %% what do the stim averages look like?
@@ -452,29 +458,29 @@ for f=1:length(parameters.frequencies)
         if TF ==0
             a2 = squeeze(mean(mean(a1,1),2));
             plot(smooth(a2)); hold on
-        end     
+        end
     end
 end
 %% convert to tif? and then store as individual file.
 folder = 'D:\2P analysis\2P local data\Carolyn\Widefield\VxDD033120F2_gcamp';
 
 %     folder = 'C:\Anne\';
- cd(folder)
-    tic
-    for f=1:length(parameters.frequencies);
-        toc
-        numF=num2str(round(parameters.frequencies(f)));
-        fieldName = matlab.lang.makeValidName(['kHz' numF]);
-        for lv=1:length(parameters.levels);
-            numLV=num2str(parameters.levels(lv));
-            idx=parameters.stimIDX{f,lv};
-            fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
-            outputFileName= ([fileName 'db.tif']);
-            for k = 1:size(stimAverages.(fieldName){lv},3)
-                imwrite(stimAverages.(fieldName){lv}(:, :, k), outputFileName, 'WriteMode', 'append')
-            end
+cd(folder)
+tic
+for f=1:length(parameters.frequencies);
+    toc
+    numF=num2str(round(parameters.frequencies(f)));
+    fieldName = matlab.lang.makeValidName(['kHz' numF]);
+    for lv=1:length(parameters.levels);
+        numLV=num2str(parameters.levels(lv));
+        idx=parameters.stimIDX{f,lv};
+        fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
+        outputFileName= ([fileName 'db.tif']);
+        for k = 1:size(stimAverages.(fieldName){lv},3)
+            imwrite(stimAverages.(fieldName){lv}(:, :, k), outputFileName, 'WriteMode', 'append')
         end
     end
+end
 
 %% %% find cumulative baseline and the response window
 baseline=1:(0.5*data.setup.FrameRate{1});
@@ -492,11 +498,11 @@ for f=1:length(parameters.frequencies);
     fieldName = matlab.lang.makeValidName(['kHz' numF]);
     for lv=1:length(parameters.levels);
         numLV=num2str(parameters.levels(lv))
-       % fname = (['SpatDenoise' numF 'khz' numLV 'db.tif']);
-       % fname = (['TempDenoise' numF 'khz' numLV 'db.tif']);
-       fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
-       fname= ([fileName 'db.tif']);
-%        fname = (['avgStim' numF 'khz' numLV 'db.tif']);
+        % fname = (['SpatDenoise' numF 'khz' numLV 'db.tif']);
+        % fname = (['TempDenoise' numF 'khz' numLV 'db.tif']);
+        fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
+        fname= ([fileName 'db.tif']);
+        %        fname = (['avgStim' numF 'khz' numLV 'db.tif']);
         info = imfinfo(fname);
         num_images = numel(info);
         for k = 1:num_images
@@ -509,10 +515,10 @@ for f=1:length(parameters.frequencies);
         baseLoc = stack(:,:,baseline);
         accumBase = cat(3, accumBase, baseLoc); % why is this such a large number?
         
-    
+        
         %         base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
         %             wind.(['Tile' loop_num]){f,lv}(:,:,:,:)=traces.(['Tile' loop_num]){f,lv}(:,:,window,:);
-    clear stack AA
+        clear stack AA
     end
 end
 
@@ -528,16 +534,16 @@ figure;
 plot(x,y)
 
 %what does a whole response window look like
- g = mean(ResponseWindow{5,2},3);
+g = mean(ResponseWindow{5,2},3);
 %         CLIM = [0 350];
-   imagesc(g);
+imagesc(g);
 
 
 %% plot all frequencies and amplitudes
 figure;
 for f=1:length(parameters.frequencies);
     numF=num2str(round(parameters.frequencies(f)))
-     fieldName = matlab.lang.makeValidName(['kHz' numF]);
+    fieldName = matlab.lang.makeValidName(['kHz' numF]);
     for lv=1:length(parameters.levels);
         numLV=num2str(parameters.levels(lv))
         y = mean(ResponseWindow{f,lv},3);
@@ -571,8 +577,8 @@ for f=1:length(parameters.frequencies);
 end
 
 
- %% Save data
-% 
+%% Save data
+%
 % if loadPreviousData
 %     cd(PathName) %Save in the same place you loaded data from
 %     save([FileName(1:end-4) '_reload'])

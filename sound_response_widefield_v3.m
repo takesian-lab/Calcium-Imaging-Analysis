@@ -63,7 +63,7 @@ for i=1:length(setup.Imaging_sets)
                 
             end
             traces.(['Tile' loop_num]){f,lv}=trace_around_sound;
-            clear trace_around_sound
+%             clear trace_around_sound
         end
         
     end

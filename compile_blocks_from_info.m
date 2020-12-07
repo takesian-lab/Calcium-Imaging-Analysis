@@ -75,9 +75,9 @@ switch PC_name
         info_filename = 'Info_VxDD062420M3';
         
     case 'RD-6-TAK2' %Esther's computer
-        info_path = '\\apollo\research\ENT\Takesian Lab\Nick\Microglia Project\COVID_timeline';
-        save_path = '\\apollo\research\ENT\Takesian Lab\Nick\Microglia Project\COVID_timeline\Compiled blocks\widefield_intrinsic';
-        info_filename = 'Info_widefield_intrinsic_forCarolyn';
+        info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\Compiled blocks';
+        info_filename = 'Info_YE083020F1';
         
     case 'RD0386' %Wisam
         % INSERT PATHS HERE

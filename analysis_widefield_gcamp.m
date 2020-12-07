@@ -453,8 +453,6 @@ for f=1:length(parameters.frequencies)
 end
 %% convert to tif? and then store as individual file.
 folder = save_path;
-% folder = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\VxDD033120F2\gcamp_RF';
-%folder = 'C:\Anne\';
 cd(folder)
 tic
 for f=1:length(parameters.frequencies);

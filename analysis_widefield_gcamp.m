@@ -58,10 +58,10 @@ else
             info_filename = 'Info_VxDD033120F2';
             
         case 'RD-6-TAK2' %Esther's computer
-            info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';
-            save_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob\analyzed widefield\YD111219M1\YD111219M1_noloco_20200120';
-            compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob\Compiled Blocks';
-            info_filename = 'Info_widefield_YD111219M1';
+            info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
+            save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\Widefield\YE083020F1';
+            compiled_blocks_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\Compiled blocks';
+            info_filename = 'Info_YE083020F1';
         case 'RD0386' %Wisam
             % INSERT PATHS HERE
             info_filename = 'Info';
@@ -263,7 +263,7 @@ end
 %% check for memory
 [loops] = memorycheck(imageData);
 
-%% DETREND: Grab a coffee - this will take approx. 2 hours (for ful ReceptiveField)
+%% DETREND: Grab a coffee - this will take approx. 2 hours (for ful ReceptiveField, 45mins for new/reduced field)
 t = cputime;
 parameters.loops=loops;
 for i=1:length(data.setup.Imaging_sets)

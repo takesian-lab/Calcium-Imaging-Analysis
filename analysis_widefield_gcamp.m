@@ -51,11 +51,11 @@ else
             save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
             info_filename = 'Info_widefield';
         case 'RD0332' %Carolyn
-            info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
+            info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
-            compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
-            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\VxDD033120F2\gcamp_RF_loco';
-            info_filename = 'Info_VxDD033120F2';
+            compiled_blocks_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledWidefieldBlocks';
+            save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\Widefield\YE083020F2';
+            info_filename = 'Info_YE083020F2';
             
         case 'RD-6-TAK2' %Esther's computer
             info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';
@@ -340,8 +340,8 @@ end
 [traces]=sound_response_widefield_v3(parameters,data,All_Images_df_over_f);
 %% pull out baseline and window
 length_trial=size(traces.Tile1{1,1},3);
-baseline=1:(0.5*data.setup.FrameRate{1});% TODO: magic number
-window=(length(baseline)+1):(data.setup.FrameRate{1}*2);
+baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});
+window=(length(baseline)+1):(data.setup.FrameRate{1}*block.setup.constant.response_window);
 
 for ll=1:loops
     loop_num=num2str(ll);
@@ -470,8 +470,8 @@ for f=1:length(parameters.frequencies);
     end
 end
 %% %% find cumulative baseline and the response window
-baseline=1:(0.5*data.setup.FrameRate{1});%TODO magic number
-window=(length(baseline)):(data.setup.FrameRate{1}*3);
+baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});%TODO magic number
+window=(length(baseline)):(data.setup.FrameRate{1}*block.setup.constant.response_window);
 folder = save_path;
 % folder = 'C:\Anne';
 cd(folder)
@@ -667,7 +667,7 @@ end
 %% determine CFs for each pixel
 [dim1 dim2 dim3] = size(imageData.Cropped_Imaging_Data);
 CF=NaN(dim1,dim2,1);
-response_threshold = 1.5;
+response_threshold = 3;
 
 
 for x= 1:dim1 % go through all x pixels

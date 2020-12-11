@@ -1,4 +1,4 @@
-function [traces]=sound_response_widefield_v3(parameters,data,All_Images_df_over_f);
+function [traces,parameters]=sound_response_widefield_v3(parameters,data,All_Images_df_over_f);
 setup = data.setup;
 
 for i=1:length(setup.Imaging_sets)
@@ -9,6 +9,7 @@ for i=1:length(setup.Imaging_sets)
     loops=parameters.loops;
     timestamp=block.timestamp;
     for ll=1:loops
+        ll
         loop_num=num2str(ll);
         Tile = All_Images_df_over_f.(['Tile' loop_num]);
         x=size(Tile,1);
@@ -63,11 +64,11 @@ for i=1:length(setup.Imaging_sets)
                 
             end
             traces.(['Tile' loop_num]){f,lv}=trace_around_sound;
-%             clear trace_around_sound
+            
         end
-        
+       
     end
-    
+     clear trace_around_sound
     
 end
 end

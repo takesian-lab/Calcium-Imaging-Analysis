@@ -33,7 +33,6 @@ switch PC_name
         cellList_filename = 'Responsive cells v2';
         
         
-
         dataType = 'water'; %To look at one stim type at a time. Leave empty to look at all
         STDlevel = 2;
         AUC_F_level = 0.05;
@@ -623,6 +622,7 @@ for b = 1:length(uniqueBlocks)
             resorted_raster_spks = [resorted_raster_spks; current_raster_spks(gcamp_sort_ind,:)];
             
             %Save cell order
+
 %         cellOrder_not_sorted = find(currentRows);
 %         cellOrder = [cellOrder; cellOrder_not_sorted(gcamp_sort_ind)];
         
@@ -633,6 +633,7 @@ for b = 1:length(uniqueBlocks)
         CellsInOrder.([Cells{c}]).([A{i}]) = cellnumbers_A ;
         
         end
+        
         if c == 1
         VIP_raster_F = resorted_raster_F;
         VIP_raster_spks = resorted_raster_spks;

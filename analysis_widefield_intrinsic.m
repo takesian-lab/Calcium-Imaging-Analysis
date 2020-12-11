@@ -65,9 +65,10 @@ else
     stim_protocol = 4; % this is the code for "widefield"
     
     % which channel was the data collected with?
-    imaging_chan = 'Ch1';
+    imaging_chan = 'Ch2';
     BOT_start = [1];
     detrend_filter = [300 10];
+    parameters.sort_loco =[1]; % pull out locomotor trials?
     
     
     
@@ -84,16 +85,16 @@ else
             save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
             info_filename = 'Info_NxDB092719M2';
         case 'RD0332' %Carolyn
-            info_path = 'D:\2P analysis\2P local data\Carolyn';
+           info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
-            compiled_blocks_path = 'Z:\Nick\Microglia Project\COVID_timeline\Compiled blocks\widefield_intrinsic';
-            save_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Widefield';
-            info_filename = 'Info_widefield_intrinsic_forCarolyn';
+            compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
+            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\VxDD053120M2\intrinsic_630';
+            info_filename = 'Info_VxDD053120M2';
         case 'RD-6-TAK2' %Carolyn
             info_path = '\\apollo\research\ENT\Takesian Lab\Nick\Microglia Project\COVID_timeline';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
             compiled_blocks_path = '\\apollo\research\ENT\Takesian Lab\Nick\Microglia Project\COVID_timeline\Compiled blocks\widefield_intrinsic';
-            save_path = '\\apollo\research\ENT\Takesian Lab\Nick\Microglia Project\COVID_timeline\Widefield analysis\LD031920F3\Intrinsic';
+            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\VxDD053120M2\intrinsic_630';
             info_filename = 'Info_widefield_intrinsic_forCarolyn';
         case 'RD0386' %Wisam
             % INSERT PATHS HERE
@@ -163,7 +164,7 @@ for i=1:length(data.setup.Imaging_sets)
     h=vline(block.Sound_Time(:),'k'); hold on %sound times
     title(sprintf('Mean Response, Sound times (not adjusted),all Trials', i));
     %xlim([0 1000])
-    pause;
+%     pause;
     
     %  average trace around sound
     
@@ -192,7 +193,7 @@ for i=1:length(data.setup.Imaging_sets)
     end
     
     mean_across_all_trials = mean(all_trials,2);
-    pause;
+%     pause;
     
     
     figure;
@@ -202,7 +203,7 @@ for i=1:length(data.setup.Imaging_sets)
     %AT added 4/15/20 to center window around peak response across window
     clear all_trials
     [amp_average_response,time_average_response] = min(mean_across_all_trials);% its min for intrinsic
-    estimated_peak = data.setup.FrameRate{i}*5; %the peak min response should be about 5 sec after stim (1s)
+    estimated_peak = data.setup.FrameRate{i}*3; %the peak min response should be about 5 sec after stim (1s)
     estimated_time = (time_average_response-estimated_peak)*(1/data.setup.FrameRate{i});
     parameters.adjusted_times_est = block.Sound_Time+estimated_time;
     
@@ -239,7 +240,7 @@ for i=1:length(data.setup.Imaging_sets)
     
     mean_across_all_trials = mean(all_trials,2);
     %       data.([mouseID]).(['Tile' BOT_number]).Average_Sound_Response = mean_across_all_trials;
-    pause;
+%     pause;
     
     figure;
     index_high_levels = find(data.([mouseID]).parameters.variable2>60);
@@ -256,7 +257,7 @@ for i=1:length(data.setup.Imaging_sets)
     %       mean_across_all_low_trials = mean(all_trials(:,index_low_levels),2);
     %       plot(1:length(average), mean_across_all_low_trials,'g')
     %        title(sprintf('Mean Response by Level across all Trials from Tile %d', i));
-    pause;
+%     pause;
     
     figure;
     index_high_freq =find(data.([mouseID]).parameters.variable1>23);
@@ -273,7 +274,7 @@ for i=1:length(data.setup.Imaging_sets)
     mean_across_all_lowf_trials = mean(all_trials(:,index_low_freq),2);
     plot(1:length(average), mean_across_all_lowf_trials,'g')
     title(sprintf('Mean Response by Freq across all Trials from Tile %d', i));
-    pause;
+%     pause;
     
     %       figure;
     %
@@ -295,7 +296,7 @@ end
 %% check for memory
 [loops] = memorycheck(imageData);
 
-%% DETREND: Grab a coffee - this will take approx. 2 hours
+%% DETREND: Grab a coffee - this will take approx. 45-60 minutes
 t = cputime;
 parameters.loops=loops;
 for i=1:length(data.setup.Imaging_sets)
@@ -360,21 +361,45 @@ for i=1:length(data.setup.Imaging_sets)
     end
 end
 
-
-
-[traces]=sound_response_widefield_v3(parameters,data,All_Images_df_over_f);
-%% pull out baseline and window
-length_trial=size(traces.Tile1{1,1},3);
-baseline=1:(0.5*data.setup.FrameRate{1});% TODO: magic number
-window=(length(baseline)+1):(data.setup.FrameRate{1}*2);
-
-for ll=1:loops
-    loop_num=num2str(ll)
+for i=1:length(data.setup.Imaging_sets)
+    mouseID=data.setup.mousename{i};
+    unique_block_name = data.setup.unique_block_names{i};
+    block = data.([mouseID]).([unique_block_name]);
     for f=1:length(parameters.frequencies);
         fnum=num2str(parameters.frequencies(f));
         for lv=1:length(parameters.levels);
             lvnum=num2str(parameters.levels(lv));
             idx=parameters.stimIDX{f,lv};
+            parameters.loco_1.stimIDX{f,lv} = idx(find(block.active_trials(idx)==1));
+            parameters.loco_0.stimIDX{f,lv} = idx(find(block.active_trials(idx)==0));
+        end
+    end
+end
+
+
+[traces]=sound_response_widefield_v3(parameters,data,All_Images_df_over_f);
+%% pull out baseline and window
+length_trial=size(traces.Tile1{1,1},3);
+baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});
+window=(length(baseline)+1):(data.setup.FrameRate{1}*block.setup.constant.response_window);
+
+for ll=1:loops
+    loop_num=num2str(ll);
+    for f=1:length(parameters.frequencies);
+        fnum=num2str(parameters.frequencies(f));
+        for lv=1:length(parameters.levels);
+            lvnum=num2str(parameters.levels(lv));
+            if parameters.sort_loco ==0
+                idx=parameters.stimIDX{f,lv};
+                if lv ==1 & f==1 & ll==1
+                    display('...creating baseline for all trials...')
+                end
+            else idx = parameters.loco_0.stimIDX{f,lv};
+                if lv ==1 & f==1 & ll==1
+                    display('...creating baseline for non-motor trials...')
+                end
+            end
+            
             TF = isempty(idx); %the index of freq x level does not always have a value for every combination
             if TF==0
                 base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
@@ -391,28 +416,32 @@ for ll=1:loops
     loop_num=num2str(ll);
     for f=1:length(parameters.frequencies);
         for lv=1:length(parameters.levels);
-            idx=parameters.stimIDX{f,lv};
+            if parameters.sort_loco ==0
+                idx=parameters.stimIDX{f,lv};
+                if lv ==1 & f==1 & ll==1
+                    display('...averaging across all trials...')
+                end
+            else idx = parameters.loco_0.stimIDX{f,lv};
+                if lv ==1 & f==1 & ll==1
+                    display('...averaging across non-motor trials...')
+                end
+            end
+            % occasionally, a stim will be empty, and this will correct
+            % for when this occurs
             TF = isempty(idx);
             if TF == 0
+                % do we want to pull out locomotor trials? If no (old
+                % version of the code) run this step, if yes, see below.
+                
                 m=traces.(['Tile' loop_num]){f,lv};
                 %mean response per stim
                 mean_stim(:,:,:)=mean(m,4);
                 avgTrace.(['Tile' loop_num]){f,lv}= mean_stim;
                 clear mean_stim
-                %mean baseline
-                %             b=base.(['Tile' loop_num]){f,lv};
-                %             mean_base=squeeze(mean(mean(mean(b,4),2),1));
-                %             tempBase(count,:)=mean_base;
                 
-                %mean window
-                %             d=stimbase.(['Tile' loop_num]){f,lv};
-                %              mean_win=squeeze(mean(mean(mean(d,4),2),1));
-                %              tempWin(count,:)=mean_win;
-                %              count=count+1;
             end
         end
     end
-    
 end
 %
 % parameters.avgBaseline=mean(tempBase,1);
@@ -462,9 +491,7 @@ for f=1:length(parameters.frequencies)
     end
 end
 %% convert to tif? and then store as individual file.
-folder = 'D:\2P analysis\2P local data\Carolyn\Widefield\VxDD033120F2_gcamp';
-
-%     folder = 'C:\Anne\';
+folder = save_path;
 cd(folder)
 tic
 for f=1:length(parameters.frequencies);
@@ -475,17 +502,21 @@ for f=1:length(parameters.frequencies);
         numLV=num2str(parameters.levels(lv));
         idx=parameters.stimIDX{f,lv};
         fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
+        a1 = stimAverages.(fieldName){lv};
+         TF = isempty(a1);
+        if TF ==0
         outputFileName= ([fileName 'db.tif']);
         for k = 1:size(stimAverages.(fieldName){lv},3)
             imwrite(stimAverages.(fieldName){lv}(:, :, k), outputFileName, 'WriteMode', 'append')
+        end
         end
     end
 end
 
 %% %% find cumulative baseline and the response window
-baseline=1:(0.5*data.setup.FrameRate{1});
-window=(length(baseline)):(data.setup.FrameRate{1}*3);
-folder = 'D:\2P analysis\2P local data\Carolyn\Widefield\VxDD033120F2_gcamp';
+baseline=1:(0.5*data.setup.FrameRate{1});%TODO magic numbers - change to values from compile blocks
+window=(length(baseline)):(data.setup.FrameRate{1}*5);%TODO magic numbers - change to values from compile blocks
+folder = save_path;
 % folder = 'C:\Anne';
 cd(folder)
 d = dir([folder '/*.tif']);%extract tiffs
@@ -501,6 +532,7 @@ for f=1:length(parameters.frequencies);
         % fname = (['SpatDenoise' numF 'khz' numLV 'db.tif']);
         % fname = (['TempDenoise' numF 'khz' numLV 'db.tif']);
         fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
+        
         fname= ([fileName 'db.tif']);
         %        fname = (['avgStim' numF 'khz' numLV 'db.tif']);
         info = imfinfo(fname);
@@ -534,7 +566,7 @@ figure;
 plot(x,y)
 
 %what does a whole response window look like
-g = mean(ResponseWindow{5,2},3);
+g = mean(ResponseWindow{1,1},3);
 %         CLIM = [0 350];
 imagesc(g);
 
@@ -576,6 +608,243 @@ for f=1:length(parameters.frequencies);
     set(gca,'XTick',[], 'YTick', [])
 end
 
+%% zscore data
+for f=1:length(parameters.frequencies);
+    numF=num2str(round(parameters.frequencies(f)))
+    figure;
+    for lv=1:length(parameters.levels);
+        numLV=num2str(parameters.levels(lv));
+        mainResponse = ResponseWindow{f,lv};%temporally/spatially filtered response (2s post  sound)
+        Df_f0 = DFF0_mean{f,lv};%temporally/spatially filtered mean response (entire trace i.e. baseline and 3s post sound)
+        %z score of every frame of response window
+        zscR = (bsxfun(@minus, mainResponse, (repmat(meanAccumBaseline,...
+            [1 1 length(window)]))))./(repmat(stdBaseline,...
+            [1 1 length(window)]));
+        %zscore of every frame for entire trace
+        zscResponse{f,lv}=zscR;
+        zscS = (bsxfun(@minus,Df_f0, (repmat(meanAccumBaseline,...
+            [1 1 size(Df_f0,3)]))))./(repmat(stdBaseline,...
+            [1 1 size(Df_f0,3)]));
+        zscSignal{f,lv} =  zscS;
+        
+        
+        [ d1 d2 frames ] =size(zscR);%size of response window data
+        
+        
+        maxResponse{f,lv} = max(mainResponse,[],3);%max of response window (not zscored)
+        meanR{f,lv} = mean(mainResponse);%average of sound response window
+        meanZresponse{f,lv} = mean(zscR(:,:,1:15),3);
+        plot(squeeze(mean(mean(zscR(:,:,:),1),2)));
+        title(sprintf('Freq %d', round(parameters.frequencies(f),2)));
+        
+        hold on;
+        
+    end
+end
+
+
+%% average z-scores across all levels
+
+clear stack
+     figure;
+
+for f=1:length(parameters.frequencies);
+    numF=num2str(round(parameters.frequencies(f)))
+        for k = 1:length(parameters.levels);
+            AA = meanZresponse{f,lv};
+            stack(:,:,k)=AA(:,:);
+            stack=double(stack);
+            size(stack)
+        end
+        
+        y_stack(:,:,f) = mean(stack,3); 
+        subplot(1,length(parameters.frequencies),f);
+        imagesc(y_stack(:,:,f));
+        title(sprintf('Freq %d', f));
+        axis image;
+    %    set(gca,'XTick',[], 'YTick', [])
+    %    caxis([2 5]);
+        colormap jet
+        
+end
+%imageData.z = y_stack; 
+clear stack
+
+%repeat - subtract by mean z scored image across all frequencies
+mean_z = mean(y_stack,3); %mean z scored image across frequencies
+     figure;
+
+for f=1:length(parameters.frequencies);
+    numF=num2str(round(parameters.frequencies(f)))
+        for k = 1:length(parameters.levels);
+            AA = meanZresponse{f,lv};
+            stack(:,:,k)=AA(:,:);
+            stack=double(stack);
+        end
+        
+        y_stack(:,:,f) = mean(stack,3); 
+        y_norm(:,:,f) = medfilt2(y_stack(:,:,f)-mean_z);
+        subplot(1,length(parameters.frequencies),f);
+        imagesc(y_norm(:,:,f));
+        
+        title(sprintf('Freq %d', f));
+        
+        axis image;
+end
+imageData.z = y_norm; 
+clear stack
+
+% %% average the DFF0 for each f/lv and see what it looks like
+% figure;
+% for f=1:length(parameters.frequencies);
+%     numF=num2str(round(parameters.frequencies(f)))
+%     for lv=1:length(parameters.levels);
+%         numLV=num2str(parameters.levels(lv));
+%         mainResponse = ResponseWindow{f,lv};%temporally/spatially filtered response (2s post  sound)
+%         Df_f0 = DFF0_mean{f,lv};%temporally/spatially filtered
+%         g = mean(Df_f0,3);
+%       %  CLIM = [0 350];
+%      %   imagesc(g,CLIM);
+%         imagesc(g);
+%         
+%         subplotSpot=f+(length(parameters.frequencies))*(length(parameters.levels)-lv);
+%         subplot(length(parameters.levels),length(parameters.frequencies),subplotSpot);
+%         
+%         title({sprintf('%s dB',numLV);sprintf('%s kHz',numF)});
+%         
+%     end
+% end
+% 
+
+% figure;
+% 
+% for V1=1:length(data.([mouseID]).parameters.Var1List)%loop through stim#1
+%     for V2=1:length(data.([mouseID]).parameters.Var2List)%loop through stim#2
+%         stim_list=data.([mouseID]).parameters.stimIDX{V1,V2};
+%         stimIDXpos=(data.([mouseID]).parameters.isRespPosStim(V1,V2,:));%index of responsive cells by stim
+%         
+%         meanPosResp=squeeze(mean(mean(data.([mouseID]).traces_G(stimIDXpos,stim_list,:),2),1));%avg response of positive responsive cells by stim
+%         std_resp=squeeze(std(mean(data.([mouseID]).traces_G(stimIDXpos,stim_list,:),2),1));
+%         subplotSpot=V1+(length(data.([mouseID]).parameters.Var1List)*(length(data.([mouseID]).parameters.Var2List)-V2))
+%         subplot(length(data.([mouseID]).parameters.Var2List),length(data.([mouseID]).parameters.Var1List),subplotSpot),
+%         shadedErrorBar(x_green,smooth(meanPosResp,10),smooth(std_resp,10),'lineprops','b')
+%         stim1=num2str(data.([mouseID]).parameters.Var1List(V1));
+%         stim2=num2str(data.([mouseID]).parameters.Var2List(V2));
+%         if setup.stim_protocol==2
+%             title({sprintf('%s dB',stim2);sprintf('%s kHz',stim1)});
+%         end
+%          axis([0 length(x_green) 0 70])
+%         
+%     end
+% end
+
+%% MAP FREQUENCIES: Plot CFs
+
+ BW = mean(imageData.Cropped_Imaging_Data,3);
+% 
+% %make elliptical mask to eliminate values outside window
+ size_x = size(BW,1);
+ size_y = size(BW,2);
+ [col row] = meshgrid(1:size_x,1:size_y);
+ center_x = round(size_x/2);
+ center_y = round(size_y/2);
+ rad_x = round(size_x/2);
+ rad_y = round(size_y/2);
+ ellipse = (row-center_y).^2./rad_y^2+(col-center_x).^2./rad_x^2 <=1;
+ mask = ellipse';
+% 
+% %display window with masked edges
+ figure;
+ ax1=axes;
+ BW_mask = BW.*mask;
+ clims = [1300 2300];
+ imagesc(BW_mask,clims);
+ axis image
+ colormap(ax1,'gray');
+ hold on;
+ 
+% %display window with masked edges with CF overlay
+ ax2=axes;
+ CF_1 = imageData.z(:,:,1);
+ CF_1 = medfilt2(CF_1,[5 5]);
+ CF_1_mask = CF_1.*mask;
+ CF_1_color_map = [zeros(256,2), linspace(0,1,256)'];
+ alpha = zeros(size_x,size_y);
+ alpha(CF_1_mask>0.1)=0.3;
+% alpha(isnan(CF_1_mask))=0;
+% alpha(isnan)=0;
+ im = imagesc(ax2,CF_1_mask,'alphadata',alpha);
+ axis image
+ colormap(ax2, CF_1_color_map);
+ caxis(ax2,[min(nonzeros(CF_1_mask)) max(nonzeros(CF_1_mask))]);
+ %alpha(0.3);
+ ax2.Visible = 'off';
+ linkprop([ax1 ax2],'Position');
+ colorbar;
+ 
+ hold on; 
+ ax2=axes;
+ CF_2 = imageData.z(:,:,2);
+ CF_2 = medfilt2(CF_2,[5 5]);
+ CF_2_mask = CF_2.*mask;
+ CF_2_color_map = [zeros(256,1), linspace(0,1,256)', zeros(256,1)];
+ alpha = zeros(size_x,size_y);
+ alpha(CF_2_mask>0.3)=0.3;
+% alpha(isnan(CF_1_mask))=0;
+% alpha(isnan)=0;
+ im = imagesc(ax2,CF_2_mask,'alphadata',alpha);
+ axis image
+ colormap(ax2, CF_2_color_map);
+ caxis(ax2,[min(nonzeros(CF_2_mask)) max(nonzeros(CF_2_mask))]);
+ %alpha(0.3);
+ ax2.Visible = 'off';
+ linkprop([ax1 ax2],'Position');
+ 
+ hold on; 
+ ax2=axes;
+ CF_3 = imageData.z(:,:,3);
+ CF_3 = medfilt2(CF_3,[5 5]);
+ CF_3_mask = CF_3.*mask;
+ CF_3_color_map = [linspace(0,1,256)', linspace(0,1,256)', zeros(256,1)];
+ alpha = zeros(size_x,size_y);
+ alpha(CF_3_mask>0.001)=0.3;
+% alpha(isnan(CF_1_mask))=0;
+% alpha(isnan)=0;
+ im = imagesc(ax2,CF_3_mask,'alphadata',alpha);
+ axis image
+ colormap(ax2, CF_3_color_map);
+ caxis(ax2,[min(nonzeros(CF_3_mask)) max(nonzeros(CF_3_mask))]);
+ %alpha(0.3);
+ ax2.Visible = 'off';
+ linkprop([ax1 ax2],'Position');
+ 
+ hold on; 
+ ax2=axes;
+ CF_4 = imageData.z(:,:,4);
+ CF_4 = medfilt2(CF_4,[5 5]);
+ CF_4_mask = CF_4.*mask;
+ CF_4_color_map = [linspace(0,1,256)', zeros(256,2)];
+ alpha = zeros(size_x,size_y);
+ alpha(CF_4_mask>0.1)=0.3;
+% alpha(isnan(CF_1_mask))=0;
+% alpha(isnan)=0;
+ im = imagesc(ax2,CF_4_mask,'alphadata',alpha);
+ axis image
+ colormap(ax2, CF_4_color_map);
+ caxis(ax2,[min(nonzeros(CF_4_mask)) max(nonzeros(CF_4_mask))]);
+ %alpha(0.3);
+ ax2.Visible = 'off';
+ linkprop([ax1 ax2],'Position');
+
+ 
+ 
+ 
+% 
+%  figure;
+%  im2 = imagesc(CF_1_mask);
+% % %image(RGB);
+%  pbaspect([1 1 1]);
+%  set(im2,'AlphaData',~isnan(CF_1_mask))
 
 %% Save data
 %

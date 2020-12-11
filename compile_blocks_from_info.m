@@ -35,13 +35,13 @@ checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 constant.baseline_length = 0.5;
 
 % How many seconds after stim should we look at?
-constant.after_stim = 7;
+constant.after_stim = 2.5;
 
 % Define (in seconds) where to look for the response peak?
-constant.response_window = 3;
+constant.response_window = 1.5;
 
 % define where to look for locomotor responses, in sec?
-constant.locowindow = 3;
+constant.locowindow = 1;
 
 %minimum amout of time (sec) that mouse is moving to be considered active
 constant.locoThresh = 0.8;
@@ -70,14 +70,14 @@ switch PC_name
         info_filename = 'Info';    
         
     case 'RD0332' %Carolyn
-       info_path = 'Z:\Carolyn\2P Imaging data\SSRI response stimuli pilot\Info Sheets';
-        save_path = 'Z:\Carolyn\2P Imaging data\SSRI response stimuli pilot\compiled blocks';
-        info_filename = 'Info_VxDD062420M3';
+       info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledWidefieldBlocks';
+        info_filename = 'Info_YE083020F1';
         
     case 'RD-6-TAK2' %Esther's computer
         info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
         save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\Compiled blocks';
-        info_filename = 'Info_YE083020F1';
+        info_filename = 'Info_YE083020F2';
         
     case 'RD0386' %Wisam
         % INSERT PATHS HERE

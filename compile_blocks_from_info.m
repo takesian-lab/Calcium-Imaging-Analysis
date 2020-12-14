@@ -235,7 +235,7 @@ for i = 1:size(currentInfo,1)
     [block] = FreqDisc_Behavior_singleblock(block);
 
     %pull out the Bruker-derived timestamps from BOTs and Voltage Recordings
-    [block] = define_sound_singleblock(block,constant);
+    [block] = define_sound_singleblock(block);
 
     %determine which trials are considered "active (locomotor)"
     % This might not be necessary to do here, but leaving in for now.

@@ -25,10 +25,11 @@
 
 %% Load Info.mat and change user-specific options
 
-recompile = 1; %1 to save over previously compiled blocks, 0 to skip
+recompile = 0; %1 to save over previously compiled blocks, 0 to skip
 checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
 %% set up values for 'align to stim'
+% Ndnf vs. Vip project: 0.5, 2.5, 1.5, 1.5, 0.8, 0.7
 
 % How many seconds of baseline?
 constant.baseline_length = 0.5;
@@ -47,7 +48,7 @@ constant.locowindow = 1.5;
 constant.locoThresh = 0.8;
 
 % Define the neuropil coefficient
-% TODO: automatically grab this from Suite2p
+% This will be checked against Suite2p value and a warning will appear if they do not match
 constant.neucoeff = 0.7;
 
 %% 
@@ -61,8 +62,8 @@ switch PC_name
         %save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
         %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
         %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks';
-        info_filename = 'Info_YE083020F1';
-        ops_filename = 'Maryse_ops2.mat';
+        info_filename = 'Info_widefield';
+        ops_filename = 'Maryse_ops_thy1.mat';
          
     case 'TAKESIANLAB2P' %2P computer
         info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
@@ -125,28 +126,36 @@ for i = 1:size(currentInfo,1)
     setup.Tosca_session     =   [currentInfo{i,8}];     %Tosca session
     setup.Tosca_run         =   [currentInfo{i,9}];     %Tosca run
     setup.analysis_name     =   [currentInfo{i,10}];    %part of the path, folder where fall.mats are stored
-    setup.framerate         =   [currentInfo{i,11}];    %15 or 30, eventually we can detect this automatically
-    setup.run_redcell       =   [currentInfo{i,12}];    %do you have red cells? 0 or 1
-    setup.voltage_recording =   [currentInfo{i,13}];    %0 for widefield, 1 for 2p
-    setup.VR_name           =   [currentInfo{i,14}];    %full voltage recording name (if widefield only)
-    setup.stim_name         =   [currentInfo{i,15}];    %type of stim presentation in plain text
-    setup.stim_protocol     =   [currentInfo{i,16}];    %number corresponding to stim protocol
-    setup.gcamp_type        =   [currentInfo{i,17}];    %f, m, or s depending on GCaMP type
-    setup.expt_group        =   [currentInfo{i,18}];    %name of experimental group or condition
+    setup.run_redcell       =   [currentInfo{i,11}];    %do you have red cells? 0 or 1
+    setup.VR_name           =   [currentInfo{i,12}];    %full voltage recording name (if widefield only)
+    setup.stim_name         =   [currentInfo{i,13}];    %type of stim presentation in plain text
+    setup.stim_protocol     =   [currentInfo{i,14}];    %number corresponding to stim protocol
+    setup.gcamp_type        =   [currentInfo{i,15}];    %f, m, or s depending on GCaMP type
+    setup.expt_group        =   [currentInfo{i,16}];    %name of experimental group or condition
+    setup.imaging_depth     =   [currentInfo{i,17}];    %imaging depth in microns
+    setup.after_stim        =   [currentInfo{i,18}];    %overwrite constant.after_stim
+     
+    if ~ismissing(setup.after_stim)
+        setup.constant.after_stim = setup.after_stim;
+    end
     
-    Block_number = sprintf('%03d',setup.imaging_set);
+    if ~ismissing(setup.FOV)
+        FOVtag = ['_FOV' setup.FOV{1}];
+    else
+        FOVtag = '';
+    end
     
-    if setup.voltage_recording == 0
+    if ~ismissing(setup.VR_name)
         widefieldTag = 'widefield-';
     else
         widefieldTag = '';
     end
     
-    setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
-        '_Block_', Block_number, '_Session_', num2str(setup.Tosca_session), ...
-        '_Run_', num2str(setup.Tosca_run), '_', widefieldTag, setup.stim_name);
-    setup.block_supname = strcat(setup.mousename, ' ', setup.expt_date, ...
-        ' ', setup.stim_name, ' ', Block_number);
+    setup.block_filename = strcat('Compiled_', setup.mousename, FOVtag, '_', setup.expt_date, ...
+        '_Session', sprintf('%02d',setup.Tosca_session), '_Run', sprintf('%02d',setup.Tosca_run),...
+        '_Block', sprintf('%03d',setup.imaging_set), '_', widefieldTag, setup.stim_name);
+    setup.block_supname = strcat(setup.mousename, '-', FOVtag, '-', setup.expt_date, ...
+        '-', setup.stim_name, '-', sprintf('%03d',setup.imaging_set));
     
     %Skip files that have previously been compiled
     if ~recompile
@@ -158,19 +167,12 @@ for i = 1:size(currentInfo,1)
         end
     end
     
-    %Not every user has a username folder, allow for this column to be empty
-    if ~ismissing(setup.username)
-        usernameSlash = strcat(setup.username, '/');
-    else
-        usernameSlash = '';
-    end
-    
     %Establish and test paths, allowing for paths to be missing
     %TOSCA PATH
     if ismissing(setup.Tosca_session)
         setup.Tosca_path = nan;
     else
-        setup.Tosca_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
+        setup.Tosca_path = strcat(setup.pathname, '/', setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
         if ~isfolder(setup.Tosca_path)
             disp(setup.block_filename)
             error('Your Tosca path is incorrect.')
@@ -181,7 +183,7 @@ for i = 1:size(currentInfo,1)
     if ismissing(setup.block_name)
         setup.block_path = nan;
     else
-        setup.block_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.block_name);
+        setup.block_path   = strcat(setup.pathname, '/', setup.mousename, '/', setup.expt_date, '/', setup.block_name);
         if ~isfolder(setup.block_path)
             disp(setup.block_filename)
             error('Your block path is incorrect.')
@@ -192,7 +194,7 @@ for i = 1:size(currentInfo,1)
     if ismissing(setup.VR_name)
         setup.VR_path = nan;
     else
-        setup.VR_path  = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.VR_name);
+        setup.VR_path  = strcat(setup.pathname, '/', setup.mousename, '/', setup.expt_date, '/', setup.VR_name);
         if ~isfolder(setup.VR_path)
             disp(setup.block_filename)
             error('Your voltage recording path is incorrect.')
@@ -203,7 +205,7 @@ for i = 1:size(currentInfo,1)
     if ismissing(setup.analysis_name)
         setup.suite2p_path = nan;
     else
-        setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, '/', setup.analysis_name);
+        setup.suite2p_path = strcat(setup.pathname, '/', setup.analysis_name);
         if ~isfolder(setup.suite2p_path)
             disp(setup.block_filename)
             error('Your Suite2p analysis path is incorrect.')
@@ -225,10 +227,8 @@ for i = 1:size(currentInfo,1)
     [block] = FreqDisc_Behavior_singleblock(block);
 
     %pull out the Bruker-derived timestamps from BOTs and Voltage Recordings
-    [block] = define_sound_singleblock(block,constant);
-
     %determine which trials are considered "active (locomotor)"
-    % This might not be necessary to do here, but leaving in for now.
+    [block] = define_sound_singleblock(block);
     [block] = define_loco_singleblock(block);
 
     %pull out block-specific data from Fall.mat
@@ -236,11 +236,6 @@ for i = 1:size(currentInfo,1)
     
     %find the stim-aligned traces
     [block] = align_to_stim(block);
-    
-    %Optionally visually check block
-    if visualize == 1
-        visualize_block(block);
-    end
     
     %% Save block
     disp('Saving...');

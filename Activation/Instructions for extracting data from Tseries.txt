@@ -8,3 +8,5 @@
 6. Run extract_ROI_data_from_Fall
 	(navigate to current Fall.mat folder first)
 	(change runID)
+7. Run plot_ROI_data_from_Fall to plot peak of activation vs. power
+	(modify cell number, run, and power)

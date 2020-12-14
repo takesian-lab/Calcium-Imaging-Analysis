@@ -1,6 +1,6 @@
 %Script to extract y from t-series
 
-mouse_dir = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\NxDE072420M2\2020-11-19';
+mouse_dir = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\YE083020F2\2020-12-02';
 cd(mouse_dir)
 currentFolders = dir;
 

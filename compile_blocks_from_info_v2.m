@@ -1,4 +1,4 @@
-%% compile_blocks_from_info
+%% compile_blocks_from_info_v2
 %
 %  This script saves a compiled 'block.mat' file for each row in Info.
 %  A compiled block contains Suite2p, Bruker, and Tosca data.
@@ -17,15 +17,14 @@
 %  - define_loco_singleblock
 %  - define_suite2p_singleblock
 %  - align_to_stim
-%  - visualize_block
 %    
-%  Use visualize_block to preview the block contents once they've been compiled.
+%  Use visualize_block and visualize_cell to preview the block contents once they've been compiled.
 %
 %  TAKESIAN LAB - March 2020
+%  v2 December 2020 saves blocks with new naming system
 
 %% Load Info.mat and change user-specific options
 
-visualize = 0; %1 to plot figures of the block immediately, 0 to skip
 recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
@@ -35,6 +34,7 @@ checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 constant.baseline_length = 0.5;
 
 % How many seconds after stim should we look at?
+% Can be overwritten by column in info
 constant.after_stim = 2.5;
 
 % Define (in seconds) where to look for the response peak?
@@ -101,16 +101,7 @@ end
 
 %% Compile all blocks unless they are set to "Ignore"
 %  No need to change any variables below this point
-
-%Add extra empty columns when updates might be ahead of people's Info sheets
-lastColumn = 19; %WARNING: Magic number
-if size(Info,2) < lastColumn
-    for i = (size(Info,2) + 1):lastColumn
-        Info{1,i} = 'Expand Columns';
-    end
-    warning('gcamp_type and expt_group columns missing from Info')
-end
-        
+ 
 %Remove header from Info
 Info(1,:) = [];
 
@@ -126,23 +117,22 @@ for i = 1:size(currentInfo,1)
     setup.constant          =   constant;
     setup.Info              =   Info;                   %Record Info for records only
     setup.pathname          =   [currentInfo{i,2}];     %first part of the path
-    setup.username          =   [currentInfo{i,3}];     %part of the path, not every user will have this, okay to leave empty
-    setup.mousename         =   [currentInfo{i,4}];     %part of the path, no underscores
-    setup.expt_date         =   [currentInfo{i,5}];     %part of the path, YYYY-MM-DD
-    setup.block_name        =   [currentInfo{i,6}];     %part of the path - full block name used for BOT
-    setup.FOV               =   [currentInfo{i,7}];     %which data to consider as coming from the same field of view, per mouse
-    setup.imaging_set       =   [currentInfo{i,8}];     %block or BOT numbers
-    setup.Tosca_session     =   [currentInfo{i,9}];     %Tosca session
-    setup.Tosca_run         =   [currentInfo{i,10}];    %Tosca run
-    setup.analysis_name     =   [currentInfo{i,11}];    %part of the path, folder where fall.mats are stored
-    setup.framerate         =   [currentInfo{i,12}];    %15 or 30, eventually we can detect this automatically
-    setup.run_redcell       =   [currentInfo{i,13}];    %do you have red cells? 0 or 1
-    setup.voltage_recording =   [currentInfo{i,14}];    %0 for widefield, 1 for 2p
-    setup.VR_name           =   [currentInfo{i,15}];    %full voltage recording name (if widefield only)
-    setup.stim_name         =   [currentInfo{i,16}];    %type of stim presentation in plain text
-    setup.stim_protocol     =   [currentInfo{i,17}];    %number corresponding to stim protocol
-    setup.gcamp_type        =   [currentInfo{i,18}];    %f, m, or s depending on GCaMP type
-    setup.expt_group        =   [currentInfo{i,19}];    %name of experimental group or condition
+    setup.mousename         =   [currentInfo{i,3}];     %part of the path, no underscores
+    setup.expt_date         =   [currentInfo{i,4}];     %part of the path, YYYY-MM-DD
+    setup.block_name        =   [currentInfo{i,5}];     %part of the path - full block name used for BOT
+    setup.FOV               =   [currentInfo{i,6}];     %which data to consider as coming from the same field of view, per mouse
+    setup.imaging_set       =   [currentInfo{i,7}];     %block or BOT numbers
+    setup.Tosca_session     =   [currentInfo{i,8}];     %Tosca session
+    setup.Tosca_run         =   [currentInfo{i,9}];     %Tosca run
+    setup.analysis_name     =   [currentInfo{i,10}];    %part of the path, folder where fall.mats are stored
+    setup.framerate         =   [currentInfo{i,11}];    %15 or 30, eventually we can detect this automatically
+    setup.run_redcell       =   [currentInfo{i,12}];    %do you have red cells? 0 or 1
+    setup.voltage_recording =   [currentInfo{i,13}];    %0 for widefield, 1 for 2p
+    setup.VR_name           =   [currentInfo{i,14}];    %full voltage recording name (if widefield only)
+    setup.stim_name         =   [currentInfo{i,15}];    %type of stim presentation in plain text
+    setup.stim_protocol     =   [currentInfo{i,16}];    %number corresponding to stim protocol
+    setup.gcamp_type        =   [currentInfo{i,17}];    %f, m, or s depending on GCaMP type
+    setup.expt_group        =   [currentInfo{i,18}];    %name of experimental group or condition
     
     Block_number = sprintf('%03d',setup.imaging_set);
     

@@ -41,7 +41,7 @@ constant.after_stim = 2.5;
 constant.response_window = 1.5;
 
 % define where to look for locomotor responses, in sec?
-constant.locowindow = 1.5;
+constant.locowindow = 1;
 
 %minimum amout of time (sec) that mouse is moving to be considered active
 constant.locoThresh = 0.8;
@@ -70,14 +70,14 @@ switch PC_name
         info_filename = 'Info';    
         
     case 'RD0332' %Carolyn
-       info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
-        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
-        info_filename = 'Info_rerunapan';
+       info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledWidefieldBlocks';
+        info_filename = 'Info_YE083020F1';
         
     case 'RD-6-TAK2' %Esther's computer
-        info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';
-        save_path = 'D:\test';
-        info_filename = 'Info_VxDD053120M2';
+        info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\Compiled blocks';
+        info_filename = 'Info_YE083020F2';
         
     case 'RD0386' %Wisam
         % INSERT PATHS HERE

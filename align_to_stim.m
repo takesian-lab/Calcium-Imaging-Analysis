@@ -70,26 +70,23 @@ for time=1:length(Sound_Time)
     [~, closest_frame_sound] = min(abs(block.timestamp(:)-sound));
     A = closest_frame_sound - baseline_inFrames;
     B = closest_frame_sound + after_inFrames - 1;
+    b = duration_inFrames;
     
     % loop through each "iscell" to find the stim-aligned 1) raw
     % fluoresence 2) neuropil signal 3) neuropil-corrected floresence 4)
     % df/F for the neuropil corrected fluoresence 5) deconvolved spikes
-    for k = 1:size(block.F,1)
 
-        %If user-defined trial is longer than block recording, take portion
-        %of trial up to the end of recording, the rest of the frames will be nan
-        b = duration_inFrames;
-        B = closest_frame_sound + after_inFrames - 1;
-        if B > size(F7,2)
-            B = size(F7,2);
-            b = length(A:B);
-        end
-        % pull out the frames aligned to a stim (defined in frames)
-        F7_stim(k,time,1:b) = F7(k,A:B);
-        F_stim(k,time,1:b) =  block.F(k,A:B);
-        Fneu_stim(k,time,1:b) = block.Fneu(k,A:B);
-        spks_stim(k,time,1:b) = block.spks(k,A:B);
+    %If user-defined trial is longer than block recording, take portion
+    %of trial up to the end of recording, the rest of the frames will be nan
+    if B > size(F7,2)
+        B = size(F7,2);
+        b = length(A:B);
     end
+    % pull out the frames aligned to a stim (defined in frames)
+    F7_stim(:,time,1:b) = F7(:,A:B);
+    F_stim(:,time,1:b) =  block.F(:,A:B);
+    Fneu_stim(:,time,1:b) = block.Fneu(:,A:B);
+    spks_stim(:,time,1:b) = block.spks(:,A:B);
 end
 
  block.aligned_stim.F7_stim = F7_stim;

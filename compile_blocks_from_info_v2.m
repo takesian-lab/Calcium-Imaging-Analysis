@@ -26,7 +26,7 @@
 %% Load Info.mat and change user-specific options
 
 recompile = 0; %1 to save over previously compiled blocks, 0 to skip
-checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
+checkOps = 1; %1 to check Fall.ops against user-specified ops.mat file
 
 %% set up values for 'align to stim'
 % Ndnf vs. Vip project: 0.5, 2.5, 1.5, 1.5, 0.8, 0.7
@@ -57,12 +57,12 @@ PC_name = getenv('computername');
 switch PC_name
     case 'RD0366' %Maryse
         info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
-        save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks';
+        save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_v2';
         %info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
         %save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
         %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
         %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks';
-        info_filename = 'Info_widefield';
+        info_filename = 'Info_YE083020F2';
         ops_filename = 'Maryse_ops_thy1.mat';
          
     case 'TAKESIANLAB2P' %2P computer
@@ -122,19 +122,18 @@ for i = 1:size(currentInfo,1)
     setup.expt_date         =   [currentInfo{i,4}];     %part of the path, YYYY-MM-DD
     setup.block_name        =   [currentInfo{i,5}];     %part of the path - full block name used for BOT
     setup.FOV               =   [currentInfo{i,6}];     %which data to consider as coming from the same field of view, per mouse
-    setup.imaging_set       =   [currentInfo{i,7}];     %block or BOT numbers
-    setup.Tosca_session     =   [currentInfo{i,8}];     %Tosca session
-    setup.Tosca_run         =   [currentInfo{i,9}];     %Tosca run
-    setup.analysis_name     =   [currentInfo{i,10}];    %part of the path, folder where fall.mats are stored
-    setup.run_redcell       =   [currentInfo{i,11}];    %do you have red cells? 0 or 1
-    setup.VR_name           =   [currentInfo{i,12}];    %full voltage recording name (if widefield only)
-    setup.stim_name         =   [currentInfo{i,13}];    %type of stim presentation in plain text
-    setup.stim_protocol     =   [currentInfo{i,14}];    %number corresponding to stim protocol
-    setup.gcamp_type        =   [currentInfo{i,15}];    %f, m, or s depending on GCaMP type
-    setup.expt_group        =   [currentInfo{i,16}];    %name of experimental group or condition
-    setup.imaging_depth     =   [currentInfo{i,17}];    %imaging depth in microns
-    setup.after_stim        =   [currentInfo{i,18}];    %overwrite constant.after_stim
-     
+    setup.Tosca_session     =   [currentInfo{i,7}];     %Tosca session
+    setup.Tosca_run         =   [currentInfo{i,8}];     %Tosca run
+    setup.analysis_name     =   [currentInfo{i,9}];    %part of the path, folder where fall.mats are stored
+    setup.run_redcell       =   [currentInfo{i,10}];    %do you have red cells? 0 or 1
+    setup.VR_name           =   [currentInfo{i,11}];    %full voltage recording name (if widefield only)
+    setup.stim_name         =   [currentInfo{i,12}];    %type of stim presentation in plain text
+    setup.stim_protocol     =   [currentInfo{i,13}];    %number corresponding to stim protocol
+    setup.gcamp_type        =   [currentInfo{i,14}];    %f, m, or s depending on GCaMP type
+    setup.expt_group        =   [currentInfo{i,15}];    %name of experimental group or condition
+    setup.imaging_depth     =   [currentInfo{i,16}];    %imaging depth in microns
+    setup.after_stim        =   [currentInfo{i,17}];    %overwrite constant.after_stim
+ 
     if ~ismissing(setup.after_stim)
         setup.constant.after_stim = setup.after_stim;
     end
@@ -143,6 +142,14 @@ for i = 1:size(currentInfo,1)
         FOVtag = ['_FOV' setup.FOV{1}];
     else
         FOVtag = '';
+    end
+
+    if ~ismissing(setup.block_name)
+        block_number = setup.block_name{1}(1,end-2:end);
+        setup.imaging_set = str2double(block_number);
+        blockTag = ['_Block' block_number];
+    else
+        blockTag = '';
     end
     
     if ~ismissing(setup.VR_name)
@@ -153,9 +160,10 @@ for i = 1:size(currentInfo,1)
     
     setup.block_filename = strcat('Compiled_', setup.mousename, FOVtag, '_', setup.expt_date, ...
         '_Session', sprintf('%02d',setup.Tosca_session), '_Run', sprintf('%02d',setup.Tosca_run),...
-        '_Block', sprintf('%03d',setup.imaging_set), '_', widefieldTag, setup.stim_name);
+        blockTag, '_', widefieldTag, setup.stim_name);
     setup.block_supname = strcat(setup.mousename, '-', FOVtag, '-', setup.expt_date, ...
-        '-', setup.stim_name, '-', sprintf('%03d',setup.imaging_set));
+        '-', setup.stim_name, '-Session', sprintf('%02d',setup.Tosca_session), '-Run', sprintf('%02d',setup.Tosca_run),...
+        '-Block', block_number);
     
     %Skip files that have previously been compiled
     if ~recompile

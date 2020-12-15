@@ -163,7 +163,7 @@ block.locomotion_trace = locomotion_trace;
 
 %Read XML file
 disp('Reading XML file')
-XML_files = filenames(contains(filenames,'.xml'));
+XML_files = filenames(contains(filenames,'.xml'));  
 X = xml2struct(XML_files{1});
 
 if ~ismissing(setup.VR_name) %widefield
@@ -176,7 +176,7 @@ if ~ismissing(setup.VR_name) %widefield
     XML.framePeriod = X.PVScan.PVStateShard.PVStateValue{1, 10}.Attributes.value;
     XML.opticalZoom = X.PVScan.PVStateShard.PVStateValue{1, 21}.Attributes.value;
     
-    framerate = round(1/str2double(XML.framePeriod));
+    framerate = ceil(1/str2double(XML.framePeriod));
     if framerate ~= 20
         warning('Check frame rate')
     end
@@ -196,7 +196,7 @@ else %2p
     XML.micronsPerPixelY = X.PVScan.PVStateShard.PVStateValue{1, 12}.IndexedValue{1, 2}.Attributes.value;
     XML.opticalZoom = X.PVScan.PVStateShard.PVStateValue{1, 17}.Attributes.value;
     
-    framerate = round(1/str2double(XML.framePeriod));
+    framerate = ceil(1/str2double(XML.framePeriod));
     if framerate ~= 15 && framerate ~= 30
         warning('Check frame rate')
     end

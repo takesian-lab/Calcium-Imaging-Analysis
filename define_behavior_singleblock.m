@@ -198,6 +198,9 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
             else
                 b_Outcome{t}=NaN;
                 trialType{t}=NaN;
+                if setup.stim_protocol == 13
+                    targetFreq(t) = Data{t}.Target_kHz;
+                end
                 
             end
         catch

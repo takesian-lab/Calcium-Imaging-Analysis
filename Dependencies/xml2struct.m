@@ -104,7 +104,7 @@ function [children,ptext,textflag] = parseChildNodes(theNode)
                 end
                 
                 %this is the text in an element (i.e., the parentNode) 
-                if (~isempty(regexprep(text.(textflag),'[\s]*','')))
+                if ~all(isspace(text.(textflag)))%(~isempty(regexprep(text.(textflag),'[\s]*','')))
                     if (~isfield(ptext,ptextflag) || isempty(ptext.(ptextflag)))
                         ptext.(ptextflag) = text.(textflag);
                     else

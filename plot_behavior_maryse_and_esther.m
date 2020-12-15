@@ -133,10 +133,6 @@ scatter(fit_threshold, targets, 'x', 'k')
 %% Plot 3 - Locomotion and licks
 
 %Get locomotor activity
-%loco_activity = abs(block.loco_data.speed); %uncorrected
-%loco_times = block.loco_data.t - block.loco_data.t(1); %uncorrected
-
-%eventually we want to get it from this after Carolyn's fix
 loco_activity = block.loco_activity;
 loco_times = block.loco_times;
 
@@ -154,13 +150,26 @@ for i = 1:length(block.Tosca_times)
     %Concatenate with previous lick times
     lick_times = [lick_times, trial_lick_times];
 end
+
+%Use full block regardless of early licks
 alternating_sound_times = trial_times + block.holdingPeriod;
 trial_type = block.trialType;
 
+outcomes_keepEL = block.Outcome;
+misses_keepEL = outcomes_keepEL == 0;
+hits_keepEL = outcomes_keepEL == 1;
+withholds_keepEL = outcomes_keepEL == 3;
+FPs_keepEL = outcomes_keepEL == 4;
+
+raw_reactionTimes_keepEL = block.rxn_time;
+raw_reactionTimes_keepEL(raw_reactionTimes_keepEL < 0) = nan; %trials with no responses become NaN
+raw_reactionTimes_keepEL = raw_reactionTimes_keepEL/1000; %convert to seconds
+reaction_times_keepEL = raw_reactionTimes_keepEL - block.holdingPeriod; 
+
 %Determine water times
 %Mouse gets water at reaction time if trial is a hit
-reaction_times_per_trial = trial_times + block.rxn_time + block.holdingPeriod;
-water_times = reaction_times_per_trial(hits);
+reaction_times_per_trial = trial_times + reaction_times_keepEL + block.holdingPeriod;
+water_times = reaction_times_per_trial(hits_keepEL);
 
 %Plot entire block
 figure; hold on
@@ -198,7 +207,7 @@ if plotExampleTrial
     
 %Adjust xlim and ylim to show only a selection of trials
 nTrialsToPlot = 1;
-trialToStartWith = 35;
+trialToStartWith = 30;
 
 xStart = trial_times(trialToStartWith);
 xEnd = trial_times(trialToStartWith + nTrialsToPlot);
@@ -221,6 +230,8 @@ for i = 1:length(alternating_sound_times)
         lineColor = 'g';
     elseif trial_type(i) == 0 %Non-target
         lineColor = 'r';
+    elseif isnan(trial_type(i)) %early lick
+        lineColor = 'k';
     end
         
     line([xsound xsound], [0, ymax], 'Color', lineColor)
@@ -238,10 +249,10 @@ end
 
 toscaFrameRate = loco_times(end)/length(loco_times);
 baselinePeriodInSeconds = 4;
-holdingPeriodInSeconds = 4;
+responsePeriodInSeconds = 4;
 baselinePeriodInFrames = floor(baselinePeriodInSeconds/toscaFrameRate);
-holdingPeriodInFrames = floor(holdingPeriodInSeconds/toscaFrameRate);
-totalPeriodInFrames = baselinePeriodInFrames + holdingPeriodInFrames;
+responsePeriodInFrames = floor(responsePeriodInSeconds/toscaFrameRate);
+totalPeriodInFrames = baselinePeriodInFrames + responsePeriodInFrames;
 
 trialRaster = zeros(length(trial_times),totalPeriodInFrames + 1);
 computer_time = block.Tosca_times{1,1}(1,1);
@@ -255,15 +266,14 @@ for i = 1:length(block.Tosca_times)
     %Concatenate with previous lick times
     lick_times = [lick_times, trial_lick_times];
 end
-trial_times = trial_times(~earlyLicks);
-alternating_sound_times = trial_times + holdingPeriod;
-trial_type = block.trialType(~earlyLicks);
-allFrequencies;
+alternating_sound_times = trial_times + block.holdingPeriod;
+trial_type = block.trialType;
+
 
 for i = 1:length(alternating_sound_times)
     T = alternating_sound_times(i);
     T0 = T - baselinePeriodInSeconds;
-    T1 = T + holdingPeriodInSeconds;
+    T1 = T + responsePeriodInSeconds;
     estimatedTimeInFrames = T0:(T1-T0)/80:T1;
     L = lick_times(lick_times > T0);
     L = L(L < T1);
@@ -280,9 +290,11 @@ for i = 1:length(alternating_sound_times)
     
 end
 
+trialRaster_removeEL = trialRaster(~earlyLicks,:);
 [sortedFreqs, sortInd] = sort(allFrequencies);
-sortedTrialRaster = trialRaster(sortInd,:);
-sortedTrialType = trial_type(sortInd);
+sortedTrialRaster = trialRaster_removeEL(sortInd,:);
+trial_type_removeEL = trial_type(:,~earlyLicks);
+sortedTrialType = trial_type_removeEL(sortInd);
 
 figure
 subplot(2,1,1)

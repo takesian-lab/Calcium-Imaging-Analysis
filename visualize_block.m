@@ -288,7 +288,7 @@ else
                 img = block.img.refImg;
                 %img = block.img.meanImg;
                 image(img);
-                if block.setup.voltage_recording == 0
+                if ismissing(block.setup.VR_name)
                     imagesc(img);
                 end
             elseif m == 2 

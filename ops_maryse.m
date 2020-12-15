@@ -17,7 +17,7 @@
 %% Save filepath
 
 filepath = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-filename = 'Maryse_ops2.mat';
+filename = 'Maryse_ops_thy1.mat';
 
 ops = struct;
 
@@ -31,7 +31,7 @@ ops.bruker = 0;
 ops.nplanes = 1;
 ops.nchannels = 1;
 ops.functional_chan = 1;
-ops.tau = 0.7;
+ops.tau = 1.5;
 ops.fs = 30;
 ops.do_bidiphase = 1;
 ops.bidiphase = 0;

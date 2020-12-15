@@ -5,7 +5,7 @@
 %Load Tseries data
 
 Fall = load('Fall.mat'); %Must load like this because iscell is a matlab function and might lead to unexpected errors.
-currentRunID = 8;
+currentRunID = 4;
 
 %% Extract info by cycle
 currentRunName = data.Folders{currentRunID,1};
@@ -96,10 +96,10 @@ nPlots = floor(sqrt(nCells));
 figure; subplot(nPlots,nPlots,1);
 suptitle(currentRunName)
 for c = 1:nCells
-    if c > nPlots^2
-        continue
-    end
-    subplot(nPlots,nPlots,c); hold on
+%     if c > nPlots^2
+%         continue
+%     end
+    subplot(nPlots,nPlots+1,c); hold on
     title(['Cell #' num2str(block.cell_number(c))])
     plot(1:size(avgTrialMat,2),avgTrialMat(c,:))
     line([baselineDuration, baselineDuration], [0 2], 'Color', 'r')

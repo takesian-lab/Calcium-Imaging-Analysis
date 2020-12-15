@@ -8,22 +8,26 @@ expt_date = char(block.setup.expt_date);
 dB_level = block.stim_level;
 plotTitle = strjoin({mousename, expt_date, num2str(dB_level), 'dB'});
 
+%Behavioral data
+outcomes = block.Outcome; %get outcomes (hit, miss, FP, withholds) from block
+earlyLicks = isnan(outcomes);
+outcomes_removeEL = outcomes(~earlyLicks);
+misses = outcomes_removeEL == 0;
+hits = outcomes_removeEL == 1;
+withholds = outcomes_removeEL == 3;
+FPs = outcomes_removeEL == 4;
+
 %Stimulus data
-allFrequencies = block.TargetFreq;
+allFrequencies = log2(block.TargetFreq(~earlyLicks)); %in log scale
+repeatingFrequency = mode(allFrequencies);
+allFrequencies = round(abs(allFrequencies - repeatingFrequency),2); %in octave difference
 table = tabulate(allFrequencies); %use the function tabulate to extract how many times each frequency was played
 uniqueFrequencies = table(:,1)';
 nRepsPerFrequency = table(:,2)'; %number of repetitions per frequency 
-holdingPeriod = block.holdingPeriod;
-
-%Behavioral data
-outcomes = block.Outcome; %get outcomes (hit, miss, FP, withholds) from block
-misses = outcomes == 0;
-hits = outcomes == 1;
-withholds = outcomes == 3;
-FPs = outcomes == 4;
+holdingPeriod = block.holdingPeriod(~earlyLicks);
 
 %Reaction times
-raw_reactionTimes = block.rxn_time;
+raw_reactionTimes = block.rxn_time(~earlyLicks);
 raw_reactionTimes(raw_reactionTimes < 0) = nan; %trials with no responses become NaN
 raw_reactionTimes = raw_reactionTimes/1000; %convert to seconds
 reaction_times = raw_reactionTimes - holdingPeriod; %subtract holding period
@@ -45,11 +49,11 @@ y = hitRatePerFrequency;
 
 %make figure
 figure;
-subplot(2,1,1); hold all
+subplot(3,1,1); hold all
 plot(x,y,'Linewidth',2) %plot psychometric curve
 line([0 x(end)+1], [0.5, 0.5], 'Color', 'r') %plot horizontal red line at 50% hit rate (chance)
 ylabel('Hit Rate')
-xlabel('Alternating frequency')
+xlabel('Frequency difference in octaves')
 set(gca, 'XTick', x)
 set(gca, 'XTickLabel', uniqueFrequencies)
 title(plotTitle)
@@ -64,7 +68,7 @@ plot(fit_curve(:,1), fit_curve(:,2), 'Linewidth', 2, 'LineStyle', '--', 'Color',
 %legend('Performance', 'Fit');
 scatter(fit_threshold, targets, 'x', 'k')
 
-%% Plot 2 - Reaction time vs. frequency (Esther)
+% Plot 2 - Reaction time vs. frequency (Esther)
 
 %Calculate average reaction time per frequency
 reaction_timesPerFrequency_STD = nan(1,length(uniqueFrequencies));
@@ -83,7 +87,7 @@ lower = y - reaction_timesPerFrequency_STD;
 
 %make figure
 %figure; 
-subplot(2,1,2); hold on
+subplot(3,1,2); hold on
 bar(x,y)
 %errorbar(x,y',lower,upper) %Plot standard deviation error bars
 scatterx = nan(1,length(reaction_times));
@@ -93,19 +97,42 @@ end
 scatter(scatterx,reaction_times, 'k')
 
 ylabel('Reaction Time')
-xlabel('Alternating frequency')
+xlabel('Frequency difference in octaves')
 set(gca, 'XTick', x)
 set(gca, 'XTickLabel', uniqueFrequencies)
 title(plotTitle)
 xlim([x(1)-1 x(end)+1])
 
+% Plot psychometric curve with bins of size 2
+
+%set up axes
+A = hitRatePerFrequency;
+y = mean([A(1:2:end-1);A(2:2:end)]);
+x = 1:length(y);
+
+%make figure
+subplot(3,1,3); hold all
+plot(x,y,'Linewidth',2) %plot psychometric curve
+line([0 x(end)+1], [0.5, 0.5], 'Color', 'r') %plot horizontal red line at 50% hit rate (chance)
+ylabel('Hit Rate')
+xlabel('Frequency difference in octaves binned by 2')
+set(gca, 'XTick', x)
+set(gca, 'XTickLabel', uniqueFrequencies(2:2:end))
+title(plotTitle)
+
+% Fit psychometric functions
+targets = [0.25 0.5 0.75]; % 25 50 75 performance
+weights = ones(1,length(y)); % No weighting
+[fit_coeffs, fit_curve, fit_threshold] = fitPsycheCurveLogit(x, y, weights, targets);
+
+% Plot psychometic curves
+plot(fit_curve(:,1), fit_curve(:,2), 'Linewidth', 2, 'LineStyle', '--', 'Color', 'g')
+%legend('Performance', 'Fit');
+scatter(fit_threshold, targets, 'x', 'k')
+
 %% Plot 3 - Locomotion and licks
 
 %Get locomotor activity
-%loco_activity = abs(block.loco_data.speed); %uncorrected
-%loco_times = block.loco_data.t - block.loco_data.t(1); %uncorrected
-
-%eventually we want to get it from this after Carolyn's fix
 loco_activity = block.loco_activity;
 loco_times = block.loco_times;
 
@@ -123,13 +150,26 @@ for i = 1:length(block.Tosca_times)
     %Concatenate with previous lick times
     lick_times = [lick_times, trial_lick_times];
 end
-alternating_sound_times = trial_times + holdingPeriod;
+
+%Use full block regardless of early licks
+alternating_sound_times = trial_times + block.holdingPeriod;
 trial_type = block.trialType;
+
+outcomes_keepEL = block.Outcome;
+misses_keepEL = outcomes_keepEL == 0;
+hits_keepEL = outcomes_keepEL == 1;
+withholds_keepEL = outcomes_keepEL == 3;
+FPs_keepEL = outcomes_keepEL == 4;
+
+raw_reactionTimes_keepEL = block.rxn_time;
+raw_reactionTimes_keepEL(raw_reactionTimes_keepEL < 0) = nan; %trials with no responses become NaN
+raw_reactionTimes_keepEL = raw_reactionTimes_keepEL/1000; %convert to seconds
+reaction_times_keepEL = raw_reactionTimes_keepEL - block.holdingPeriod; 
 
 %Determine water times
 %Mouse gets water at reaction time if trial is a hit
-reaction_times_per_trial = trial_times + reaction_times + holdingPeriod;
-water_times = reaction_times_per_trial(hits);
+reaction_times_per_trial = trial_times + reaction_times_keepEL + block.holdingPeriod;
+water_times = reaction_times_per_trial(hits_keepEL);
 
 %Plot entire block
 figure; hold on
@@ -147,6 +187,8 @@ for i = 1:length(alternating_sound_times)
         lineColor = 'g';
     elseif trial_type(i) == 0 %Non-target
         lineColor = 'r';
+    elseif isnan(trial_type(i))
+        lineColor = 'k';
     end
         
     line([xsound xsound], [0, ymax], 'Color', lineColor)
@@ -165,7 +207,7 @@ if plotExampleTrial
     
 %Adjust xlim and ylim to show only a selection of trials
 nTrialsToPlot = 1;
-trialToStartWith = 35;
+trialToStartWith = 30;
 
 xStart = trial_times(trialToStartWith);
 xEnd = trial_times(trialToStartWith + nTrialsToPlot);
@@ -188,6 +230,8 @@ for i = 1:length(alternating_sound_times)
         lineColor = 'g';
     elseif trial_type(i) == 0 %Non-target
         lineColor = 'r';
+    elseif isnan(trial_type(i)) %early lick
+        lineColor = 'k';
     end
         
     line([xsound xsound], [0, ymax], 'Color', lineColor)
@@ -205,10 +249,10 @@ end
 
 toscaFrameRate = loco_times(end)/length(loco_times);
 baselinePeriodInSeconds = 4;
-holdingPeriodInSeconds = 4;
+responsePeriodInSeconds = 4;
 baselinePeriodInFrames = floor(baselinePeriodInSeconds/toscaFrameRate);
-holdingPeriodInFrames = floor(holdingPeriodInSeconds/toscaFrameRate);
-totalPeriodInFrames = baselinePeriodInFrames + holdingPeriodInFrames;
+responsePeriodInFrames = floor(responsePeriodInSeconds/toscaFrameRate);
+totalPeriodInFrames = baselinePeriodInFrames + responsePeriodInFrames;
 
 trialRaster = zeros(length(trial_times),totalPeriodInFrames + 1);
 computer_time = block.Tosca_times{1,1}(1,1);
@@ -222,14 +266,14 @@ for i = 1:length(block.Tosca_times)
     %Concatenate with previous lick times
     lick_times = [lick_times, trial_lick_times];
 end
-alternating_sound_times = trial_times + holdingPeriod;
+alternating_sound_times = trial_times + block.holdingPeriod;
 trial_type = block.trialType;
-allFrequencies;
+
 
 for i = 1:length(alternating_sound_times)
     T = alternating_sound_times(i);
     T0 = T - baselinePeriodInSeconds;
-    T1 = T + holdingPeriodInSeconds;
+    T1 = T + responsePeriodInSeconds;
     estimatedTimeInFrames = T0:(T1-T0)/80:T1;
     L = lick_times(lick_times > T0);
     L = L(L < T1);
@@ -246,9 +290,11 @@ for i = 1:length(alternating_sound_times)
     
 end
 
+trialRaster_removeEL = trialRaster(~earlyLicks,:);
 [sortedFreqs, sortInd] = sort(allFrequencies);
-sortedTrialRaster = trialRaster(sortInd,:);
-sortedTrialType = trial_type(sortInd);
+sortedTrialRaster = trialRaster_removeEL(sortInd,:);
+trial_type_removeEL = trial_type(:,~earlyLicks);
+sortedTrialType = trial_type_removeEL(sortInd);
 
 figure
 subplot(2,1,1)

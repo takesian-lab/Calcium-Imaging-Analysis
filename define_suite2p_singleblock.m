@@ -70,6 +70,11 @@ end
 
 block.ops = get_abridged_ops(Fall.ops);
 
+%Check that neucoeff matches block.ops.neucoeff
+if ~isequal(block.setup.constant.neucoeff, block.ops.neucoeff)
+    warning(['User neucoeff (' num2str(block.setup.constant.neucoeff) ') does not match Suite2p neucoeff (' num2str(block.ops.neucoeff) ')'])
+end
+
 if checkOps
     unmatchingOps = [];
     userOps = [];

@@ -1,4 +1,4 @@
-%% compile_blocks_from_info
+%% compile_blocks_from_info_v2
 %
 %  This script saves a compiled 'block.mat' file for each row in Info.
 %  A compiled block contains Suite2p, Bruker, and Tosca data.
@@ -17,37 +17,38 @@
 %  - define_loco_singleblock
 %  - define_suite2p_singleblock
 %  - align_to_stim
-%  - visualize_block
 %    
-%  Use visualize_block to preview the block contents once they've been compiled.
+%  Use visualize_block and visualize_cell to preview the block contents once they've been compiled.
 %
 %  TAKESIAN LAB - March 2020
+%  v2 December 2020 saves blocks with new naming system
 
 %% Load Info.mat and change user-specific options
 
-visualize = 0; %1 to plot figures of the block immediately, 0 to skip
-recompile = 1; %1 to save over previously compiled blocks, 0 to skip
-checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
+recompile = 0; %1 to save over previously compiled blocks, 0 to skip
+checkOps = 1; %1 to check Fall.ops against user-specified ops.mat file
 
 %% set up values for 'align to stim'
+% Ndnf vs. Vip project: 0.5, 2.5, 1.5, 1.5, 0.8, 0.7
 
 % How many seconds of baseline?
 constant.baseline_length = 0.5;
 
 % How many seconds after stim should we look at?
+% Can be overwritten by column in info
 constant.after_stim = 2.5;
 
 % Define (in seconds) where to look for the response peak?
 constant.response_window = 1.5;
 
 % define where to look for locomotor responses, in sec?
-constant.locowindow = 1;
+constant.locowindow = 1.5;
 
 %minimum amout of time (sec) that mouse is moving to be considered active
 constant.locoThresh = 0.8;
 
 % Define the neuropil coefficient
-% TODO: automatically grab this from Suite2p
+% This will be checked against Suite2p value and a warning will appear if they do not match
 constant.neucoeff = 0.7;
 
 %% 
@@ -56,13 +57,13 @@ PC_name = getenv('computername');
 switch PC_name
     case 'RD0366' %Maryse
         info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
-        save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks';
+        save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_v2';
         %info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
         %save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
         %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
         %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks';
-        info_filename = 'Info_YE083020F1';
-        ops_filename = 'Maryse_ops2.mat';
+        info_filename = 'Info_YE083020F2';
+        ops_filename = 'Maryse_ops_thy1.mat';
          
     case 'TAKESIANLAB2P' %2P computer
         info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
@@ -70,14 +71,14 @@ switch PC_name
         info_filename = 'Info';    
         
     case 'RD0332' %Carolyn
-       info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
-        save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledWidefieldBlocks';
-        info_filename = 'Info_YE083020F1';
+       info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
+        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
+        info_filename = 'Info_rerunapan';
         
     case 'RD-6-TAK2' %Esther's computer
-        info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
-        save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\Compiled blocks';
-        info_filename = 'Info_YE083020F2';
+        info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';
+        save_path = 'D:\test';
+        info_filename = 'Info_VxDD053120M2';
         
     case 'RD0386' %Wisam
         % INSERT PATHS HERE
@@ -101,16 +102,7 @@ end
 
 %% Compile all blocks unless they are set to "Ignore"
 %  No need to change any variables below this point
-
-%Add extra empty columns when updates might be ahead of people's Info sheets
-lastColumn = 19; %WARNING: Magic number
-if size(Info,2) < lastColumn
-    for i = (size(Info,2) + 1):lastColumn
-        Info{1,i} = 'Expand Columns';
-    end
-    warning('gcamp_type and expt_group columns missing from Info')
-end
-        
+ 
 %Remove header from Info
 Info(1,:) = [];
 
@@ -126,37 +118,52 @@ for i = 1:size(currentInfo,1)
     setup.constant          =   constant;
     setup.Info              =   Info;                   %Record Info for records only
     setup.pathname          =   [currentInfo{i,2}];     %first part of the path
-    setup.username          =   [currentInfo{i,3}];     %part of the path, not every user will have this, okay to leave empty
-    setup.mousename         =   [currentInfo{i,4}];     %part of the path, no underscores
-    setup.expt_date         =   [currentInfo{i,5}];     %part of the path, YYYY-MM-DD
-    setup.block_name        =   [currentInfo{i,6}];     %part of the path - full block name used for BOT
-    setup.FOV               =   [currentInfo{i,7}];     %which data to consider as coming from the same field of view, per mouse
-    setup.imaging_set       =   [currentInfo{i,8}];     %block or BOT numbers
-    setup.Tosca_session     =   [currentInfo{i,9}];     %Tosca session
-    setup.Tosca_run         =   [currentInfo{i,10}];    %Tosca run
-    setup.analysis_name     =   [currentInfo{i,11}];    %part of the path, folder where fall.mats are stored
-    setup.framerate         =   [currentInfo{i,12}];    %15 or 30, eventually we can detect this automatically
-    setup.run_redcell       =   [currentInfo{i,13}];    %do you have red cells? 0 or 1
-    setup.voltage_recording =   [currentInfo{i,14}];    %0 for widefield, 1 for 2p
-    setup.VR_name           =   [currentInfo{i,15}];    %full voltage recording name (if widefield only)
-    setup.stim_name         =   [currentInfo{i,16}];    %type of stim presentation in plain text
-    setup.stim_protocol     =   [currentInfo{i,17}];    %number corresponding to stim protocol
-    setup.gcamp_type        =   [currentInfo{i,18}];    %f, m, or s depending on GCaMP type
-    setup.expt_group        =   [currentInfo{i,19}];    %name of experimental group or condition
+    setup.mousename         =   [currentInfo{i,3}];     %part of the path, no underscores
+    setup.expt_date         =   [currentInfo{i,4}];     %part of the path, YYYY-MM-DD
+    setup.block_name        =   [currentInfo{i,5}];     %part of the path - full block name used for BOT
+    setup.FOV               =   [currentInfo{i,6}];     %which data to consider as coming from the same field of view, per mouse
+    setup.Tosca_session     =   [currentInfo{i,7}];     %Tosca session
+    setup.Tosca_run         =   [currentInfo{i,8}];     %Tosca run
+    setup.analysis_name     =   [currentInfo{i,9}];    %part of the path, folder where fall.mats are stored
+    setup.run_redcell       =   [currentInfo{i,10}];    %do you have red cells? 0 or 1
+    setup.VR_name           =   [currentInfo{i,11}];    %full voltage recording name (if widefield only)
+    setup.stim_name         =   [currentInfo{i,12}];    %type of stim presentation in plain text
+    setup.stim_protocol     =   [currentInfo{i,13}];    %number corresponding to stim protocol
+    setup.gcamp_type        =   [currentInfo{i,14}];    %f, m, or s depending on GCaMP type
+    setup.expt_group        =   [currentInfo{i,15}];    %name of experimental group or condition
+    setup.imaging_depth     =   [currentInfo{i,16}];    %imaging depth in microns
+    setup.after_stim        =   [currentInfo{i,17}];    %overwrite constant.after_stim
+ 
+    if ~ismissing(setup.after_stim)
+        setup.constant.after_stim = setup.after_stim;
+    end
     
-    Block_number = sprintf('%03d',setup.imaging_set);
+    if ~ismissing(setup.FOV)
+        FOVtag = ['_FOV' setup.FOV{1}];
+    else
+        FOVtag = '';
+    end
+
+    if ~ismissing(setup.block_name)
+        block_number = setup.block_name{1}(1,end-2:end);
+        setup.imaging_set = str2double(block_number);
+        blockTag = ['_Block' block_number];
+    else
+        blockTag = '';
+    end
     
-    if setup.voltage_recording == 0
+    if ~ismissing(setup.VR_name)
         widefieldTag = 'widefield-';
     else
         widefieldTag = '';
     end
     
-    setup.block_filename = strcat('Compiled_', setup.mousename, '_', setup.expt_date, ...
-        '_Block_', Block_number, '_Session_', num2str(setup.Tosca_session), ...
-        '_Run_', num2str(setup.Tosca_run), '_', widefieldTag, setup.stim_name);
-    setup.block_supname = strcat(setup.mousename, ' ', setup.expt_date, ...
-        ' ', setup.stim_name, ' ', Block_number);
+    setup.block_filename = strcat('Compiled_', setup.mousename, FOVtag, '_', setup.expt_date, ...
+        '_Session', sprintf('%02d',setup.Tosca_session), '_Run', sprintf('%02d',setup.Tosca_run),...
+        blockTag, '_', widefieldTag, setup.stim_name);
+    setup.block_supname = strcat(setup.mousename, '-', FOVtag, '-', setup.expt_date, ...
+        '-', setup.stim_name, '-Session', sprintf('%02d',setup.Tosca_session), '-Run', sprintf('%02d',setup.Tosca_run),...
+        '-Block', block_number);
     
     %Skip files that have previously been compiled
     if ~recompile
@@ -168,19 +175,12 @@ for i = 1:size(currentInfo,1)
         end
     end
     
-    %Not every user has a username folder, allow for this column to be empty
-    if ~ismissing(setup.username)
-        usernameSlash = strcat(setup.username, '/');
-    else
-        usernameSlash = '';
-    end
-    
     %Establish and test paths, allowing for paths to be missing
     %TOSCA PATH
     if ismissing(setup.Tosca_session)
         setup.Tosca_path = nan;
     else
-        setup.Tosca_path = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
+        setup.Tosca_path = strcat(setup.pathname, '/', setup.mousename, '/Tosca_', setup.mousename, {'/Session '}, num2str(setup.Tosca_session));
         if ~isfolder(setup.Tosca_path)
             disp(setup.block_filename)
             error('Your Tosca path is incorrect.')
@@ -191,7 +191,7 @@ for i = 1:size(currentInfo,1)
     if ismissing(setup.block_name)
         setup.block_path = nan;
     else
-        setup.block_path   = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.block_name);
+        setup.block_path   = strcat(setup.pathname, '/', setup.mousename, '/', setup.expt_date, '/', setup.block_name);
         if ~isfolder(setup.block_path)
             disp(setup.block_filename)
             error('Your block path is incorrect.')
@@ -202,7 +202,7 @@ for i = 1:size(currentInfo,1)
     if ismissing(setup.VR_name)
         setup.VR_path = nan;
     else
-        setup.VR_path  = strcat(setup.pathname, '/', usernameSlash, setup.mousename, '/', setup.expt_date, '/', setup.VR_name);
+        setup.VR_path  = strcat(setup.pathname, '/', setup.mousename, '/', setup.expt_date, '/', setup.VR_name);
         if ~isfolder(setup.VR_path)
             disp(setup.block_filename)
             error('Your voltage recording path is incorrect.')
@@ -213,7 +213,7 @@ for i = 1:size(currentInfo,1)
     if ismissing(setup.analysis_name)
         setup.suite2p_path = nan;
     else
-        setup.suite2p_path = strcat(setup.pathname, '/', usernameSlash, '/', setup.analysis_name);
+        setup.suite2p_path = strcat(setup.pathname, '/', setup.analysis_name);
         if ~isfolder(setup.suite2p_path)
             disp(setup.block_filename)
             error('Your Suite2p analysis path is incorrect.')
@@ -235,10 +235,8 @@ for i = 1:size(currentInfo,1)
     [block] = FreqDisc_Behavior_singleblock(block);
 
     %pull out the Bruker-derived timestamps from BOTs and Voltage Recordings
-    [block] = define_sound_singleblock(block);
-
     %determine which trials are considered "active (locomotor)"
-    % This might not be necessary to do here, but leaving in for now.
+    [block] = define_sound_singleblock(block);
     [block] = define_loco_singleblock(block);
 
     %pull out block-specific data from Fall.mat
@@ -246,11 +244,6 @@ for i = 1:size(currentInfo,1)
     
     %find the stim-aligned traces
     [block] = align_to_stim(block);
-    
-    %Optionally visually check block
-    if visualize == 1
-        visualize_block(block);
-    end
     
     %% Save block
     disp('Saving...');

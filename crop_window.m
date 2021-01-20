@@ -15,7 +15,7 @@ for a=1:size(setup.mousename,1) %Mice
     for i=1:length(Imaging_Block)
         unique_block_name = setup.unique_block_names{a,b}(i);
         block = data.([mouseID]).([unique_block_name]);
-        folder = convertStringsToChars(setup.BOTpath);
+        folder = block.setup.block_path; %convertStringsToChars(setup.BOTpath);
         
         %how many tiffs do we need to load?
         tiffnum = length(block.timestamp);

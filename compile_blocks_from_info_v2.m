@@ -26,7 +26,7 @@
 %% Load Info.mat and change user-specific options
 
 recompile = 0; %1 to save over previously compiled blocks, 0 to skip
-checkOps = 1; %1 to check Fall.ops against user-specified ops.mat file
+checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
 %% set up values for 'align to stim'
 % Ndnf vs. Vip project: 0.5, 2.5, 1.5, 1.5, 0.8, 0.7
@@ -57,12 +57,12 @@ PC_name = getenv('computername');
 switch PC_name
     case 'RD0366' %Maryse
         info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
-        save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_v2';
+        save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledWidefieldBlocks';
         %info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
         %save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
         %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
         %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks';
-        info_filename = 'Info_YE083020F2';
+        info_filename = 'Info_widefield';
         ops_filename = 'Maryse_ops_thy1.mat';
          
     case 'TAKESIANLAB2P' %2P computer
@@ -109,6 +109,10 @@ Info(1,:) = [];
 %Remove rows that are set to "Ignore"
 ignore = [Info{:,1}]';
 currentInfo = Info(ignore == 0,:);
+
+if isempty(currentInfo)
+    error('No data found to compile. Check Info sheet.')
+end
 
 %Loop through all remaining rows
 for i = 1:size(currentInfo,1)

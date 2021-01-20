@@ -73,7 +73,8 @@ else
     Info = importfile(info_filename);
     
     %Create data structure for files corresponding to stim_protocol
-    [data] = fillSetupFromInfoTable_v2(Info, compiled_blocks_path, stim_protocol);
+    [data] = fillSetupFromInfoTable_v3(Info, compiled_blocks_path, stim_protocol);
+    %[data] = fillSetupFromInfoTable_v2(Info, compiled_blocks_path, stim_protocol); Use V2 for old compile_blocks format
     data.setup.imaging_chan = imaging_chan;
     data.setup.BOT_start = BOT_start;
     

@@ -167,8 +167,8 @@ for i=1:length(data.setup.Imaging_sets)
     %AT added 4/15/20 to center window around peak response across window
     clear all_trials
     [amp_average_response,time_average_response] = max(mean_across_all_trials);
-    estimated_peak = data.setup.FrameRate{i}*1.2; %the peak should be about 0.8sec after stim (1s)
-    estimated_time = (time_average_response-estimated_peak)*(1/data.setup.FrameRate{i});
+    estimated_peak = block.setup.framerate*1.2; %the peak should be about 0.8sec after stim (1s)
+    estimated_time = (time_average_response-estimated_peak)*(1/block.setup.framerate);
     parameters.adjusted_times_est = block.Sound_Time+estimated_time;
     
     %  repeat this average trace around sound with the estimated times
@@ -342,9 +342,9 @@ end
 [traces,parameters]=sound_response_widefield_v3(parameters,data,All_Images_df_over_f);
 %% pull out baseline and window
 length_trial=size(traces.Tile1{1,1},3);
-baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});
+baseline=1:(block.setup.constant.baseline_length*block.setup.framerate);
 % window=(length(baseline)+1):(data.setup.FrameRate{1}*block.setup.constant.response_window);
-window=(length(baseline)+1):(data.setup.FrameRate{1}*1.5);
+window=(length(baseline)+1):(block.setup.framerate*1.5);
 for ll=1:loops
     loop_num=num2str(ll);
     for f=1:length(parameters.frequencies);
@@ -557,8 +557,8 @@ end
 
 
 %% %% find cumulative baseline and the response window
-baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});%TODO magic number
-window=(length(baseline)):(data.setup.FrameRate{1}*block.setup.constant.response_window);
+baseline=1:(block.setup.constant.baseline_length*block.setup.framerate);%TODO magic number
+window=(length(baseline)):(block.setup.framerate*block.setup.constant.response_window);
 folder = save_path;
 % folder = 'C:\Anne';
 cd(folder)

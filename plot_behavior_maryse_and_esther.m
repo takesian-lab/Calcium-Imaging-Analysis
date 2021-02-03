@@ -61,12 +61,14 @@ title(plotTitle)
 % Fit psychometric functions
 targets = [0.25 0.5 0.75]; % 25 50 75 performance
 weights = ones(1,length(y)); % No weighting
-[fit_coeffs, fit_curve, fit_threshold] = fitPsycheCurveLogit(x, y, weights, targets);
+[~, fit_curve, fit_threshold] = fitPsycheCurveLogit(x, y, weights, targets); %FOR GRAPH ONLY
 
 % Plot psychometic curves
 plot(fit_curve(:,1), fit_curve(:,2), 'Linewidth', 2, 'LineStyle', '--', 'Color', 'g')
 %legend('Performance', 'Fit');
 scatter(fit_threshold, targets, 'x', 'k')
+
+[~, ~, actual_threshold] = fitPsycheCurveLogit(uniqueFrequencies, y, weights, targets)
 
 % Plot 2 - Reaction time vs. frequency (Esther)
 
@@ -123,12 +125,15 @@ title(plotTitle)
 % Fit psychometric functions
 targets = [0.25 0.5 0.75]; % 25 50 75 performance
 weights = ones(1,length(y)); % No weighting
-[fit_coeffs, fit_curve, fit_threshold] = fitPsycheCurveLogit(x, y, weights, targets);
+[fit_coeffs, fit_curve_bin2, fit_threshold_bin2] = fitPsycheCurveLogit(x, y, weights, targets);
 
 % Plot psychometic curves
-plot(fit_curve(:,1), fit_curve(:,2), 'Linewidth', 2, 'LineStyle', '--', 'Color', 'g')
+plot(fit_curve_bin2(:,1), fit_curve_bin2(:,2), 'Linewidth', 2, 'LineStyle', '--', 'Color', 'g')
 %legend('Performance', 'Fit');
-scatter(fit_threshold, targets, 'x', 'k')
+scatter(fit_threshold_bin2, targets, 'x', 'k')
+
+[~, ~, actual_threshold_bin2] = fitPsycheCurveLogit(uniqueFrequencies(2:2:end), y, weights, targets)
+
 
 %% Plot 3 - Locomotion and licks
 

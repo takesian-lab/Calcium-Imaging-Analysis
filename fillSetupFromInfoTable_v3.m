@@ -49,22 +49,26 @@ EG = 15; %name of experimental group or condition
 %Random H20 = 9
 %Noiseburst_ITI = 10
 %Random air puff = 11
+%Spontaneous = 12
+%Maryse's Behavior = 13
 
-code = {'Noiseburst', 'Receptive Field', 'FM sweep', 'Widefield', 'SAM', 'SAM freq' , 'Behavior', 'Behavior', 'Random H20', 'Noiseburst ITI', 'Random Air'};
+code = {'Noiseburst', 'Receptive Field', 'FM sweep', 'Widefield', 'SAM', 'SAM freq' , 'Behavior', 'Behavior',...
+    'Random H20', 'Noiseburst ITI', 'Random Air', 'Spontaneous', 'Maryse Behavior'};
 disp(['Analyzing ' code{stim_protocol} ' files'])
 
 %% Create data structure
 
-Info(1,:) = []; %Remove header from Info
-
-%Add Imaging_set (block #) to Info to be back-compatible with analysis scripts
+%Add Imaging_set (block #) to Info
 IS = size(Info,2) + 1;
-for i = 1:size(Info,1)
+Info{1,IS} = 'imaging_set';
+for i = 2:size(Info,1)
     if ~ismissing(Info{i,B})
         block_name = Info{i,B}{1};
         Info{i,IS} = str2double(block_name(1,end-2:end));
     end
 end
+
+Info(1,:) = []; %Remove header from Info
 
 %Set up data
 data = struct;
@@ -106,6 +110,7 @@ for i = 1:length(uniqueMice)
     currentInfo_M = currentInfo(matching_mice,:);
     FOVs = [currentInfo_M{:,F}]'; %The FOV corresponds to which data was run together in Suite2p.
     %If left empty it will be NAN and all NANs will be treated as separate FOVs
+    %THIS DOES NOT CURRENTLY WORK IF YOU HAVE MIXED NAN AND NUMERICAL FOVs FOR THE SAME ANIMAL
     uniqueFOVs = unique(FOVs);
     
     for j = 1:length(uniqueFOVs)
@@ -139,10 +144,16 @@ for i = 1:length(uniqueMice)
                 FOVtag = '';
             end
             
-            block_name = setup.block_name{i,j}{f};
-            blockTag = ['_Block' block_name(1,end-2:end)];
-            
-            if ~ismissing(currentInfo_F{:,VN})
+            if ~ismissing(setup.block_name{i,j})
+                block_name = setup.block_name{i,j}{f};
+                blockTag = ['_Block' block_name(1,end-2:end)];
+                uniqueBlockTag = ['Block' num2str([currentInfo_F{f,IS}]) '_'];
+            else
+                blockTag = '';
+                uniqueBlockTag = '';
+            end
+   
+            if ~ismissing(currentInfo_F{f,VN})
                 widefieldTag = 'widefield-';
             else
                 widefieldTag = '';
@@ -153,9 +164,10 @@ for i = 1:length(uniqueMice)
                  blockTag, '_', widefieldTag, setup.stim_name{i,j}{f});
             
             load(block_filenames{1,f})
+            disp(block_filenames{1,f})
         
-            unique_block_names{1,f} = strcat('Block', num2str([currentInfo_F{f,IS}]),...
-                '_Session', num2str([currentInfo_F{f,TS}]), '_Run', num2str([currentInfo_F{f,TR}]));
+            unique_block_names{1,f} = strcat(uniqueBlockTag,...
+                'Session', num2str([currentInfo_F{f,TS}]), '_Run', num2str([currentInfo_F{f,TR}]));
 
             if isfield(block, 'parameters')
                 data.([currentMouse]).parameters = block.parameters; %This will be written over every time

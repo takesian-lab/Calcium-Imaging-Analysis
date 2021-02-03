@@ -25,7 +25,7 @@
 
 %% Load Info.mat and change user-specific options
 
-recompile = 0; %1 to save over previously compiled blocks, 0 to skip
+recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
 %% set up values for 'align to stim'
@@ -57,13 +57,13 @@ PC_name = getenv('computername');
 switch PC_name
     case 'RD0366' %Maryse
         info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
-        save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledWidefieldBlocks';
+        save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_V2';
         %info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
         %save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
         %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
-        %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks';
-        info_filename = 'Info_widefield';
-        ops_filename = 'Maryse_ops_thy1.mat';
+        %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks v2';
+        info_filename = 'Info_NxDE102320M2';
+        ops_filename = 'Maryse_ops2.mat';
          
     case 'TAKESIANLAB2P' %2P computer
         info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
@@ -143,7 +143,11 @@ for i = 1:size(currentInfo,1)
     end
     
     if ~ismissing(setup.FOV)
-        FOVtag = ['_FOV' setup.FOV{1}];
+        try
+            FOVtag = ['_FOV' setup.FOV{1}];
+        catch
+            FOVtag = ['_FOV' num2str(setup.FOV(1))];
+        end
     else
         FOVtag = '';
     end
@@ -167,7 +171,7 @@ for i = 1:size(currentInfo,1)
         blockTag, '_', widefieldTag, setup.stim_name);
     setup.block_supname = strcat(setup.mousename, '-', FOVtag, '-', setup.expt_date, ...
         '-', setup.stim_name, '-Session', sprintf('%02d',setup.Tosca_session), '-Run', sprintf('%02d',setup.Tosca_run),...
-        '-Block', block_number);
+        blockTag);
     
     %Skip files that have previously been compiled
     if ~recompile

@@ -8,6 +8,84 @@ for i=1:length(setup.Imaging_sets)
     
     loops=parameters.loops;
     timestamp=block.timestamp;
+    
+    %if noiseburstITI protocol...
+    if parameters.stim_protocol==10
+        for ll=1:loops
+        ll
+        loop_num=num2str(ll);
+        Tile = All_Images_df_over_f.(['Tile' loop_num]);
+        x=size(Tile,1);
+        y=size(Tile,2);
+        z=size(Tile,3);
+            for lv=1:length(parameters.levels);
+                lvnum=num2str(parameters.levels(lv));
+                
+                % plot all trials or only non-loco trials - this section
+                % just creates a display for the user
+                if parameters.sort_loco ==0
+                    idx=parameters.stimIDX{lv};
+                    if lv ==1  & ll==1
+                        display('...creating traces for all trials...')
+                    end
+                else idx = parameters.loco_0.stimIDX{lv};
+                    if lv ==1 & ll==1
+                        display('...creating traces for non-motor trials...')
+                    end
+                end
+            
+            
+            %adjusted sound times - which times to use in the analysis
+            %(adjusted or not)
+            if parameters.use_adjusted==1;
+                Sound_Time=parameters.adjusted_times(idx);
+        
+                if lv ==1 & ll==1
+                    display('...use adjusted sound times...')
+                end
+            else Sound_Time=block.Sound_Time(idx)
+                
+                if lv==1 & ll==1
+                    display('...use original sound times...')
+                end
+            end
+            TF = isempty(idx);
+        
+            if TF==0;
+%                 length(Sound_Time)
+                for sound = 1:length(Sound_Time);
+                    sound_time = Sound_Time(sound);
+                    before_time = Sound_Time(sound)-block.setup.constant.baseline_length;
+                    after_time = Sound_Time(sound)+block.setup.constant.after_stim;
+                    window_time = Sound_Time(sound)+block.setup.constant.response_window;
+                    
+                    [c closest_frame_before] = min(abs(timestamp(:)-before_time));
+                    [c closest_frame_sound] = min(abs(timestamp(:)-sound_time));
+                    [c closest_frame_after] = min(abs(timestamp(:)-after_time));
+                    [c closest_frame_window] = min(abs(timestamp(:)-window_time));
+                    
+                    
+                    length_sound_trial(sound) = closest_frame_after-closest_frame_before;
+                    trace_around_sound(:,:,:,sound) =  Tile(:,:,closest_frame_before:closest_frame_after);
+                    size(trace_around_sound,4)
+                end
+               
+                
+            end
+            traces.(['Tile' loop_num]){lv}=trace_around_sound;
+            clear trace_around_sound
+%             size(traces.(['Tile' loop_num]){lv},4)
+            
+        end
+       
+   
+%      clear trace_around_sound
+    
+    end %end loops
+        
+    else
+    
+    
     for ll=1:loops
         ll
         loop_num=num2str(ll);
@@ -20,7 +98,8 @@ for i=1:length(setup.Imaging_sets)
             for lv=1:length(parameters.levels);
                 lvnum=num2str(parameters.levels(lv));
                 
-                % plot all trials or only non-loco trials
+                % plot all trials or only non-loco trials - this section
+                % just creates a display for the user
                 if parameters.sort_loco ==0
                     idx=parameters.stimIDX{f,lv};
                     if lv ==1 & f==1 & ll==1
@@ -33,7 +112,8 @@ for i=1:length(setup.Imaging_sets)
                 end
             
             
-            %adjusted sound times
+            %adjusted sound times - which times to use in the analysis
+            %(adjusted or not)
             if parameters.use_adjusted==1;
                 Sound_Time=parameters.adjusted_times(idx);
                 if lv ==1 & f==1 & ll==1
@@ -64,12 +144,15 @@ for i=1:length(setup.Imaging_sets)
                 
             end
             traces.(['Tile' loop_num]){f,lv}=trace_around_sound;
+            clear trace_around_sound
+           
             
         end
        
     end
      clear trace_around_sound
     
+    end %end loops
 end
 end
 end

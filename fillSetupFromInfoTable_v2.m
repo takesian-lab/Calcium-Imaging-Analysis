@@ -77,6 +77,10 @@ currentInfo = Info(matching_stims,:);
 ignore = [currentInfo{:,I}]';
 currentInfo = currentInfo(ignore == 0,:);
 
+if isempty(currentInfo)
+    error('No data found to compile. Check Info sheet.')
+end
+
 %% Fill setup and data
 
 %Make data struct with the following format:

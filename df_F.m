@@ -36,7 +36,8 @@ for a=1:size(setup.mousename,1) %Mice
         unique_block_name = setup.unique_block_names{a,b}(1);
      % settings for trace window
         constants = data.([mouseID]).([unique_block_name]).setup.constant;
-        FrameRate = unique(setup.FrameRate{a,b});
+        FrameRate = data.([mouseID]).([unique_block_name]).setup.framerate;
+        %FrameRate = unique(setup.FrameRate{a,b}); %OLD WAY TO GET FRAME RATE
         
         if length(FrameRate) > 1
             error('Not all frame rates are the same.')

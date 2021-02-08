@@ -15,7 +15,7 @@ for a=1:size(setup.mousename,1) %Mice
     for i=1:length(Imaging_Block)
         unique_block_name = setup.unique_block_names{a,b}(i);
         block = data.([mouseID]).([unique_block_name]);
-        folder = convertStringsToChars(setup.BOTpath);
+        folder = convertStringsToChars(block.setup.block_path); %convertStringsToChars(setup.BOTpath);
         
         %how many tiffs do we need to load?
         tiffnum = length(block.timestamp);
@@ -35,7 +35,7 @@ for a=1:size(setup.mousename,1) %Mice
         for k=1:length(d);
 %             
             num_BOT = sprintf('%06d',((setup.BOT_start-1)+k));
-            fig_name = strcat(setup.BOTname, '_Cycle00001_', setup.imaging_chan, '_', num_BOT, '.ome.tif');
+            fig_name = strcat(block.setup.block_name, '_Cycle00001_', setup.imaging_chan, '_', num_BOT, '.ome.tif');
             fig_name = convertStringsToChars(fig_name);
             image = imread(fig_name);
             filtered_image = imresize(image,0.5);%reduce to 256x256

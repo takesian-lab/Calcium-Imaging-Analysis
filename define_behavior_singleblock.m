@@ -198,6 +198,9 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
             else
                 b_Outcome{t}=NaN;
                 trialType{t}=NaN;
+                if setup.stim_protocol == 13
+                    targetFreq(t) = Data{t}.Target_kHz;
+                end
                 
             end
         catch
@@ -347,17 +350,27 @@ for j=1:length(Data)
     end
 end
 error_trials=cell2mat(error_trials);
-~isnan(error_trials);
 k = find(error_trials>0);
-block.errors = k;
 if ~isempty(k)
-
-warning(['Found ' num2str(length(k)) ' error(s) out of ' num2str(length(error_trials)) ' Tosca trials'])
-
-    New_sound_times(:,k)=[];
+    start_time(:,k) = [];
+    Tosca_times(:,k)  = [];
+    New_sound_times(:,k) = [];
+    licks(k,:) = [];
+    b_Outcome(:,k) = [];
+    trialType(:,k) = [];
+    if ~isnan(targetFreq)
+        targetFreq(:,k) = [];
+    end
+    zero_loc(:,k) = [];
+    activity_trial(:,k) = [];
+    rxn_time(:,k) = [];
+    locTrial_idx(:,k) = [];
     if setup.stim_protocol>=2
         V1(:,k)=[];
         V2(:,k)=[];
+    end
+    if setup.stim_protocol == 13
+    	holdingPeriod(:,k) = [];
     end
 end
 
@@ -368,14 +381,15 @@ Var2=[Var2,V2];
 %Format used to be: data.([mouseID]).(['ImagingBlock' Imaging_Num]).VARIABLE
 %And: data.([mouseID]).parameters
 
-block.New_sound_times = New_sound_times;
 block.start_time = start_time;
-block.lick_time = licks;
 block.Tosca_times = Tosca_times;
+block.errors = k;
+block.New_sound_times = New_sound_times;
+block.lick_time = licks;
 block.Outcome =  cell2mat(b_Outcome);
 block.trialType = cell2mat(trialType);
 block.TargetFreq = targetFreq;
-block.parameters.variable1 = Var1; %index of variable1 (e.g. frequency)
+block.parameters.variable1 = Var1; %index of variable 1 (e.g. frequency)
 block.parameters.variable2 = Var2; %index of variable 2 (e.g. level)
 block.loco_data = loco_data; %raw loco data
 block.loco_activity = loco_trace_activity; %trace of velocity

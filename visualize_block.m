@@ -24,6 +24,7 @@ function visualize_block(block)
 bin = 10; %Number of cells to plot at a time (for visibility)
 SF = 0.5; %Shrinking factor for traces to appear more spread out
 z = 1; %Portion of recording to plot e.g. 0.5, 0.33, 1
+Zframes = 15000000; %Plot red lines for stim onset if there is less than this many frames
 
 setup = block.setup;
 
@@ -216,7 +217,7 @@ else
 
                 count = count + 1;
             end
-            if Z < 15000 && isfield(block, 'Sound_Time') %Don't plot red lines if there is too much data, otherwise its messy
+            if Z < Zframes && isfield(block, 'Sound_Time') %Don't plot red lines if there is too much data, otherwise its messy
                 %plot multicolored lines if less than 8 stim, else plot red lines
                 if isfield(block.parameters, 'variable1')
                         var1 = unique(block.parameters.variable1);
@@ -288,7 +289,7 @@ else
                 img = block.img.refImg;
                 %img = block.img.meanImg;
                 image(img);
-                if block.setup.voltage_recording == 0
+                if ismissing(block.setup.VR_name)
                     imagesc(img);
                 end
             elseif m == 2 

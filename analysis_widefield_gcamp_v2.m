@@ -29,12 +29,12 @@ else
     %Noiseburst_ITI = 10
     %Random air puff = 11
     
-   
-    stim_protocol = 4; % this is the code for "widefield"
+    
+    parameters.stim_protocol = 4; % widefield RF = 4, noiseburst ITI = 10
     imaging_chan = 'Ch2'; %was the data collected Ch1 or Ch2?
     BOT_start = [1];
     detrend_filter = [300 10];
-    parameters.sort_loco =[0]; % 0 = all trials, 1 = non motor trials only
+    parameters.sort_loco =[1]; % 0 = all trials, 1 = non motor trials only
     
     
     
@@ -51,11 +51,11 @@ else
             save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
             info_filename = 'Info_widefield';
         case 'RD0332' %Carolyn
-            info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
+            info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
-            compiled_blocks_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledWidefieldBlocks';
-            save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\Widefield\YE083020F2';
-            info_filename = 'Info_YE083020F2';
+            compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
+            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\NxDE102320M2\Gcamp RF\adjusted trials';
+            info_filename = 'Info_NxDE102320M2';
             
         case 'RD-6-TAK2' %Esther's computer
             info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
@@ -73,7 +73,7 @@ else
     Info = importfile(info_filename);
     
     %Create data structure for files corresponding to stim_protocol
-    [data] = fillSetupFromInfoTable_v2(Info, compiled_blocks_path, stim_protocol);
+    [data] = fillSetupFromInfoTable_v2(Info, compiled_blocks_path, parameters.stim_protocol);
     data.setup.imaging_chan = imaging_chan;
     data.setup.BOT_start = BOT_start;
     
@@ -84,8 +84,76 @@ else
     %     parpool('local',10);
     % end
 end
-%% crop the window
-[imageData,data,parameters] = crop_window(data);
+
+
+
+
+%% register the image - 
+% i registered the Tiffs in suite2p and then used those to load into the
+% crop window function - can I somehow make this part of "compile blocks"
+% eventually this code will run inside the 'crop_window' function. In the
+% mean time - I am starting here from Full_Tile_Matrix (which is saved in
+% the save path for this mouse)
+
+% this (for now) has everything you need to crop the window. Dont run the
+% next section
+cd(save_path)
+load('Full_Tile_Matrix.mat')
+first_frame = Full_Tile_Matrix(:,:,1);
+%make a 3d stack of the first frame?
+fixed=zeros(size(Full_Tile_Matrix,1),size(Full_Tile_Matrix,2),size(Full_Tile_Matrix,3));%pre-allocate the matrix
+for d = 1:size(Full_Tile_Matrix,3)
+    fixed(:,:,d) = first_frame(:,:);
+end
+
+moving = Full_Tile_Matrix;
+[optimizer, metric] = imregconfig('monomodal'); %can I optimize these settings? (currently default settings)
+moving_reg = imregister(moving,fixed,'translation',optimizer,metric);
+donereg =1
+
+
+
+
+figure;
+       reg_image = mat2gray(mean(moving_reg,3));
+       imshow(reg_image);
+
+        title(sprintf('Mean Window Tile; registered'));
+         figure;
+        h_im = imshow(reg_image); hold on;
+        message = sprintf('Draw a circle and then hit the space bar,');
+        uiwait(msgbox(message));
+        h = imellipse;
+        pause;
+        BW = createMask(h);
+        pos_window = getPosition(h); %returns [x min, y min, width, height]
+        %csvwrite('[mouseID] 'window_position'']) to mouse folder
+        parameters.x_min = pos_window(1)
+        parameters.y_min = pos_window(2)
+        parameters.x_max = pos_window(3)+parameters.x_min
+        parameters.y_max = pos_window(4)+parameters.y_min
+        Tile_Mean_ROI = reg_image;
+        Tile_Mean_ROI(BW==0)=0;
+        figure; imshow(Tile_Mean_ROI);title(sprintf('Masked Window'));
+        pause;
+        
+        Tile_Mean_ROI=Tile_Mean_ROI(parameters.y_min:parameters.y_max,parameters.x_min:parameters.x_max);
+        figure; imshow(Tile_Mean_ROI); title(sprintf('Cropped Window'));
+        pause;
+        parameters.Window_Postion = [parameters.x_min parameters.x_max parameters.y_min parameters.y_max];
+        imageData.Cropped_Imaging_Data = moving_reg(parameters.y_min:parameters.y_max,parameters.x_min:parameters.x_max,:);
+%         clear Full_Tile_Matrix
+        clear Cropped
+        clear Tile_Mean_ROI
+
+
+
+ %% crop the window - I will take registerd images and add it to this function once I am done editing
+[imageData,data,parameters,Full_Tile_Matrix] = crop_window(data,parameters);
+% cd(save_path)
+% save('Full_Tile_Matrix.mat','Full_Tile_Matrix','-v7.3');
+% clear Full_Tile_Matrix;
+
 
 
 %% anne's "old code" to test for window quality and check sound stimulation
@@ -205,7 +273,7 @@ for i=1:length(data.setup.Imaging_sets)
     %       data.([mouseID]).(['Tile' BOT_number]).Average_Sound_Response = mean_across_all_trials;
     pause;
     % look at sound responses in high/low/med frequency trials
-    if stim_protocol==4;
+    if parameters.stim_protocol==4;
         figure;
         index_high_levels = find(data.([mouseID]).parameters.variable2>60);
         mean_across_all_high_trials = mean(all_trials(:,index_high_levels),2);
@@ -242,19 +310,19 @@ for i=1:length(data.setup.Imaging_sets)
         pause;
         
         figure;
-    % THis only runs if there are a lot of trials...
-    
-%         mean_across_all_first_half_trials = mean(all_trials(:,1:300),2);
-%         plot(1:length(average), mean_across_all_first_half_trials,'r')
-%         
-%         hold on;
-%         mean_across_all_first_half_trials = mean(all_trials(:,300:500),2);
-%         plot(1:length(average), mean_across_all_first_half_trials,'g')
-%         
-%         hold on;
-%         mean_across_all_second_half_trials = mean(all_trials(:,500:720),2);
-%         plot(1:length(average), mean_across_all_second_half_trials,'y ')
-%         title(sprintf('Mean Response by Time across all Trials from Tile %d', i));
+        % THis only runs if there are a lot of trials...
+        
+        %         mean_across_all_first_half_trials = mean(all_trials(:,1:300),2);
+        %         plot(1:length(average), mean_across_all_first_half_trials,'r')
+        %
+        %         hold on;
+        %         mean_across_all_first_half_trials = mean(all_trials(:,300:500),2);
+        %         plot(1:length(average), mean_across_all_first_half_trials,'g')
+        %
+        %         hold on;
+        %         mean_across_all_second_half_trials = mean(all_trials(:,500:720),2);
+        %         plot(1:length(average), mean_across_all_second_half_trials,'y ')
+        %         title(sprintf('Mean Response by Time across all Trials from Tile %d', i));
     end
     
     
@@ -262,9 +330,9 @@ for i=1:length(data.setup.Imaging_sets)
 end
 
 %% check for memory
-[loops] = memorycheck(imageData);
+[loops] = memorycheck(imageData); 
 
-%% DETREND: Grab a coffee - this will take approx. 2 hours (for ful ReceptiveField, 45mins for new/reduced field)
+%% DETREND: Grab a coffee - this will take approx. 2 hours (for full ReceptiveField, 45mins for new/reduced field)
 t = cputime;
 parameters.loops=loops;
 for i=1:length(data.setup.Imaging_sets)
@@ -308,8 +376,25 @@ for i=1:length(data.setup.Imaging_sets)
     mouseID=data.setup.mousename{i};
     unique_block_name = data.setup.unique_block_names{i};
     block = data.([mouseID]).([unique_block_name]);
-    FreqList=unique(data.([mouseID]).parameters.variable1);%what is Variable#1
-    LevList=unique(data.([mouseID]).parameters.variable2);%what is Variable#
+    
+    if parameters.stim_protocol == 10;
+        LevList=unique(data.([mouseID]).parameters.variable1); %noiseburst level
+          parameters.levels=LevList;%store in a list for later
+%         FreqList=1; % they are all the same sound
+        n1=data.([mouseID]).parameters.variable1;%pull out variable#1 in order presented in experiment
+        %         n2=data.([mouseID]).parameters.variable2;%pull out variable#2 in order presented in experiment
+        for m=1:length(LevList)%loop through variable1 (frequency for TRF
+            p=find(n1==LevList(m));%pull out a particular stimulus (Var #1) (i.e. 4kHz)
+            [s]=p; %find specific stim types (i.e. 4khz, 60dB)
+            parameters.stimIDX(m)={s};%stim index (Var#1xVar#2, i.e. freq x level)
+        end
+        
+    else
+        FreqList=unique(data.([mouseID]).parameters.variable1);%what is Variable#1 (freq)
+        LevList=unique(data.([mouseID]).parameters.variable2);%what is Variable# (lev)
+        n1=data.([mouseID]).parameters.variable1;%pull out variable#1 in order presented in experiment
+        n2=data.([mouseID]).parameters.variable2;%pull out variable#2 in order presented in experiment
+    
     parameters.frequencies=FreqList;%store in a list for later
     parameters.levels=LevList;%store in a list for later
     n1=data.([mouseID]).parameters.variable1;%pull out variable#1 in order presented in experiment
@@ -322,23 +407,38 @@ for i=1:length(data.setup.Imaging_sets)
             parameters.stimIDX(m,q)={s};%stim index (Var#1xVar#2, i.e. freq x level)
         end
     end
+    end
 end
 
 for i=1:length(data.setup.Imaging_sets)
     mouseID=data.setup.mousename{i};
     unique_block_name = data.setup.unique_block_names{i};
     block = data.([mouseID]).([unique_block_name]);
-    for f=1:length(parameters.frequencies);
-        fnum=num2str(parameters.frequencies(f));
-        for lv=1:length(parameters.levels);
-            lvnum=num2str(parameters.levels(lv));
-            idx=parameters.stimIDX{f,lv};
-            parameters.loco_1.stimIDX{f,lv} = idx(find(block.active_trials(idx)==1));
-            parameters.loco_0.stimIDX{f,lv} = idx(find(block.active_trials(idx)==0));
+    
+    
+    if parameters.stim_protocol==10;
+            for lv=1:length(parameters.levels);
+                lvnum=num2str(parameters.levels(lv));
+                idx=parameters.stimIDX{lv};
+                parameters.loco_1.stimIDX{lv} = idx(find(block.active_trials(idx)==1));
+                parameters.loco_0.stimIDX{lv} = idx(find(block.active_trials(idx)==0));
+            end
+            else
+                for f=1:length(parameters.frequencies);
+                    fnum=num2str(parameters.frequencies(f));
+                    for lv=1:length(parameters.levels);
+                        lvnum=num2str(parameters.levels(lv));
+                        idx=parameters.stimIDX{f,lv};
+                        parameters.loco_1.stimIDX{f,lv} = idx(find(block.active_trials(idx)==1));
+                        parameters.loco_0.stimIDX{f,lv} = idx(find(block.active_trials(idx)==0));
+                    end
+                end
         end
     end
-end
+
+
 [traces,parameters]=sound_response_widefield_v3(parameters,data,All_Images_df_over_f);
+
 %% pull out baseline and window
 length_trial=size(traces.Tile1{1,1},3);
 baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});
@@ -346,6 +446,29 @@ baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});
 window=(length(baseline)+1):(data.setup.FrameRate{1}*1.5);
 for ll=1:loops
     loop_num=num2str(ll);
+    if parameters.stim_protocol ==10;
+        for lv=1:length(parameters.levels);
+            lvnum=num2str(parameters.levels(lv));
+            if parameters.sort_loco ==0
+                idx=parameters.stimIDX{lv};
+                if lv ==1 & f==1 & ll==1
+                    display('...creating baseline for all trials, noiseburst...')
+                end
+            else idx = parameters.loco_0.stimIDX{lv};
+                if lv ==1 & f==1 & ll==1
+                    display('...creating baseline for non-motor trials, noiseburst...')
+                end
+            end
+            
+            TF = isempty(idx); %the index of freq x level does not always have a value for every combination
+            if TF==0
+                base.(['Tile' loop_num]){lv}(:,:,:,:) = traces.(['Tile' loop_num]){lv}(:,:,baseline,:);
+                %             wind.(['Tile' loop_num]){f,lv}(:,:,:,:)=traces.(['Tile' loop_num]){f,lv}(:,:,window,:);
+            end
+        end
+%       
+        
+    else
     for f=1:length(parameters.frequencies);
         fnum=num2str(parameters.frequencies(f));
         for lv=1:length(parameters.levels);
@@ -367,6 +490,7 @@ for ll=1:loops
                 %             wind.(['Tile' loop_num]){f,lv}(:,:,:,:)=traces.(['Tile' loop_num]){f,lv}(:,:,window,:);
             end
         end
+        end
     end
 end
 
@@ -375,6 +499,35 @@ loops=parameters.loops;
 count=1;
 for ll=1:loops
     loop_num=num2str(ll);
+    if parameters.stim_protocol ==10;
+                for lv=1:length(parameters.levels);
+            if parameters.sort_loco ==0
+                idx=parameters.stimIDX{lv};
+                if lv ==1 & ll==1
+                    display('...averaging across all trials, noiseburst...')
+                end
+            else idx = parameters.loco_0.stimIDX{lv};
+                if lv ==1 & ll==1
+                    display('...averaging across non-motor trials, noiseburst...')
+                end
+            end
+            % occasionally, a stim will be empty, and this will correct
+            % for when this occurs
+            TF = isempty(idx);
+            if TF == 0
+                % do we want to pull out locomotor trials? If no (old
+                % version of the code) run this step, if yes, see below.
+                
+                m=traces.(['Tile' loop_num]){lv};
+                %mean response per stim
+                mean_stim(:,:,:)=mean(m,4);
+                avgTrace.(['Tile' loop_num]){lv}= mean_stim;
+                clear mean_stim
+                
+            end
+        end
+   
+    else
     for f=1:length(parameters.frequencies);
         for lv=1:length(parameters.levels);
             if parameters.sort_loco ==0
@@ -403,48 +556,93 @@ for ll=1:loops
             end
         end
     end
+    end
 end
 
 
 %
 % parameters.avgBaseline=mean(tempBase,1);
 % parameters.stdBaseline=std(tempBase,1);
-clear tempBase idx f b count ll loop_num lv m mean_base
+clear tempBase idx b count ll loop_num lv m mean_base
 
 %% what do the individual traces look like for a given tile?
- %pick a tile to look at here, and set level to look at that intensity
- %1=10...8=80dB
-loop_num=num2str(2);
+%pick a tile to look at here, and set level to look at that intensity
+%1=10...8=80dB
+loop_num=num2str(1);
 
-    for f=1:length(parameters.frequencies);
-        for lv=7;%1:length(parameters.levels);
-            if parameters.sort_loco ==0
-                idx=parameters.stimIDX{f,lv};
-            else idx = parameters.loco_0.stimIDX{f,lv};
-            end
-            % occasionally, a stim will be empty, and this will correct
-            % for when this occurs
-            TF = isempty(idx);
-            if TF == 0
-                m=traces.(['Tile' loop_num]){f,lv};
-                figure;
-                for mm = 1:size(traces.(['Tile' loop_num]){f,lv},4);
-                    sTrace = traces.(['Tile' loop_num]){f,lv}(:,:,:,mm);
-                    msTrace = squeeze(mean(mean(sTrace,1),2));
-                    plot(smooth(msTrace,5)); hold on;
-                  
-                end
-            
+
+if parameters.stim_protocol==10;
+  
+    for lv=1:length(parameters.levels);
+        if parameters.sort_loco ==0
+            idx=parameters.stimIDX{lv};
+        else idx = parameters.loco_0.stimIDX{lv};
+       
+        end
+        % occasionally, a stim will be empty, and this will correct
+        % for when this occurs
+        TF = isempty(idx);
+        if TF == 0
+            m=traces.(['Tile' loop_num]){lv};
+            size(traces.(['Tile' loop_num]){lv},4)
+            figure;
+            for mm = 1:size(traces.(['Tile' loop_num]){lv},4);
+                sTrace = traces.(['Tile' loop_num]){lv}(:,:,:,mm);
+                msTrace = squeeze(mean(mean(sTrace,1),2));
+                plot(smooth(msTrace,5)); hold on;
                 
             end
+            
+            
         end
     end
 
+else
+for f=1:length(parameters.frequencies);
+    for lv=1;%1:length(parameters.levels);
+        if parameters.sort_loco ==0
+            idx=parameters.stimIDX{f,lv};
+        else idx = parameters.loco_0.stimIDX{f,lv};
+        end
+        % occasionally, a stim will be empty, and this will correct
+        % for when this occurs
+        TF = isempty(idx);
+        if TF == 0
+            m=traces.(['Tile' loop_num]){f,lv};
+            figure;
+            for mm = 1:size(traces.(['Tile' loop_num]){f,lv},4);
+                sTrace = traces.(['Tile' loop_num]){f,lv}(:,:,:,mm);
+                msTrace = squeeze(mean(mean(sTrace,1),2));
+                plot(smooth(msTrace,5)); hold on;
+                
+            end
+            
+            
+        end
+    end
+end
+end
 
 %% put tiles back together
 rejoin_tiles=[];
 %loop through
+if parameters.stim_protocol==10;
+    for lv=1:length(parameters.levels);
+        numLV=num2str(parameters.levels(lv))
+        
+        rejoin_tiles=[];
+        for ll=1:loops
+            loop_num=num2str(ll);
+            
+            mm=avgTrace.(['Tile' loop_num]){lv};
+            rejoin_tiles=double(cat(1, rejoin_tiles, mm));
+        end
+        fieldName = matlab.lang.makeValidName(['db' numLV ]); %Replace invalid characters from fieldname, like -
+        stimAverages.(fieldName)=rejoin_tiles;
+        clear rejoin_tiles
+    end
 
+else
 
 for f=1:length(parameters.frequencies)
     numF=num2str(round(parameters.frequencies(f)))
@@ -463,10 +661,27 @@ for f=1:length(parameters.frequencies)
         clear rejoin_tiles
     end
 end
+end
 %    clear mm avgTrace
 
-%% what do the stim averages look like?
+%% what do the stim averages look like? 
 figure;
+if parameters.stim_protocol ==10
+  
+    for lv=1:length(parameters.levels);
+          
+        numLV=num2str(parameters.levels(lv))
+         figure;
+        fieldName = matlab.lang.makeValidName(['db' numLV ])
+        a1 = stimAverages.(fieldName);
+        TF = isempty(a1);
+        if TF ==0
+            a2 = squeeze(mean(mean(a1,1),2));
+            plot(smooth(a2)); %hold on
+        end
+    end
+
+else
 for f=1:length(parameters.frequencies)
     numF=num2str(round(parameters.frequencies(f)))
     subplot(2,ceil(length(parameters.frequencies)/2),f)
@@ -482,10 +697,29 @@ for f=1:length(parameters.frequencies)
         end
     end
 end
+end
 %% convert to tif? and then store as individual file.
 folder = save_path;
 cd(folder)
 tic
+%noiseburst widefield
+if parameters.stim_protocol==10
+    for lv=1:length(parameters.levels);
+        numLV=num2str(parameters.levels(lv));
+         fieldName = matlab.lang.makeValidName(['db' numLV]);
+        idx=parameters.stimIDX{lv};
+        fileName = matlab.lang.makeValidName(['avgStim_' numLV]);
+        a1 = stimAverages.(fieldName);
+        TF = isempty(a1);
+        if TF ==0
+            outputFileName= ([fileName 'db.tif']);
+            for k = 1:size(stimAverages.(fieldName),3)
+                imwrite(stimAverages.(fieldName)(:, :, k), outputFileName, 'WriteMode', 'append')
+            end
+        end
+    end
+else
+    % RF and FMsweep widefield
 for f=1:length(parameters.frequencies);
     toc
     numF=num2str(round(parameters.frequencies(f)));
@@ -494,15 +728,16 @@ for f=1:length(parameters.frequencies);
         numLV=num2str(parameters.levels(lv));
         idx=parameters.stimIDX{f,lv};
         fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
-         a1 = stimAverages.(fieldName){lv};
+        a1 = stimAverages.(fieldName){lv};
         TF = isempty(a1);
         if TF ==0
-        outputFileName= ([fileName 'db.tif']);
-        for k = 1:size(stimAverages.(fieldName){lv},3)
-            imwrite(stimAverages.(fieldName){lv}(:, :, k), outputFileName, 'WriteMode', 'append')
-        end
+            outputFileName= ([fileName 'db.tif']);
+            for k = 1:size(stimAverages.(fieldName){lv},3)
+                imwrite(stimAverages.(fieldName){lv}(:, :, k), outputFileName, 'WriteMode', 'append')
+            end
         end
     end
+end
 end
 
 %% normalize traces to mean 0 and std 1 - in progress....
@@ -538,16 +773,16 @@ end
 %                 normz = zscore(stack,0,3); %cgs left off here
 %             end
 %         end
-%         
+%
 %         %TODO: CGS - put the zscore here?
-%         
-%         
+%
+%
 %         ResponseWindow{f,lv}=stack(:,:,window);
 %         DFF0_mean{f,lv} = stack (:,:,:);
 %         baseLoc = stack(:,:,baseline);
 %         accumBase = cat(3, accumBase, baseLoc); % why is this such a large number?
 %         end
-%         
+%
 %         %         base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
 %         %             wind.(['Tile' loop_num]){f,lv}(:,:,:,:)=traces.(['Tile' loop_num]){f,lv}(:,:,window,:);
 %         clear stack AA
@@ -556,7 +791,7 @@ end
 
 
 %% %% find cumulative baseline and the response window
-baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});%TODO magic number
+baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});
 window=(length(baseline)):(data.setup.FrameRate{1}*block.setup.constant.response_window);
 folder = save_path;
 % folder = 'C:\Anne';
@@ -564,8 +799,45 @@ cd(folder)
 d = dir([folder '/*.tif']);%extract tiffs
 count = 1;
 % image = imageData.Cropped_Imaging_Data;
-total_stim = length(parameters.levels)*length(parameters.frequencies);
+if parameters.stim_protocol==10
+total_stim = length(parameters.levels);
+else total_stim = length(parameters.levels)*length(parameters.frequencies);
+end
 accumBase = zeros(size(imageData.Cropped_Imaging_Data,1),size(imageData.Cropped_Imaging_Data,2),total_stim*length(baseline));
+
+
+if parameters.stim_protocol==10
+    for lv=1:length(parameters.levels);
+        numLV=num2str(parameters.levels(lv));
+         fieldName = matlab.lang.makeValidName(['db' numLV]);
+        % fname = (['SpatDenoise' numF 'khz' numLV 'db.tif']);
+        % fname = (['TempDenoise' numF 'khz' numLV 'db.tif']);
+        fileName = matlab.lang.makeValidName(['avgStim_' numLV]);
+        fname= ([fileName 'db.tif']);
+        TF = exist(fname);
+        %          a1 = stimAverages.(fieldName){lv};
+        %         TF = isempty(a1);
+        if TF ==2 %sometimes there is a stim that is missing in the matrix of variables, this will only run if it exists
+            %        fname = (['avgStim' numF 'khz' numLV 'db.tif']);
+            info = imfinfo(fname);
+            num_images = numel(info);
+            for k = 1:num_images
+                AA = imread(fname, k);
+                stack(:,:,k)=AA(:,:);
+                stack=double(stack);
+            end
+            ResponseWindow{lv}=stack(:,:,window);
+            DFF0_mean{lv} = stack (:,:,:);
+            baseLoc = stack(:,:,baseline);
+            accumBase = cat(3, accumBase, baseLoc); % why is this such a large number?
+        end
+        
+        %         base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
+        %             wind.(['Tile' loop_num]){f,lv}(:,:,:,:)=traces.(['Tile' loop_num]){f,lv}(:,:,window,:);
+        clear stack AA
+    end
+else
+
 for f=1:length(parameters.frequencies);
     numF=num2str(round(parameters.frequencies(f)));
     fieldName = matlab.lang.makeValidName(['kHz' numF]);
@@ -576,21 +848,21 @@ for f=1:length(parameters.frequencies);
         fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
         fname= ([fileName 'db.tif']);
         TF = exist(fname);
-%          a1 = stimAverages.(fieldName){lv};
-%         TF = isempty(a1);
+        %          a1 = stimAverages.(fieldName){lv};
+        %         TF = isempty(a1);
         if TF ==2 %sometimes there is a stim that is missing in the matrix of variables, this will only run if it exists
-        %        fname = (['avgStim' numF 'khz' numLV 'db.tif']);
-        info = imfinfo(fname);
-        num_images = numel(info);
-        for k = 1:num_images
-            AA = imread(fname, k);
-            stack(:,:,k)=AA(:,:);
-            stack=double(stack);
-        end
-        ResponseWindow{f,lv}=stack(:,:,window);
-        DFF0_mean{f,lv} = stack (:,:,:);
-        baseLoc = stack(:,:,baseline);
-        accumBase = cat(3, accumBase, baseLoc); % why is this such a large number?
+            %        fname = (['avgStim' numF 'khz' numLV 'db.tif']);
+            info = imfinfo(fname);
+            num_images = numel(info);
+            for k = 1:num_images
+                AA = imread(fname, k);
+                stack(:,:,k)=AA(:,:);
+                stack=double(stack);
+            end
+            ResponseWindow{f,lv}=stack(:,:,window);
+            DFF0_mean{f,lv} = stack (:,:,:);
+            baseLoc = stack(:,:,baseline);
+            accumBase = cat(3, accumBase, baseLoc); % why is this such a large number?
         end
         
         %         base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
@@ -598,12 +870,14 @@ for f=1:length(parameters.frequencies);
         clear stack AA
     end
 end
+end
 
 stdBaseline=std(accumBase,0,3);
 meanAccumBaseline = mean(accumBase,3);
 
 %plot response window
-y=DFF0_mean{5,2};
+% y=DFF0_mean{5,2};%RF
+y=DFF0_mean{1,9};
 %y=y(150:180,170:200,:);
 y= squeeze(mean(mean(y,2),1));
 x=1:length(y);
@@ -611,14 +885,32 @@ figure;
 plot(x,y)
 
 %what does a whole response window look like
-g = mean(ResponseWindow{5,2},3);
-%         CLIM = [0 350];
-imagesc(g);
+% g = mean(ResponseWindow{5,2},3);
+% %         CLIM = [0 350];
+% imagesc(g);
 
 
 %% plot all frequencies and amplitudes
 figure;
 n = 0;
+if parameters.stim_protocol==10
+
+    for lv=1:length(parameters.levels);
+        numLV=num2str(parameters.levels(lv))
+        lv
+        y = mean(ResponseWindow{lv},3);
+        
+        %         n = ((f-1)*length(parameters.frequencies))+lv
+        n=n+1
+        subplot(1,length(parameters.levels),n);
+        imagesc(y);
+        %    caxis([250 300]);
+        title(sprintf('dB %d', round(parameters.levels(lv),2)));
+        axis image;
+        set(gca,'XTick',[], 'YTick', [])
+    end
+
+else
 for f=1:length(parameters.frequencies);
     numF=num2str(round(parameters.frequencies(f)));
     fieldName = matlab.lang.makeValidName(['kHz' numF]);
@@ -628,13 +920,17 @@ for f=1:length(parameters.frequencies);
         
         %         n = ((f-1)*length(parameters.frequencies))+lv
         n=n+1
-        subplot(length(parameters.levels),length(parameters.frequencies),n);
+        subplot(length(parameters.frequencies),length(parameters.levels),n);
         imagesc(y);
         %    caxis([250 300]);
         title(sprintf('Freq %d', round(parameters.frequencies(f),2)));
         axis image;
-        set(gca,'XTick',[], 'YTick', [])
+%         set(gca,'XTick',[], 'YTick', [])
+lim = caxis
+caxis([0 3])
+
     end
+end
 end
 
 
@@ -653,7 +949,9 @@ for f=1:length(parameters.frequencies);
     imagesc(y);
     title(sprintf('Freq %d', f));
     axis image;
-    set(gca,'XTick',[], 'YTick', [])
+%     set(gca,'XTick',[], 'YTick', [])
+lim = caxis
+caxis([0 3])
 end
 
 %% zscore data
@@ -668,8 +966,8 @@ for f=1:length(parameters.frequencies);
         zscR = (bsxfun(@minus, mainResponse, (repmat(meanAccumBaseline,...
             [1 1 length(window)]))))./(repmat(stdBaseline,...
             [1 1 length(window)]));
-%         zscR = zscore(Df_f0);
-     
+        %         zscR = zscore(Df_f0);
+        
         %zscore of every frame for entire trace
         zscResponse{f,lv}=zscR;
         zscS = (bsxfun(@minus,Df_f0, (repmat(meanAccumBaseline,...
@@ -683,7 +981,7 @@ for f=1:length(parameters.frequencies);
         
         maxResponse{f,lv} = max(mainResponse,[],3);%max of response window (not zscored)
         meanR{f,lv} = mean(mainResponse);%average of sound response window
-        meanZresponse{f,lv} = mean(zscR(:,:,1:15),3);
+        meanZresponse{f,lv} = mean(zscR(:,:,:),3);
         plot(squeeze(mean(mean(zscR(:,:,:),1),2)));
         title(sprintf('Freq %d', round(parameters.frequencies(f),2)));
         
@@ -748,7 +1046,7 @@ end
 %         shadedErrorBar(x_green,smooth(meanPosResp,10),smooth(std_resp,10),'lineprops','b')
 %         stim1=num2str(data.([mouseID]).parameters.Var1List(V1));
 %         stim2=num2str(data.([mouseID]).parameters.Var2List(V2));
-%         if setup.stim_protocol==2
+%         if setup.parameters.stim_protocol==2
 %             title({sprintf('%s dB',stim2);sprintf('%s kHz',stim1)});
 %         end
 %          axis([0 length(x_green) 0 70])
@@ -759,7 +1057,7 @@ end
 %% determine CFs for each pixel
 [dim1 dim2 dim3] = size(imageData.Cropped_Imaging_Data);
 CF=NaN(dim1,dim2,1);
-response_threshold = 3;
+response_threshold = 2;
 
 
 for x= 1:dim1 % go through all x pixels

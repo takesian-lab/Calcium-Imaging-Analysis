@@ -6,7 +6,6 @@ function visualize_block(block)
 % 
 % Argument(s): 
 %   block (struct)
-%   m (struct)
 % 
 % Returns:
 %   

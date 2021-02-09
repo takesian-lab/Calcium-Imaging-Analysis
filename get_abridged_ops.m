@@ -80,5 +80,9 @@ ops2.win_baseline = ops.win_baseline;
 ops2.sig_baseline = ops.sig_baseline;
 ops2.neucoeff = ops.neucoeff;
 
+%% Zcorr
+if isfield(ops,'zcorr')
+    ops2.zcorr = ops.zcorr;
+end
 end
 

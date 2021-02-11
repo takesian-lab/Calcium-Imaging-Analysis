@@ -25,7 +25,7 @@
 
 %% Load Info.mat and change user-specific options
 
-recompile = 0; %1 to save over previously compiled blocks, 0 to skip
+recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
 %% set up values for 'align to stim'
@@ -169,9 +169,9 @@ for i = 1:size(currentInfo,1)
     setup.block_filename = strcat('Compiled_', setup.mousename, FOVtag, '_', setup.expt_date, ...
         '_Session', sprintf('%02d',setup.Tosca_session), '_Run', sprintf('%02d',setup.Tosca_run),...
         blockTag, '_', widefieldTag, setup.stim_name);
-    setup.block_supname = strcat(setup.mousename, '-', FOVtag, '-', setup.expt_date, ...
+    setup.block_supname = strcat(setup.mousename, '-', FOVtag(2:end), '-', setup.expt_date, ...
         '-', setup.stim_name, '-Session', sprintf('%02d',setup.Tosca_session), '-Run', sprintf('%02d',setup.Tosca_run),...
-        blockTag);
+        blockTag(2:end));
     
     %Skip files that have previously been compiled
     if ~recompile

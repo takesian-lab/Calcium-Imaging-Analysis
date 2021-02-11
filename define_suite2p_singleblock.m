@@ -122,11 +122,17 @@ block.F = Fall.F(keep_ind,Frame_set);
 block.Fneu = Fall.Fneu(keep_ind,Frame_set);
 block.spks = Fall.spks(keep_ind,Frame_set);
 
+%Save redcell data
 if isfield(Fall, 'redcell')
     redcell = Fall.redcell; %Not all runs will have red cells
     block.redcell = redcell(keep_ind);
 else
     block.redcell = nan;
+end
+
+%Update zcorr frame set
+if isfield (block.ops, 'zcorr')
+    block.ops.zcorr = block.ops.zcorr(:,Frame_set); %Dimensions are z-stack position vs. frame
 end
 
 block.setup = setup;

@@ -16,12 +16,27 @@ response_window = block.setup.constant.response_window; %Time where we expect a 
 response_window_in_frames = response_window*framerate; %Same as above in frames
 
 %Stimulus data
-stim_v1 = block.parameters.variable1'; %repeating frequency per trial
-stim_v2 = block.parameters.variable2'; %alternating frequency per trial
-holdingPeriod = block.holdingPeriod'; %holdiner period per trial
-repeating = unique(stim_v1);
-alternating = unique(stim_v2);
 
+stimInOv = 0;
+
+if stimInOv
+    stim_v1_kHz = unique(block.parameters.variable1');
+    stim_v2_kHz = unique(block.parameters.variable2');
+    stim_v1 = log2(block.parameters.variable1'); %repeating frequency per trial
+    stim_v2 = log2(block.parameters.variable2'); %alternating frequency per trial
+    holdingPeriod = block.holdingPeriod'; %holdiner period per trial
+    repeating_log = unique(stim_v1);
+    stim_v1 = stim_v1 - repeating_log;
+    stim_v2 = round(stim_v2 - repeating_log,2);
+    alternating = unique(stim_v2);
+    repeating = unique(stim_v1);
+else
+    stim_v1 = block.parameters.variable1'; %repeating frequency per trial
+    stim_v2 = block.parameters.variable2'; %alternating frequency per trial
+    holdingPeriod = block.holdingPeriod'; %holdiner period per trial
+    alternating = unique(stim_v2);
+    repeating = unique(stim_v1);
+end
 %% Find sound-responsive neurons
 
 STDlevel = 2; %# of standard deviations above baseline for a response to be considered active
@@ -179,33 +194,53 @@ for c = 1:length(cells)
     
     figure;
     %pull out only 1 alternating frequency at a time
+    maxvals = nan(1,length(alternating));
     for a = 1:length(alternating)
         currentFrequency = alternating(a);
         currentFrequencyIndex = stim_v2_loco == currentFrequency; 
         F7_freq = F7_df_f(currentFrequencyIndex,:);
 
-    %Average data
-    avg_F7_freq = nanmean(F7_freq);
+        %Average data
+        avg_F7_freq = nanmean(F7_freq);
+
+        %Add to list of cellResponses
+
+        y = smooth(avg_F7_freq,3)'; %Average and smooth responses
+        subplot(3,ceil(length(alternating)/3),a)
+        plot(y)
+        vline(nBaselineFrames, '-') %plot vertical red line at sound onset
+        xlim([0 size(y,2)])
+        ylabel('DF/F')
+        xlabel('Time (frames)')
+        title([num2str(currentFrequency)])
+        axis square
+        
+        maxvals(a) = max(y);
+    end
     
-    %Add to list of cellResponses
-   
-    y = smooth(avg_F7_freq,3)'; %Average and smooth responses
-    subplot(2,7,a)
-    plot(y)
-    vline(nBaselineFrames, '-') %plot vertical red line at sound onset
-    xlim([0 size(y,2)])
-    ylabel('DF/F')
-    xlabel('Time (frames)')
-    title([num2str(currentFrequency) 'kHz'])
-    axis square
-    end 
+    %Adjust max of each plot
+    for a = 1:length(alternating)
+        subplot(3,ceil(length(alternating)/3),a)
+        ylim([0 quantile(maxvals,0.9)])
+    end
+    
     suptitle(['cell #' num2str(cellNumber)])
+    
+    figure
+    plot(maxvals)
+    ylabel('Max response')
+    xlabel('Alternating frequency')
+    set(gca,'XTick',1:2:length(alternating))
+    set(gca,'XTickLabel',num2str(alternating(1:2:end)))
+    suptitle(['cell #' num2str(cellNumber)])
+
 end
 
-% %% Plot "neurometric" curve
-% % Look at the Psychometric Curve section in the code plot_behavior_maryse_and_esther
-% % Can you plot a "neurometric" curve for each cell using the peak amplitude of its response to the alternating frequencies?
-% 
+%% Plot "neurometric" curve
+% Look at the Psychometric Curve section in the code plot_behavior_maryse_and_esther
+% Can you plot a "neurometric" curve for each cell using the peak amplitude of its response to the alternating frequencies?
+
+
 % %Calculate hit rate per frequency
 % hitsPerFrequency = nan(1,length(uniqueFrequencies)); %make empty vector to fill with data
 % for i = 1:length(uniqueFrequencies)

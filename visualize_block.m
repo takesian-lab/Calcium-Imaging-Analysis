@@ -6,7 +6,6 @@ function visualize_block(block)
 % 
 % Argument(s): 
 %   block (struct)
-%   m (struct)
 % 
 % Returns:
 %   
@@ -24,7 +23,7 @@ function visualize_block(block)
 bin = 10; %Number of cells to plot at a time (for visibility)
 SF = 0.5; %Shrinking factor for traces to appear more spread out
 z = 1; %Portion of recording to plot e.g. 0.5, 0.33, 1
-Zframes = 15000000; %Plot red lines for stim onset if there is less than this many frames
+Zframes = 15000; %Plot red lines for stim onset if there is less than this many frames
 
 setup = block.setup;
 
@@ -35,24 +34,14 @@ else
 
     %% Plot locomotor activity
 
-    %THIS IS TEMPORARILY MESSED UP
-    if isfield(block, 'loco_activity')
-        loco_time = block.loco_times;
+    if isfield(block, 'locomotion_trace')
+        loco_time = block.locomotion_trace;
         loco_speed = block.loco_activity;
         active_time = loco_speed;
         active_time(active_time < block.setup.constant.locoThresh) = 0;
-
-%     elseif isfield(block, 'locomotion_data')
-%         loco_time = block.locomotion_data(:,1);
-%         loco_speed = block.locomotion_data(:,3);
-%     else
-%         loco_time = block.loco_data(:,1);
-%         loco_speed = block.loco_data(:,3);
+    else
+        error('Missing block.locomotion_trace. Update code and recompile block.')
     end
-%         
-%     if isfield(block, 'active_time')
-%         active_time = block.active_time;
-%     end
 
     figure; 
 
@@ -66,9 +55,7 @@ else
     ylabel('Considered active')
     xlabel('Seconds')
     set(gca, 'ytick', [0 1])
-    %if isfield(block, 'active_time') 
-        plot(loco_time, active_time > 0); hold on;
-    %end
+    plot(loco_time, active_time > 0); hold on;
     suptitle(block.setup.block_supname)
    
 

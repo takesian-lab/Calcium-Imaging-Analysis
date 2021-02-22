@@ -11,7 +11,12 @@ function visualize_block(block)
 %   
 % 
 % Notes:
-%
+%   To save figures to edit in Illustrator:
+%   If MATLAB thinks the figure is too complicated it will produce an
+%   embedded image in the EPS file, rather than vectorized content. You can
+%   force MATLAB to produce vectorized output by using the -painters option
+%   when calling the print command, as in:
+%       print -painters -depsc output.eps
 %
 % TODO: determine best way to measuer df/F. Currently, using mean trace as
 % Fo; however, there are other (better?) ways to do this.
@@ -37,6 +42,12 @@ else
     if isfield(block, 'locomotion_trace')
         loco_time = block.locomotion_trace;
         loco_speed = block.loco_activity;
+        if length(loco_speed) ~= length(loco_time)
+            shorter_loco = min(length(loco_speed),length(loco_time));
+            loco_time = loco_time(1:shorter_loco);
+            loco_speed = loco_speed(1:shorter_loco);
+            warning('locomotion_trace and loco_activity are not the same length')
+        end               
         active_time = loco_speed;
         active_time(active_time < block.setup.constant.locoThresh) = 0;
     else

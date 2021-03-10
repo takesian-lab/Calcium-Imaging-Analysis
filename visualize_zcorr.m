@@ -37,6 +37,12 @@ timestamp = block.timestamp;
 loco_time = block.locomotion_trace;
 loco_speed = block.loco_activity;
         
+if length(loco_speed) ~= length(loco_time)
+    shorter_loco = min(length(loco_speed),length(loco_time));
+    loco_time = loco_time(1:shorter_loco);
+    loco_speed = loco_speed(1:shorter_loco);
+    warning('locomotion_trace and loco_activity are not the same length')
+end    
 %% PLOT
 
 %Make timestamp for plotting

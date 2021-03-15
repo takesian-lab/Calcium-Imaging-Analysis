@@ -34,6 +34,11 @@ if ismissing(block.setup.suite2p_path) || ismissing(block.setup.block_path)
     return
 end
 
+if isfield(block, 'MultiplaneData')
+    disp('Skipping align to stim due to multiplane data...');
+    return
+end
+
 disp('Aligning to stim...');
 
 %% Pull out the traces to each stim

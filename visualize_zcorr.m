@@ -1,11 +1,12 @@
-function visualize_zcorr(block)
+function visualize_zcorr(block, plane)
 % DOCUMENTATION IN PROGRESS
 %
 % This function allows you to preview the output of ops.zcorr from a single block
 % 
 % Argument(s): 
 %   block (struct)
-% 
+%   plane (int) for multiplane data, number (0,1,2...) of the plane you want to anaylze
+%
 % Returns:
 %   
 % 
@@ -17,10 +18,22 @@ function visualize_zcorr(block)
 
 %% Setup
 
+if nargin > 1
+    multiplaneData = true;
+    planeName = ['plane' num2str(plane)];
+else
+    multiplaneData = false;
+end
+
 max_drift = 10; %Number of planes that the imaging plane can drift in +/- Z
 
 %Extract zcorr from block and establish best imaging plane
-zcorr_raw = block.ops.zcorr;
+if multiplaneData
+    zcorr_raw = block.ops.zcorr.(planeName);
+    nPlanes = numel(fieldnames(block.ops.zcorr));
+else
+    zcorr_raw = block.ops.zcorr;
+end
 [~, best_z_raw] = max(zcorr_raw,[],1);
 imaging_plane = mode(best_z_raw);
 A = imaging_plane - max_drift;
@@ -34,6 +47,12 @@ imaging_plane_cropped = mode(best_z);
 
 %locomotor activity
 timestamp = block.timestamp;
+if multiplaneData
+    planeInd = [1:nPlanes:length(timestamp)] + plane;
+    planeInd(planeInd > length(timestamp)) = [];
+    timestamp = timestamp(planeInd);
+end
+
 loco_time = block.locomotion_trace;
 loco_speed = block.loco_activity;
         
@@ -45,8 +64,14 @@ if length(loco_speed) ~= length(loco_time)
 end    
 %% PLOT
 
+if timestamp(end) < 200
+    unit = 10;
+else
+    unit = 100;
+end
+
 %Make timestamp for plotting
-plotLabels = 0:100:(timestamp(end) - mod(timestamp(end),100));
+plotLabels = 0:unit:(timestamp(end) - mod(timestamp(end),100));
 plotInds = nan(size(plotLabels));
 for i = 1:length(plotLabels)
     [~, plotInds(i)] = min(abs(timestamp-plotLabels(i)));
@@ -92,6 +117,7 @@ suptitle(block.setup.block_supname)
 
 %Only take Z information where loco activity is available
 %And resample points in Z vector to match loco vector
+
 best_z_index = nan(size(loco_time));
 for i = 1:length(loco_time)
     [~, best_z_index(i)] = min(abs(timestamp-loco_time(i)));
@@ -134,7 +160,12 @@ suptitle(block.setup.block_supname)
 
 %% XCORR OF CELL ACTIVITY vs. Z STACK BEST POSITION
 
-F7 = block.F - block.setup.constant.neucoeff*block.Fneu;
+if multiplaneData
+    F7 = block.F.(planeName) - block.setup.constant.neucoeff*block.Fneu.(planeName);
+else
+    F7 = block.F - block.setup.constant.neucoeff*block.Fneu;
+end
+        
 F7_loco = F7(:,best_z_index); %Resampled to match loco
 
 %Compute DF/F

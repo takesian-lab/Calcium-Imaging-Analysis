@@ -41,7 +41,7 @@ redChannel = 1; %Number of the red channel, i.e. Ch1 or Ch2
 %Filepath access
 frameA = 13; %number of chars to start of frame number
 frameB = 8;  %number of chars to end of frame number
-blockA = 32; %number of chars to start of block umber
+blockA = 32; %number of chars to start of block number
 blockB = 30; %number of chars to end of block number
 chanA  = 15; %number of chars to channel number
 
@@ -52,7 +52,7 @@ filelist_char = ops.filelist;
 filelist_str = string(ops.filelist);
 
 %The filelist format should be as follows:
-%D:/FILEPATH/BOT_MOUSEID_DETAILS-###/BOT_MOUSEID_DETAILS-###_Cycle#####_Ch2_######.ome.tif
+%D:/FILEPATH/BOT_FILENAME-###/BOT_FILENAME-###_Cycle#####_Ch2_######.ome.tif
 % ### is the block number
 % ##### is the cycle number (used for t-series)
 % ###### is the tif/frame number
@@ -129,8 +129,11 @@ end
 if returnFrameSet
     %Convert blockFrames into Frame_set based on block_name
     matching_blocks = strcmp(blockNames, block_name);
-
-    if sum(matching_blocks) == 0
+    char_block_name = char(block_name);
+    
+    if isequal(char_block_name(1:10),'Zcorrected')
+        matching_blocks = 1; %Accommodate Z-corrected data
+    elseif sum(matching_blocks) == 0
         error('block_name is not contained in dataset')
     elseif sum(matching_blocks) > 1
         error('Multiple blocks with the same block_name');

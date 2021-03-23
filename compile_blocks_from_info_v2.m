@@ -251,7 +251,9 @@ for i = 1:size(currentInfo,1)
     [block] = define_suite2p_singleblock(block, user_ops);
     
     %find the stim-aligned traces
-    [block] = align_to_stim(block);
+    if ~isfield(block, 'MultiplaneData') %align_to_stim does not accommodate multiplane data yet
+        [block] = align_to_stim(block);
+    end
     
     %% Save block
     disp('Saving...');

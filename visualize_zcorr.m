@@ -1,4 +1,6 @@
 function visualize_zcorr(block, plane)
+% visualize_zcorr(block, plane)
+%
 % DOCUMENTATION IN PROGRESS
 %
 % This function allows you to preview the output of ops.zcorr from a single block
@@ -21,6 +23,8 @@ function visualize_zcorr(block, plane)
 if nargin > 1
     multiplaneData = true;
     planeName = ['plane' num2str(plane)];
+elseif nargin == 1 && isfield(block,'MultiplaneData')
+    error('Please choose plane number: visualize_zcorr(block,plane)')
 else
     multiplaneData = false;
 end
@@ -228,10 +232,22 @@ for i = 1:4
 end
 suptitle(block.setup.block_supname)
 
+%Compute +/- peak of cross-correlogram
+[loco_peak, loco_peak_ind] = max(abs(cmat_loco),[],2);
+[bestz_peak, bestz_peak_ind] = max(abs(cmat_bestz),[],2);
+loco_sign = double(cmat_loco(loco_peak_ind) > 0);
+bestz_sign = double(cmat_bestz(bestz_peak_ind) > 0);
+loco_sign(loco_sign == 0) = -1;
+bestz_sign(bestz_sign == 0) = -1;
+loco_peak = loco_peak.*loco_sign;
+bestz_peak = bestz_peak.*bestz_sign;
+
 figure
-scatter(max(cmat_loco,[],2), max(cmat_bestz,[],2))
+scatter(loco_peak, bestz_peak)
 xlabel('xcorr(Loco, F)')
 ylabel('xcorr(Z difference, F)')
+hline(0)
+vline(0)
 
 suptitle(block.setup.block_supname)
 end

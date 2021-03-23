@@ -1,4 +1,6 @@
 function zcorrect_multiplane(block, plotFigureOnly)
+% zcorrect_multiplane(block, plotFigureOnly)
+%
 % DOCUMENTATION IN PROGRESS
 %
 % Compute zcorr for multiplane data and make Z-corrected blocks
@@ -20,7 +22,7 @@ function zcorrect_multiplane(block, plotFigureOnly)
 %% Setup
 
 if nargin < 2
-    plotFigureOnly = 0;
+    plotFigureOnly = 1;
 end
 
 max_drift = 10; %Number of planes that the imaging plane can drift in +/- Z
@@ -99,6 +101,7 @@ for p = 1:nPlanes
     subplot(4,nPlanes,p+nPlanes*2)
     plot(best_z(B1:B2))
     hline(imaging_plane_cropped, 'r')
+    hline(mode(best_z(B1:B2)), 'k')
     set(gca, 'YTick', 1:5:(B-A)+1)
     set(gca, 'YTickLabel', A:5:B+1)
     ylabel('Best Z stack position')
@@ -159,17 +162,48 @@ for f = 1:min_frames
     end
 end
 
-% % PLOT
-% 
-% figure; hold on
-% subplot(3,1,1)
-% imagesc(best_z_val_stack)
-% 
-% subplot(3,1,2)
-% imagesc(best_z_stack_relative)
-% 
-% subplot(3,1,3)
-% plot(best_plane)
+% PLOT
+
+figure; hold on
+subplot(4,1,1); hold on
+imagesc(best_z_stack_relative)
+colormap('jet')
+ylabel('Plane')
+xlabel('Frames')
+title('Frames from best z-position')
+set(gca,'YTick',1:nPlanes)
+set(gca,'YTickLabel',0:(nPlanes-1))
+xlim([0.5 length(best_plane) + .5])
+ylim([0.5 nPlanes + .5])
+
+subplot(4,1,2)
+plot(best_plane)
+xlim([0 length(best_plane)])
+ylim([0 nPlanes])
+title('Best plane')
+set(gca,'YTick',1:nPlanes)
+
+subplot(4,1,3); hold on
+imagesc(best_z_stack_relative)
+colormap('jet')
+ylabel('Plane')
+xlabel('Frames')
+title('Overlay')
+set(gca,'YTick',1:nPlanes)
+set(gca,'YTickLabel',0:(nPlanes-1))
+plot(best_plane, 'w')
+xlim([0.5 length(best_plane) + .5])
+ylim([0.5 nPlanes + .5])
+
+subplot(4,1,4)
+hist(best_plane, 0.5:1:(nPlanes+0.5))
+set(gca,'XTick', 0.5:1:(nPlanes+0.5))
+set(gca,'XTickLabel', 0:nPlanes)
+title('N best frames per plane')
+xlabel('Plane')
+ylabel('Count')
+
+suptitle(block.setup.block_supname)
 
 %%
 
@@ -178,6 +212,8 @@ if plotFigureOnly
 end
 
 %% Make Z-corrected block
+
+disp('Performing Z-correction')
 
 cd(block.setup.block_path)
 [path,folder_name,~] = fileparts(pwd);

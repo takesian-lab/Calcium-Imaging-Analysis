@@ -20,6 +20,29 @@ The stim_protocol code is:
 - spontaneous     = 12
 - behavior MT     = 13
 
+Output block structure:
+
+block.setup 		= list of variables created from Info spreadsheet
+block.setup.constant 	= user-defined constants from the top of compile_blocks_from_info script
+block.start_time 	= raw Tosca timestamp for the start of each trial
+block.Tosca_times 	= raw Tosca timestamps for every sample in each trial
+block.errors 		= list of error trials (which have been removed from every variable saved in block)
+block.New_sound_times 	= sound time in seconds relative to each trial start
+block.lick_time		= lick raster (0 or 1) for every sample in each trial
+block.concat_times 	= concatenated trials in seconds (time-corrected)
+block.concat_licks  	= concatenated lick raster corresponding to time in continuous_trials
+block.outcome		= CS+/CS- outcomes: 1 = hit, 0 = miss, 3 = withhold, 4 = false alarm; nan = other
+block.trialType		= CS+/CS- identities: 1 = CS+, 0 = CS-
+block.TargetFreq	= Stim frequency for behavior blocks
+block.parameters	= stimulus parameters for every trial (e.g. freq. and dB)
+block.loco_data		= raw loco data if block does not have Bruker data
+block.loco_activity	= concatenated locomotor activity trace for the full block (time-corrected)
+block.loco_times	= timestamp in seconds corresponding to loco_activity
+block.loc_Trial_times 	= locomotor activity for each trial (time-corrected)
+block.loc_Trial_activity= timestamp in seconds corresponding to loc_Trial_times
+block.rxn_time 		= reaction time in ms
+block.locIDX		= indices of loco_activity/loco_times that correspond to each trial
+
 -----
 
 # Running the code

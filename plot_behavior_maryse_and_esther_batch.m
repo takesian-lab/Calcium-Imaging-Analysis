@@ -3,8 +3,9 @@
 %% Load files
 
 stim_protocol = 13; %Maryse behavior
+stim_name = 'training';
 
-loadPreviousData = 1;
+loadPreviousData = 0;
 
 if loadPreviousData
     %Load data
@@ -32,7 +33,7 @@ else
     cd(info_path)
     Info = importfile(info_filename);
 
-    [data] = fillSetupFromInfoTable_v3(Info, compiled_blocks_path, stim_protocol);
+    [data] = fillSetupFromInfoTable_v3(Info, compiled_blocks_path, stim_protocol, stim_name);
     disp('Data structure created.')
 end
 

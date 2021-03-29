@@ -151,6 +151,7 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
         for y=1:length(zero_times) % find the time (in Tosca units) for the new sound
             n=StateChange(y,1);
             New_sound_times(y)=zero_times{1,y}(1,n);
+            New_sound_idx(y) = n;
         end
 
         if setup.stim_protocol == 13
@@ -228,30 +229,43 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
         % divide the loco activity by trials to use in
         % define_sound_singleblock
         activity_trial{t} = loco_data.speed(locTrial_idx{t}(:));
-        
-        % now that all the loco times are corrected per trial, put them
-        % back together to get a loc trace that is on a correct timescale
-        loco_trace_times = [];
-        loco_trace_activity =[];
-        
-        
-        
-        for j = 1:length(zero_loc)
-            if j == 1
-                loc_add = zero_loc{1,j}(:);
-                loco_trace_times = [loco_trace_times; loc_add];
-                activity_add = activity_trial{1,j}(:);
-                loco_trace_activity =[loco_trace_activity;activity_add];
-            else
-                loc_add = zero_loc{1,j}(:) + loc_add(end);
-                loco_trace_times = [loco_trace_times; loc_add];
-                activity_add = activity_trial{1,j}(:);
-                loco_trace_activity =[loco_trace_activity;activity_add];
-                end
-            loco_trace_activity=abs(loco_trace_activity);
-        end
-        
     end
+end
+
+% now that all the loco times are corrected per trial, put them
+% back together to get a loc trace that is on a correct timescale
+loco_trace_times = [];
+loco_trace_activity =[];
+
+% added by Maryse 3/26/21 - do the same for licks/trial time
+concatenated_trial_times = [];
+concatenated_lick_times = [];
+
+for j = 1:length(zero_loc)
+    if j == 1
+        loc_add = zero_loc{1,j}(:);
+        loco_trace_times = [loco_trace_times; loc_add];
+        activity_add = activity_trial{1,j}(:);
+        loco_trace_activity =[loco_trace_activity;activity_add];
+
+        %added by Maryse
+        trial_add = zero_times{1,j}(:);
+        lick_add = licks{1,j}(:);
+        concatenated_trial_times = [concatenated_trial_times; trial_add];
+        concatenated_lick_times = [concatenated_lick_times; lick_add];
+    else
+        loc_add = zero_loc{1,j}(:) + loc_add(end);
+        loco_trace_times = [loco_trace_times; loc_add];
+        activity_add = activity_trial{1,j}(:);
+        loco_trace_activity =[loco_trace_activity;activity_add];
+
+        %added by Maryse
+        trial_add = zero_times{1,j}(:) + trial_add(end);
+        lick_add =  licks{j,1}(:);
+        concatenated_trial_times = [concatenated_trial_times; trial_add];
+        concatenated_lick_times = [concatenated_lick_times; lick_add];
+    end
+    loco_trace_activity=abs(loco_trace_activity);
 end
 
 A=exist('targetFreq');
@@ -351,10 +365,12 @@ for j=1:length(Data)
 end
 error_trials=cell2mat(error_trials);
 k = find(error_trials>0);
+k(k > ntr) = []; %Cannot remove trials that don't exist
 if ~isempty(k)
     start_time(:,k) = [];
     Tosca_times(:,k)  = [];
     New_sound_times(:,k) = [];
+    New_sound_idx(:,k) = [];
     licks(k,:) = [];
     b_Outcome(:,k) = [];
     trialType(:,k) = [];
@@ -385,7 +401,10 @@ block.start_time = start_time;
 block.Tosca_times = Tosca_times;
 block.errors = k;
 block.New_sound_times = New_sound_times;
+block.New_sound_idx = New_sound_idx;
 block.lick_time = licks;
+block.concat_times = concatenated_trial_times;
+block.concat_licks = concatenated_lick_times;
 block.Outcome =  cell2mat(b_Outcome);
 block.trialType = cell2mat(trialType);
 block.TargetFreq = targetFreq;
@@ -395,7 +414,7 @@ block.loco_data = loco_data; %raw loco data
 block.loco_activity = loco_trace_activity; %trace of velocity
 block.loco_times = loco_trace_times; %time-corrected, should match the velocity trace
 block.loc_Trial_times = zero_loc; %timestamps for loco by each trial
-block.loc_Trial_activity = activity_trial; % velocity for each trial
+block.loc_Trial_activity = activity_trial; % time-corrected velocity for each trial
 block.rxn_time = rxn_time;
 block.setup = setup;
 block.locIDX = locTrial_idx;

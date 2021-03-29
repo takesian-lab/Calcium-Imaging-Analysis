@@ -56,13 +56,13 @@ PC_name = getenv('computername');
 
 switch PC_name
     case 'RD0366' %Maryse
-        info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
-        save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_V2';
+%         info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
+%         save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_V2';
         %info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
         %save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
-        %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
-        %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks v2';
-        info_filename = 'Info_NxDE102320M2';
+        info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks v2';
+        info_filename = 'Info v2';
         ops_filename = 'Maryse_ops2.mat';
          
     case 'TAKESIANLAB2P' %2P computer
@@ -251,9 +251,7 @@ for i = 1:size(currentInfo,1)
     [block] = define_suite2p_singleblock(block, user_ops);
     
     %find the stim-aligned traces
-    if ~isfield(block, 'MultiplaneData') %align_to_stim does not accommodate multiplane data yet
-        [block] = align_to_stim(block);
-    end
+    [block] = align_to_stim(block);
     
     %% Save block
     disp('Saving...');

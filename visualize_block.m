@@ -40,19 +40,26 @@ else
     %% Plot locomotor activity
 
     if isfield(block, 'locomotion_trace')
+        %Time-corrected loco trace matched to Bruker data
         loco_time = block.locomotion_trace;
         loco_speed = block.loco_activity;
-        if length(loco_speed) ~= length(loco_time)
-            shorter_loco = min(length(loco_speed),length(loco_time));
-            loco_time = loco_time(1:shorter_loco);
-            loco_speed = loco_speed(1:shorter_loco);
-            warning('locomotion_trace and loco_activity are not the same length')
-        end               
-        active_time = loco_speed;
-        active_time(active_time < block.setup.constant.locoThresh) = 0;
+    elseif isfield(block, 'loco_activity')
+        %Time-corrected loco traces
+        loco_time = block.loco_times;
+        loco_speed = block.loco_activity;
+        warning('Missing block.locomotion_trace. You may need to update code and recompile block.')
     else
         error('Missing block.locomotion_trace. Update code and recompile block.')
     end
+
+    if length(loco_speed) ~= length(loco_time)
+        shorter_loco = min(length(loco_speed),length(loco_time));
+        loco_time = loco_time(1:shorter_loco);
+        loco_speed = loco_speed(1:shorter_loco);
+        warning('locomotion_trace and loco_activity are not the same length')
+    end               
+    active_time = loco_speed;
+    active_time(active_time < block.setup.constant.locoThresh) = 0;
 
     figure; 
 

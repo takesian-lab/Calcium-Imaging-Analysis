@@ -43,19 +43,19 @@ switch PC_name
         analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
         
     case 'RD0332' %Carolyn
-        cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS';
-        blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
-        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData CGS\Locomotor_receptivecell only';
-        cellList_filename = 'ResponsiveCellsOnly';
+        cellList_path = 'Z:\Carolyn\2P Imaging data\SSRI response stimuli pilot\VxDD062420M3';
+        blocks_path = 'Z:\Carolyn\2P Imaging data\SSRI response stimuli pilot\compiled blocks';
+        save_path = 'Z:\Carolyn\2P Imaging data\SSRI response stimuli pilot\VxDD062420M3\extracted';
+        cellList_filename = 'VxDD062420M3_postFLX';
         
         dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
         STDlevel = 2;
         AUC_F_level = 0.05;
         AUC_spks_level = 5;
-        sort_active = 2; % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
+        sort_active = 0; % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
         plot_graphs = 0;
-        save_data = 1;
-        analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
+        save_data = 0;
+        analyze_by_stim_condition = 0; %determine if cell is active based on individual stim conditions
         
     otherwise
         disp('Computer does not match known users')
@@ -559,14 +559,14 @@ for b = 1:length(uniqueBlocks)
     ExtractedData.Calcium_Raster = raster_F;
     ExtractedData.Spikes_Raster = raster_spks;
     
-    %% Save
+    %% Save extracted data
     if save_data == 1
         cd(save_path)
-        %     d = datestr(now,'yyyymmdd-HHMMSS');
-        %     save(['extractedData_' dataType '_' d '.mat'], 'ExtractedData');
-        save(['extractedData_' dataType '.mat'], 'ExtractedData');
+            d = datestr(now,'yyyymmdd-HHMMSS');
+            save(['extractedData_' dataType '_' d '.mat'], 'ExtractedData');
+%         save(['extractedData_' dataType '.mat'], 'ExtractedData');
     end
-    
+%     save(['motorSort_list_' dataType '.mat'], 'CellsInOrder');
     %% Plot sorted rasters
     
     %Plot by activity type and peak/trough amplitude
@@ -590,7 +590,7 @@ for b = 1:length(uniqueBlocks)
             currentActivity = A{i};
             activeRows = strcmpi(activityList, currentActivity);
             currentRows = and(currentCells, activeRows);
-            cellnumbers_A = find(currentRows==1); %cell numbers to use for comparison in locomotor 
+            cellnumbers_A = find(currentRows); %cell numbers to use for comparison in locomotor 
             
             %find rows in current activity type and sort by amplitude and/or latency
             current_raster_F = ExtractedData.Calcium_Raster(currentRows,:);
@@ -622,23 +622,30 @@ for b = 1:length(uniqueBlocks)
             resorted_raster_spks = [resorted_raster_spks; current_raster_spks(gcamp_sort_ind,:)];
             
             %Save cell order
+
+%         cellOrder_not_sorted = find(currentRows);
+%         cellOrder = [cellOrder; cellOrder_not_sorted(gcamp_sort_ind)];
+        
+       CellsInOrder.([Cells{c}]).([A{i}]) = cellnumbers_A(gcamp_sort_ind);
+
         cellOrder_not_sorted = find(currentRows);
         cellOrder = [cellOrder; cellOrder_not_sorted(gcamp_sort_ind)];
         CellsInOrder.([Cells{c}]).([A{i}]) = cellnumbers_A ;
         
         end
+        
         if c == 1
         VIP_raster_F = resorted_raster_F;
         VIP_raster_spks = resorted_raster_spks;
         VIP_average_F = average_F;
         VIP_average_spks = average_spks;
-        VIP_cell_order = cellOrder;
+%         VIP_cell_order = cellOrder;
     elseif c == 2
         NDNF_raster_F = resorted_raster_F;
         NDNF_raster_spks = resorted_raster_spks;
         NDNF_average_F = average_F;
         NDNF_average_spks = average_spks;
-        NDNF_cell_order = cellOrder;
+%         NDNF_cell_order = cellOrder;
     end
 end
 
@@ -716,11 +723,20 @@ h = colorbar;
 set(get(h,'label'),'string','Spikes');
 caxis([0, 100]);
 
+    %% Save cell order
+    if save_data == 1
+        cd(save_path)
+            d = datestr(now,'yyyymmdd-HHMMSS');
+            save(['CellsInOrder_' dataType '_' d '.mat'], 'CellsInOrder');
+%         save(['extractedData_' dataType '.mat'], 'ExtractedData');
+    end
+%     save(['motorSort_list_' dataType '.mat'], 'CellsInOrder');
+
 %% Helper script
 
 removeOutlier = 1;
 
-outlier = 123;
+outlier = [49 52 61 63 178 215];
 
 if removeOutlier
     ExtractedData.AutoActivity(outlier,:) = [];

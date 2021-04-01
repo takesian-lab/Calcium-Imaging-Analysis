@@ -44,10 +44,9 @@ else
     switch PC_name
         case 'RD0366' %Maryse
             info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-            %compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks';
-            compiled_blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\analyzed\Daily_Imaging';
+            compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks_v2';
             save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-            info_filename = 'Info_VxAC031419M1';
+            info_filename = 'Info_YE083020F1';
         case 'RD0332' %Carolyn
             info_path = 'D:\2P analysis\2P local data\Carolyn';
 %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
@@ -65,7 +64,8 @@ else
     Info = importfile(info_filename);
 
     %Create data structure for files corresponding to stim_protocol
-    [data] = fillSetupFromInfoTable_v2(Info, compiled_blocks_path, stim_protocol);
+    [data] = fillSetupFromInfoTable_v3(Info, compiled_blocks_path, stim_protocol);
+    %[data] = fillSetupFromInfoTable_v2(Info, compiled_blocks_path, stim_protocol); Use V2 for old compile_blocks format
     data.setup.run_redcell = run_redcell;
 end
 

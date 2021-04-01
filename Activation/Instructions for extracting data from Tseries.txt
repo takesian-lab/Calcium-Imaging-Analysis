@@ -1,0 +1,12 @@
+1. Run data through Suite2p
+2. Perform manual labelling
+3. Save to mat
+4. Record info in Info.mat (just to keep track - compile blocks doesn't work yet)
+5. Run extractYfromTseries (change mouse_dir)
+	T-series data saved in mouse_dir
+	Keep T-series data loaded
+6. Run extract_ROI_data_from_Fall
+	(navigate to current Fall.mat folder first)
+	(change runID)
+7. Run plot_ROI_data_from_Fall to plot peak of activation vs. power
+	(modify cell number, run, and power)

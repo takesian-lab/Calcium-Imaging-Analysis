@@ -1,4 +1,4 @@
-function [block] = define_sound_singleblock(block,constant)
+function [block] = define_sound_singleblock(block)
 % DOCUMENTATION IN PROGRESS
 % 
 % This function obtains the Bruker timestamp from the BOT and VR csv files,
@@ -25,7 +25,6 @@ function [block] = define_sound_singleblock(block,constant)
 % Variables needed from block.setup:
 % -block_path
 % -VR_path
-% -voltage_recording
 % -stim_protocol
 %
 % Uses the function:
@@ -49,6 +48,7 @@ end
 disp('Pulling out Bruker data...');
 
 setup = block.setup;
+constant = block.setup.constant;
 
 %% Go to block and VR folders and pull out BOT and voltage recording files
 
@@ -58,7 +58,7 @@ setup = block.setup;
 %now lets get the relevant data from Voltage recording. This is when Tosca
 %sends a 5V burst to the Bruker system. The first time this occurs is t=0 on Tosca
 
-if setup.stim_protocol == 4 || setup.voltage_recording == 0
+if ~ismissing(setup.VR_name)
     cd(setup.VR_path) %Widefield
 else
     cd(setup.block_path) %2p
@@ -152,14 +152,73 @@ cd(setup.block_path)
 filedir = dir;
 filenames = {filedir(:).name};
 BOT_files = filenames(contains(filenames,'botData'));
-BOT_filename = BOT_files{contains(BOT_files,'.csv')};
+BOT_files_ind = contains(BOT_files,'.csv');
+if sum(BOT_files_ind) == 1 %Regular BOT
+    BOT_filename = BOT_files{BOT_files_ind};
+    display(['Loading ' BOT_filename])
+    frame_data = csvread(BOT_filename, 1,0);
+else %T-series or multi-plane BOT
+    display(['Loading ' num2str(sum(BOT_files_ind)) ' BOT files'])
+    BOT_filename = nan;
+    frame_data = [];
+    for b = 1:length(BOT_files)
+        if BOT_files_ind(b) == 1
+            temp_frame_data = csvread(BOT_files{b}, 1,0);
+            frame_data = [frame_data; temp_frame_data];
+        end
+    end       
+end
 
-display(['Loading ' BOT_filename])
-frame_data = csvread(BOT_filename, 1,0);
 timestamp = frame_data(:,1)-frame_data(1,1);% this is where we make that small correction
 block.timestamp = timestamp;
 block.active_trials = active_trials;
 block.locomotion_trace = locomotion_trace;
+
+%Read XML file
+disp('Reading XML file')
+XML_files = filenames(contains(filenames,'.xml'));  
+X = xml2struct(XML_files{1});
+
+if ~ismissing(setup.VR_name) %widefield
+    XML = struct;
+    XML.activeMode = X.PVScan.PVStateShard.PVStateValue{1, 1}.Attributes.value;
+    XML.camera_binFactor = X.PVScan.PVStateShard.PVStateValue{1, 3}.Attributes.value;
+    XML.camera_exposureMode = X.PVScan.PVStateShard.PVStateValue{1, 4}.Attributes.value;
+    XML.camera_exposureTime = X.PVScan.PVStateShard.PVStateValue{1, 5}.Attributes.value;
+    XML.dwellTime = X.PVScan.PVStateShard.PVStateValue{1, 9}.Attributes.value;
+    XML.framePeriod = X.PVScan.PVStateShard.PVStateValue{1, 10}.Attributes.value;
+    XML.opticalZoom = X.PVScan.PVStateShard.PVStateValue{1, 21}.Attributes.value;
+    
+    framerate = ceil(1/str2double(XML.framePeriod));
+    if framerate ~= 20
+        warning('Check frame rate')
+    end
+    
+else %2p
+    XML = struct;
+    XML.filename = XML_files{1};
+    XML.activeMode = X.PVScan.PVStateShard.PVStateValue{1, 1}.Attributes.value;
+    XML.dwellTime = X.PVScan.PVStateShard.PVStateValue{1, 5}.Attributes.value;
+    XML.framePeriod = X.PVScan.PVStateShard.PVStateValue{1, 6}.Attributes.value;
+    XML.laserPower = X.PVScan.PVStateShard.PVStateValue{1, 8}.IndexedValue{1, 1}.Attributes.value;
+    XML.laserWavelength = X.PVScan.PVStateShard.PVStateValue{1, 9}.IndexedValue.Attributes.value;
+    XML.PMT1_Gain = X.PVScan.PVStateShard.PVStateValue{1, 19}.IndexedValue{1, 1}.Attributes.value;
+    XML.PMT2_Gain = X.PVScan.PVStateShard.PVStateValue{1, 19}.IndexedValue{1, 2}.Attributes.value;
+    XML.linesPerFrame = X.PVScan.PVStateShard.PVStateValue{1, 10}.Attributes.value;
+    XML.micronsPerPixelX = X.PVScan.PVStateShard.PVStateValue{1, 12}.IndexedValue{1, 1}.Attributes.value;
+    XML.micronsPerPixelY = X.PVScan.PVStateShard.PVStateValue{1, 12}.IndexedValue{1, 2}.Attributes.value;
+    XML.opticalZoom = X.PVScan.PVStateShard.PVStateValue{1, 17}.Attributes.value;
+    
+    framerate = ceil(1/str2double(XML.framePeriod));
+    if framerate ~= 15 && framerate ~= 30
+        warning('Check frame rate')
+    end
+end
+
+%Record XML data
+setup.XML = XML;
+setup.framerate = framerate;
+disp(['Framerate: ' num2str(framerate)])
 
 %Record filenames
 setup.VR_filename = VR_filename;

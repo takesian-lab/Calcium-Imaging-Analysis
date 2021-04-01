@@ -6,13 +6,17 @@ function visualize_block(block)
 % 
 % Argument(s): 
 %   block (struct)
-%   m (struct)
 % 
 % Returns:
 %   
 % 
 % Notes:
-%
+%   To save figures to edit in Illustrator:
+%   If MATLAB thinks the figure is too complicated it will produce an
+%   embedded image in the EPS file, rather than vectorized content. You can
+%   force MATLAB to produce vectorized output by using the -painters option
+%   when calling the print command, as in:
+%       print -painters -depsc output.eps
 %
 % TODO: determine best way to measuer df/F. Currently, using mean trace as
 % Fo; however, there are other (better?) ways to do this.
@@ -24,6 +28,7 @@ function visualize_block(block)
 bin = 10; %Number of cells to plot at a time (for visibility)
 SF = 0.5; %Shrinking factor for traces to appear more spread out
 z = 1; %Portion of recording to plot e.g. 0.5, 0.33, 1
+Zframes = 15000; %Plot red lines for stim onset if there is less than this many frames
 
 setup = block.setup;
 
@@ -34,24 +39,20 @@ else
 
     %% Plot locomotor activity
 
-    %THIS IS TEMPORARILY MESSED UP
-    if isfield(block, 'loco_activity')
-        loco_time = block.loco_times;
+    if isfield(block, 'locomotion_trace')
+        loco_time = block.locomotion_trace;
         loco_speed = block.loco_activity;
+        if length(loco_speed) ~= length(loco_time)
+            shorter_loco = min(length(loco_speed),length(loco_time));
+            loco_time = loco_time(1:shorter_loco);
+            loco_speed = loco_speed(1:shorter_loco);
+            warning('locomotion_trace and loco_activity are not the same length')
+        end               
         active_time = loco_speed;
         active_time(active_time < block.setup.constant.locoThresh) = 0;
-
-%     elseif isfield(block, 'locomotion_data')
-%         loco_time = block.locomotion_data(:,1);
-%         loco_speed = block.locomotion_data(:,3);
-%     else
-%         loco_time = block.loco_data(:,1);
-%         loco_speed = block.loco_data(:,3);
+    else
+        error('Missing block.locomotion_trace. Update code and recompile block.')
     end
-%         
-%     if isfield(block, 'active_time')
-%         active_time = block.active_time;
-%     end
 
     figure; 
 
@@ -65,9 +66,7 @@ else
     ylabel('Considered active')
     xlabel('Seconds')
     set(gca, 'ytick', [0 1])
-    %if isfield(block, 'active_time') 
-        plot(loco_time, active_time > 0); hold on;
-    %end
+    plot(loco_time, active_time > 0); hold on;
     suptitle(block.setup.block_supname)
    
 
@@ -216,7 +215,7 @@ else
 
                 count = count + 1;
             end
-            if Z < 15000 && isfield(block, 'Sound_Time') %Don't plot red lines if there is too much data, otherwise its messy
+            if Z < Zframes && isfield(block, 'Sound_Time') %Don't plot red lines if there is too much data, otherwise its messy
                 %plot multicolored lines if less than 8 stim, else plot red lines
                 if isfield(block.parameters, 'variable1')
                         var1 = unique(block.parameters.variable1);
@@ -288,7 +287,7 @@ else
                 img = block.img.refImg;
                 %img = block.img.meanImg;
                 image(img);
-                if block.setup.voltage_recording == 0
+                if ismissing(block.setup.VR_name)
                     imagesc(img);
                 end
             elseif m == 2 

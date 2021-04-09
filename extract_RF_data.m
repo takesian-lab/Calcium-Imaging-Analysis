@@ -28,10 +28,14 @@ PC_name = getenv('computername');
 
 switch PC_name
     case 'RD0366' %Maryse
-        cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
-        blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
-        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData MET';
-        cellList_filename = 'ResponsiveCells';
+%         cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
+         blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
+%         save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData MET';
+%         cellList_filename = 'ResponsiveCells';
+        cellList_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\Presentations\Joint lab meeting April 7, 2021';
+        %blocks_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_v2';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\Presentations\Joint lab meeting April 7, 2021';
+        cellList_filename = 'Tuning_NDNF';
         
         dataType = 'RF';
         STDlevel = 2;

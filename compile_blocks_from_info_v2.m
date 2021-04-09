@@ -56,10 +56,8 @@ PC_name = getenv('computername');
 
 switch PC_name
     case 'RD0366' %Maryse
-%         info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
-%         save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_V2';
-        %info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
-        %save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
+         %info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
+         %save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_V2';
         info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
         save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks v2';
         info_filename = 'Info v2';

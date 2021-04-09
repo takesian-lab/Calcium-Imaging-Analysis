@@ -110,8 +110,10 @@ try
     ikeep = false(size(tloco));
     for k = 1:length(tloco)
         minDiff = min(abs(tloco(k) - ttr));
-        if minDiff < 0.055
+        if minDiff < 0.05
             ikeep(k) = true;
+        else
+            minDiff
         end
     end
     

@@ -27,18 +27,22 @@ PC_name = getenv('computername');
 
 switch PC_name
     case 'RD0366' %Maryse
-        cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
-        blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
-        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData MET';
-        cellList_filename = 'Responsive cells v2';
+        %cellList_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020';
+        %blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\CompiledBlocks';
+        %save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\ExtractedData MET';
+        %cellList_filename = 'Responsive cells v2';
+        cellList_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\Presentations\Joint lab meeting April 7, 2021';
+        blocks_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_v2';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\Presentations\Joint lab meeting April 7, 2021';
+        %cellList_filename = 'Behavior_NDNF';
+        cellList_filename = 'Behavior_Thy1';
         
-        
-        dataType = 'water'; %To look at one stim type at a time. Leave empty to look at all
+        dataType = 'FM'; %To look at one stim type at a time. Leave empty to look at all
         STDlevel = 2;
-        AUC_F_level = 0.05;
-        AUC_spks_level = 5;
+        AUC_F_level = 0;
+        AUC_spks_level = 10;
         sort_active = 1;  % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
-        plot_graphs = 0;
+        plot_graphs = 1;
         save_data = 0;
         analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
         
@@ -352,7 +356,7 @@ for b = 1:length(uniqueBlocks)
                     %PEAK COMPUTATIONS
                     peak_data = nan(1,4);
                     [peak, peak_latency] = max(response);
-                    if peak >= peak_threshold %only store data if peak is above threshold
+                    if peak >= peak_threshold && any(response) %only store data if peak is above threshold
                         [p1_latency] = find(response >= peak_threshold, 1, 'first');
                         [p2_latency] = find(response(1, peak_latency:end) <= peak_threshold, 1, 'first') - 2;
                         p1 = response(p1_latency);
@@ -481,7 +485,7 @@ for b = 1:length(uniqueBlocks)
                     autoActivity{count,i} = activity;
                     
                     %Plot
-                    if plot_graphs == 1
+                    if plot_graphs == 1 && any(y)
                         subplot(1,2,i); hold on
                         plot(y)
                         hline(nanmean(baseline), 'k')
@@ -736,7 +740,7 @@ caxis([0, 100]);
 
 removeOutlier = 1;
 
-outlier = [49 52 61 63 178 215];
+outlier = [25];
 
 if removeOutlier
     ExtractedData.AutoActivity(outlier,:) = [];

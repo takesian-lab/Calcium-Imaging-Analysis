@@ -3,10 +3,10 @@
 %% Load files
 
 stim_protocol = 13; %Maryse behavior
-stim_name = 'behavior'; %training or testing or behavior
+stim_name = 'training'; %training or testing or behavior
 
 saveData = 0;
-loadPreviousData = 1;
+loadPreviousData = 0;
 
 if loadPreviousData
     %Load data
@@ -174,15 +174,15 @@ if strcmp(stim_name, 'training')
     %HIT RATE AND FP RATE
     figure;
     
-    subplot(1,2,1)
-    plot(batch_hitRate')
+    %subplot(1,2,1)
+    plot(batch_hitRate'); hold on
     ylim([0 1])
     ylabel('Percent')
     xlabel('Training day')
-    title('Hit rate')
+    %title('Hit rate')
     legend(mice, 'Location', 'southwest')
     
-    subplot(1,2,2)
+    %subplot(1,2,2)
     plot(batch_FPrate')
     ylim([0 1])
     xlabel('Training day')

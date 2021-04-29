@@ -5,7 +5,7 @@
 %Load Tseries data
 
 Fall = load('Fall.mat'); %Must load like this because iscell is a matlab function and might lead to unexpected errors.
-currentRunID = 4;
+currentRunID = 25;
 
 %% Extract info by cycle
 currentRunName = data.Folders{currentRunID,1};

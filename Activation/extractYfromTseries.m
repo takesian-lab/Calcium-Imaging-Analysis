@@ -1,6 +1,6 @@
 %Script to extract y from t-series
 
-mouse_dir = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\YE083020F2\2020-12-02';
+mouse_dir = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\NxDE090520M3\2021-03-11';
 cd(mouse_dir)
 currentFolders = dir;
 
@@ -12,8 +12,12 @@ for i = 1:size(currentFolders,1)
     folderNames = {currentFolders.name}';
     currentFolderName = folderNames{i,1};
     if length(currentFolderName) < 7; continue; end
-    isTseries(i,1) = input(['Include ' currentFolderName ' in TSeries? 1 for yes, 0 for no: ']);
-     %isTseries(i,1) = strcmp(currentFolderName(1:7),'TSeries') || strcmp(currentFolderName(1:7),'Tseries');
+    try
+        isTseries(i,1) = input(['Include ' currentFolderName ' in TSeries? 1 for yes, 0 for no: ']);
+    catch
+        isTseries(i,1) = input(['Include ' currentFolderName ' in TSeries? 1 for yes, 0 for no: ']);
+    end
+     %isTseries(is,1) = strcmp(currentFolderName(1:7),'TSeries') || strcmp(currentFolderName(1:7),'Tseries');
 end
 isTseries = logical(isTseries);
 

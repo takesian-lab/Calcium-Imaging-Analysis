@@ -3,7 +3,7 @@
 %% Load files
 
 stim_protocol = 13; %Maryse behavior
-stim_name = 'training'; %training or testing or behavior
+stim_name = 'behavior'; %training or testing or behavior
 
 saveData = 0;
 loadPreviousData = 0;
@@ -81,8 +81,8 @@ for a = 1:nMice %Mice
            stimLevels(c) = block.stim_level;
        end
        
-       if unique(stimLevels) == 40
-           %continue;
+       if unique(stimLevels) == 60
+           
        else
            matchingBlocks(stimLevels == 40) = [];
        end
@@ -90,6 +90,8 @@ for a = 1:nMice %Mice
        for c = 1:length(matchingBlocks)
            unique_block_name = matchingBlocks{c};
            block = data.([mouseID]).([unique_block_name]);
+           disp(unique_block_name)
+           disp(block.stim_level)
 
            %% Get information from block
            

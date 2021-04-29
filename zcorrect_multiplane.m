@@ -40,7 +40,7 @@ if length(loco_speed) ~= length(loco_time)
 end  
 
 %% Extract zcorr from block and establish best imaging plane
-zcorr = block.ops.zcorr;
+zcorr = block.zcorr;
 planes = fieldnames(zcorr);
 nPlanes = numel(planes);
 

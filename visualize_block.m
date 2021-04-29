@@ -28,7 +28,7 @@ function visualize_block(block)
 bin = 10; %Number of cells to plot at a time (for visibility)
 SF = 0.5; %Shrinking factor for traces to appear more spread out
 z = 1; %Portion of recording to plot e.g. 0.5, 0.33, 1
-Zframes = 15000; %Plot red lines for stim onset if there is less than this many frames
+Zframes = 1500; %Plot red lines for stim onset if there is less than this many frames
 
 setup = block.setup;
 

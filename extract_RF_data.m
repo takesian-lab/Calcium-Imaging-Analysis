@@ -39,8 +39,8 @@ switch PC_name
         
         dataType = 'RF';
         STDlevel = 2;
-        AUC_F_level = 0.05;
-        AUC_spks_level = 5;
+        AUC_F_level = 3;
+        AUC_spks_level = 40;
         sort_active = 1;  % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
         plot_graphs = 0; %Plot one graph for each cell
         plot_RF = 0; %Plot receptive fields for each cell

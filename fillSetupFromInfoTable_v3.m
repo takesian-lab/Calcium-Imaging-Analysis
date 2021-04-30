@@ -1,4 +1,4 @@
-function [data] = fillSetupFromInfoTable_v3(Info, compiled_blocks_path, stim_protocol)
+function [data] = fillSetupFromInfoTable_v3(Info, compiled_blocks_path, stim_protocol, stim_name)
 % This function creates a data.mat file with all of the block data for 
 % a given experiment specified by Info
 % 
@@ -52,6 +52,12 @@ EG = 15; %name of experimental group or condition
 %Spontaneous = 12
 %Maryse's Behavior = 13
 
+if nargin < 4
+    matchStimName = 0;
+else
+    matchStimName = 1;
+end
+
 code = {'Noiseburst', 'Receptive Field', 'FM sweep', 'Widefield', 'SAM', 'SAM freq' , 'Behavior', 'Behavior',...
     'Random H20', 'Noiseburst ITI', 'Random Air', 'Spontaneous', 'Maryse Behavior'};
 disp(['Analyzing ' code{stim_protocol} ' files'])
@@ -80,8 +86,14 @@ data.setup.compiled_blocks_path = compiled_blocks_path;
 %Find table rows that match stim_protocol
 setup = data.setup;
 stims = [Info{:,SP}]';
-matching_stims = stims == setup.stim_protocol;
-currentInfo = Info(matching_stims,:);
+if matchStimName
+    stimNames = [Info{:,SN}]';
+    matching_stims = intersect(find(stims == setup.stim_protocol), find(stimNames == stim_name));
+    currentInfo = Info(matching_stims,:);
+else
+    matching_stims = stims == setup.stim_protocol;
+    currentInfo = Info(matching_stims,:);
+end
 
 %Remove rows that are set to "Ignore"
 ignore = [currentInfo{:,I}]';

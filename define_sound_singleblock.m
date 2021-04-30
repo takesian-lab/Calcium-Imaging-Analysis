@@ -211,7 +211,7 @@ else %2p
     
     framerate = ceil(1/str2double(XML.framePeriod));
     if framerate ~= 15 && framerate ~= 30
-        warning('Check frame rate')
+        warning(['Check frame rate. Detected rate is: ' num2str(1/str2double(XML.framePeriod))])
     end
 end
 

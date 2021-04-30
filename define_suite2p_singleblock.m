@@ -73,7 +73,7 @@ switch currentFolder
         %Regardless of nPlanes, cd to plane0 and use as the default folder for getting ops info
         cd(strcat(setup.suite2p_path, '/plane0'))  
     otherwise
-        disp('Check suite2p path')
+        disp('Check suite2p path. Must end in suite2p or plane0')
         return
 end
 
@@ -81,7 +81,7 @@ Fall = load('Fall.mat'); %Must load like this because iscell is a matlab functio
 
 %% Get Frame_set using get_frames_from_Fall
 
-[Frame_set,~] = get_frames_from_Fall(Fall.ops, setup.block_name, displayTable);
+[Frame_set,~,Block_position] = get_frames_from_Fall(Fall.ops, setup.block_name, displayTable);
 setup.Frame_set = Frame_set;
 
 %Check that Frame_set matches timestamp from Bruker function
@@ -157,8 +157,8 @@ if nPlanes == 1
     end
 
     %Update zcorr frame set
-    if isfield (block.ops, 'zcorr')
-        block.ops.zcorr = block.ops.zcorr(:,Frame_set); %Dimensions are z-stack position vs. frame
+    if isfield (Fall.ops, 'zcorr')
+        block.zcorr = Fall.ops.zcorr(:,Frame_set); %Dimensions are z-stack position vs. frame
     end
 end
 
@@ -182,14 +182,21 @@ for n = 1:nPlanes
 
     %Cell and neuropil data
     %Only keep data from 'is cells'
-    %No frame set required if multi-plane data is not concatenated across blocks (not sure if this is possible yet)
+    %Find frame_set for each plane (this is different than the Frame_set above)
+    frames_per_folder = Fall.ops.frames_per_folder;
+    if Block_position == 1 %or single-block data
+        Plane_set = 1:frames_per_folder(Block_position);
+    else
+        Plane_set = (sum(frames_per_folder(1:Block_position-1)) + 1):sum(frames_per_folder(1:Block_position));
+    end
+    
     block.iscell.(currentPlane) = Fall.iscell;
     keep_ind = find(block.iscell.(currentPlane)(:,1));
     block.cell_number.(currentPlane) = keep_ind-1; %Subtract 1 for the python to matlab correction of cell label
     block.stat.(currentPlane) = Fall.stat(1,keep_ind);
-    block.F.(currentPlane) = Fall.F(keep_ind,:);
-    block.Fneu.(currentPlane) = Fall.Fneu(keep_ind,:);
-    block.spks.(currentPlane) = Fall.spks(keep_ind,:);
+    block.F.(currentPlane) = Fall.F(keep_ind,Plane_set);
+    block.Fneu.(currentPlane) = Fall.Fneu(keep_ind,Plane_set);
+    block.spks.(currentPlane) = Fall.spks(keep_ind,Plane_set);
 
     %Save redcell data
     if isfield(Fall, 'redcell')
@@ -202,9 +209,9 @@ for n = 1:nPlanes
     %Update zcorr frame set
     if isfield (Fall.ops, 'zcorr')
         if n == 1
-            block.ops.zcorr = [];
+            block.zcorr = [];
         end
-        block.ops.zcorr.(currentPlane) = Fall.ops.zcorr; %Dimensions are z-stack position vs. frame
+        block.zcorr.(currentPlane) = Fall.ops.zcorr(:,Plane_set); %Dimensions are z-stack position vs. frame
     end
         
 end

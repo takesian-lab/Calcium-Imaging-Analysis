@@ -34,7 +34,7 @@ max_drift = 10; %Number of planes that the imaging plane can drift in +/- Z
 %Extract zcorr from block and establish best imaging plane
 if multiplaneData
     zcorr_raw = block.zcorr.(planeName);
-    nPlanes = numel(fieldnames(block.zcorr));
+    nPlanes = block.ops.nplanes;
 else
     zcorr_raw = block.zcorr;
 end
@@ -58,8 +58,9 @@ else
     timestamp = block.timestamp;
 end
 
-loco_time = block.locomotion_trace;
+loco_time = block.locomotion_trace; %Matched to Bruker timestamps
 loco_speed = block.loco_activity;
+loco_speed(loco_speed < block.setup.constant.locoThresh) = 0; %Correct for floor of loco readout
         
 if length(loco_speed) ~= length(loco_time)
     shorter_loco = min(length(loco_speed),length(loco_time));
@@ -185,6 +186,12 @@ Fs = round(1/((xcorr_x(end) - xcorr_x(1))/length(xcorr_x)));
 nSeconds = 10;
 maxlag = Fs*nSeconds;
 
+nNans = sum(isnan(xcorr_loco));
+if nNans > 0
+    xcorr_loco(isnan(xcorr_loco)) = 0;
+    warning([num2str(nNans) ' NaNs replaced with zeros'])
+end
+
 %xcorr
 [c, lags] = xcorr(xcorr_loco, xcorr_Z, maxlag, 'coeff');
 
@@ -215,8 +222,10 @@ suptitle(block.setup.block_supname)
 
 if multiplaneData
     F7 = block.F.(planeName) - block.setup.constant.neucoeff*block.Fneu.(planeName);
+    spks = block.spks.(planeName);
 else
     F7 = block.F - block.setup.constant.neucoeff*block.Fneu;
+    spks = block.spks;
 end
 
 %Compute DF/F
@@ -225,89 +234,196 @@ F7_df_f = (F7 - mean_F)./mean_F;%(total-mean)/mean
 %A = smooth(F7_df_f,10);
 
 %Trim and resample if necessary
-xcorr_F7 = F7_df_f(:,keep_Z);
+xcorr_F = F7_df_f(:,keep_Z);
+xcorr_spks = spks(:,keep_Z);
 if resample_necessary && ~loco_longer
-    xcorr_F7 = xcorr_F7(:,new_longer_ind);
+    xcorr_F = xcorr_F(:,new_longer_ind);
+    xcorr_spks = xcorr_spks(:,new_longer_ind);
 end
 
 %Compute lags and xcorr
-cmat_loco = [];
-cmat_Z = [];
+cmat_loco_F = [];
+cmat_Z_F = [];
+cmat_loco_spks = [];
+cmat_Z_spks = [];
 
-for i = 1:size(xcorr_F7,1)
-    [c1, lags] = xcorr(xcorr_loco', xcorr_F7(i,:), maxlag,  'coeff');
-    [c2, lags] = xcorr(xcorr_Z, xcorr_F7(i,:), maxlag, 'coeff');
-    cmat_loco = [cmat_loco; c1];
-    cmat_Z = [cmat_Z; c2];
+for i = 1:size(xcorr_F,1)
+    [c1, lags] = xcorr(xcorr_loco', xcorr_F(i,:), maxlag,  'coeff');
+    [c2, lags] = xcorr(xcorr_Z, xcorr_F(i,:), maxlag, 'coeff');
+    [c3, lags] = xcorr(xcorr_loco', xcorr_spks(i,:), maxlag,  'coeff');
+    [c4, lags] = xcorr(xcorr_Z, xcorr_spks(i,:), maxlag, 'coeff');
+    cmat_loco_F = [cmat_loco_F; c1];
+    cmat_Z_F = [cmat_Z_F; c2];
+    cmat_loco_spks = [cmat_loco_spks; c3];
+    cmat_Z_spks = [cmat_Z_spks; c4];
 end
 
 %%
-figure
 
-subplot(3,2,1)
-plot(lags,cmat_loco)
-ylabel('Corr coeff')
-title('xcorr(Loco, F)')
-
-subplot(3,2,2)
-plot(lags,cmat_Z)
-ylabel('Corr coeff')
-title('xcorr(Z difference, F)')
-
-subplot(3,2,3)
-plot(lags,mean(cmat_loco))
-ylabel('Avg corr coeff')
-
-subplot(3,2,4)
-plot(lags,mean(cmat_Z))
-ylabel('Avg corr coeff')
-
-subplot(3,2,5)
-imagesc(cmat_loco)
-caxis([0 0.6])
-ylabel('Cells')
-set(gca, 'XTick', 0:Fs:2*maxlag)
-set(gca, 'XTickLabel', -maxlag/Fs:1:maxlag/Fs)
-xlabel('Lag (s)')
+for f = 1:2
     
-subplot(3,2,6)
-imagesc(cmat_Z)
-caxis([0 0.6])
-ylabel('Cells')
-set(gca, 'XTick', 0:Fs:2*maxlag)
-set(gca, 'XTickLabel', -maxlag/Fs:1:maxlag/Fs)
-xlabel('Lag (s)')
+    if f == 1 %F
+        cmat_loco = cmat_loco_F;
+        cmat_Z = cmat_Z_F;
+        activityType = 'F';
+    elseif f == 2 %Spikes
+        cmat_loco = cmat_loco_spks;
+        cmat_Z = cmat_Z_spks;
+        activityType = 'Spks';
+    end
 
-for i = 1:4
-    subplot(3,2,i)
-    set(gca, 'XTick', -maxlag:Fs:maxlag)
+    figure
+
+    subplot(3,2,1)
+    plot(lags,cmat_loco)
+    ylabel('Corr coeff')
+    title(['xcorr(Loco, ' activityType ')'])
+
+    subplot(3,2,2)
+    plot(lags,cmat_Z)
+    ylabel('Corr coeff')
+    title(['xcorr(Z difference, ' activityType ')'])
+
+    subplot(3,2,3)
+    plot(lags,nanmean(cmat_loco))
+    ylabel('Avg corr coeff')
+
+    subplot(3,2,4)
+    plot(lags,nanmean(cmat_Z))
+    ylabel('Avg corr coeff')
+
+    subplot(3,2,5)
+    imagesc(cmat_loco)
+    caxis([0 0.6])
+    ylabel('Cells')
+    set(gca, 'XTick', 0:Fs:2*maxlag)
     set(gca, 'XTickLabel', -maxlag/Fs:1:maxlag/Fs)
     xlabel('Lag (s)')
+
+    subplot(3,2,6)
+    imagesc(cmat_Z)
+    caxis([0 0.6])
+    ylabel('Cells')
+    set(gca, 'XTick', 0:Fs:2*maxlag)
+    set(gca, 'XTickLabel', -maxlag/Fs:1:maxlag/Fs)
+    xlabel('Lag (s)')
+
+    for i = 1:4
+        subplot(3,2,i)
+        set(gca, 'XTick', -maxlag:Fs:maxlag)
+        set(gca, 'XTickLabel', -maxlag/Fs:1:maxlag/Fs)
+        xlabel('Lag (s)')
+    end
+    suptitle(block.setup.block_supname)
+
+
+    %Compute +/- peak of cross-correlogram
+    [loco_peak, loco_peak_ind] = max(abs(cmat_loco),[],2);
+    [Z_peak, Z_peak_ind] = max(abs(cmat_Z),[],2);
+    loco_sign = double(cmat_loco(loco_peak_ind) > 0);
+    Z_sign = double(cmat_Z(Z_peak_ind) > 0);
+    loco_sign(loco_sign == 0) = -1;
+    Z_sign(Z_sign == 0) = -1;
+    loco_peak = loco_peak.*loco_sign;
+    Z_peak = Z_peak.*Z_sign;
+
+    figure
+    scatter(loco_peak, Z_peak)
+    xlabel(['xcorr(Loco, ' activityType ')'])
+    ylabel(['xcorr(Z difference, ' activityType ')'])
+    xlim([-0.4 0.4])
+    ylim([-0.4 0.4])
+    hline(0)
+    vline(0)
+
+    if ~isempty(find(abs(loco_peak) > 0.4)) || ~isempty(find(abs(Z_peak) > 0.4))
+        warning('Some points exceed xy limits of scatterplot')
+    end
+
+    suptitle(block.setup.block_supname)
 end
+
+%% Plot figure of neural activity compared to Z and loco
+% 
+% figure('units','normalized','outerposition',[0 0 1 1])
+% SF = 0.25; %Shrinking factor for traces to appear more spread out (for visualization purposes)
+% if multiplaneData
+%     cellnum = block.cell_number.(planeName);
+% else
+%     cellnum = block.cell_number;
+% end
+% count = 1; %for staggering plot lines
+% 
+% for c = 1:20%length(cellnum)
+%     current_cellnum = cellnum(c);
+% 
+%     subplot(4,4,1:8); hold on
+% 
+%     row_num = find(cellnum == current_cellnum);
+%     cell_trace = xcorr_F7(row_num,:);%pull out the full trace for each cell
+%     
+%     plot(xcorr_x, cell_trace*SF + count,'LineWidth',1);
+%     count = count + 1;
+% end
+% 
+% suptitle(block.setup.block_supname)
+% title('DF/F')
+% xlim([0 xcorr_x(end)])
+% xlabel('Time (s)')
+% set(gca, 'YTick', [1:1:count-1])
+% set(gca, 'YTickLabel', [cellnum(1:count-1)])
+% ylabel('Cell')
+% 
+% %Plot best Z plane
+% subplot(4,4,9:12); hold on %loco
+% plot(xcorr_x, xcorr_Z);
+% title('Best Z plane')
+% ylabel('Best Z plane')
+% xlim([0 xcorr_x(end)])
+% xlabel('Time (s)')
+% 
+% %Plot locomotor activity
+% subplot(4,4,13:16); hold on %loco
+% plot(xcorr_x, xcorr_loco);
+% title('Locomotor activity')
+% ylabel('Activity (cm/s)')
+% xlim([0 xcorr_x(end)])
+% xlabel('Time (s)')
+
+%% Plot histogram of F and Spikes
+
+figure('units','normalized','outerposition',[0 0 1 1])
+
 suptitle(block.setup.block_supname)
 
-%Compute +/- peak of cross-correlogram
-[loco_peak, loco_peak_ind] = max(abs(cmat_loco),[],2);
-[Z_peak, Z_peak_ind] = max(abs(cmat_Z),[],2);
-loco_sign = double(cmat_loco(loco_peak_ind) > 0);
-Z_sign = double(cmat_Z(Z_peak_ind) > 0);
-loco_sign(loco_sign == 0) = -1;
-Z_sign(Z_sign == 0) = -1;
-loco_peak = loco_peak.*loco_sign;
-Z_peak = Z_peak.*Z_sign;
+%F PSTH
+subplot(4,4,1:4); hold on
+psth = sum(xcorr_F);
+area(xcorr_x, psth); 
+title('DF/F PSTH')
+xlim([0 xcorr_x(end)])
+ylabel('DF/F')
 
-figure
-scatter(loco_peak, Z_peak)
-xlabel('xcorr(Loco, F)')
-ylabel('xcorr(Z difference, F)')
-xlim([-0.4 0.4])
-ylim([-0.4 0.4])
-hline(0)
-vline(0)
+%Spikes PSTH
+subplot(4,4,5:8); hold on
+psth = sum(xcorr_spks);
+area(xcorr_x, psth);
+title('Spikes PSTH')
+xlim([0 xcorr_x(end)])
+ylabel('Spikes')
 
-if ~isempty(find(abs(loco_peak) > 0.4)) || ~isempty(find(abs(Z_peak) > 0.4))
-    warning('Some points exceed xy limits of scatterplot')
-end
+%Plot best Z plane
+subplot(4,4,9:12); hold on %loco
+plot(xcorr_x, xcorr_Z);
+title('Best Z plane')
+ylabel('Best Z plane')
+xlim([0 xcorr_x(end)])
 
-suptitle(block.setup.block_supname)
+%Plot locomotor activity
+subplot(4,4,13:16); hold on %loco
+plot(xcorr_x, xcorr_loco);
+title('Locomotor activity')
+ylabel('Activity (cm/s)')
+xlim([0 xcorr_x(end)])
+xlabel('Time (s)')
 end

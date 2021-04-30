@@ -82,7 +82,8 @@ INSTRUCTIONS FOR MAKING Z-CORRECTED BLOCKS
    Add blocks to info sheet. This should act like a normal block now.
    *Direct analysis path (analysis_name) to plane0 folder
    *block_name now starts with 'Zcorrected-'
-   *I like to add '_Zcorrected' to the end of the stim_name
+   *IMPORTANT: Add '-Zcorrected' to the end of the stim_name (e.g. FMsweep-Zcorrected)
+    otherwise it will save over your multiplane blocks because they have the same name
 
 
 10) VISUALIZE DATA

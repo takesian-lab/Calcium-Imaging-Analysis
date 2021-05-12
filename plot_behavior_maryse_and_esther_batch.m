@@ -17,9 +17,9 @@ else
 
     switch PC_name
         case 'RD0366' %Maryse
-            info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
-            save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
-            compiled_blocks_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks v2';
+            info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior';
+            save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior';
+            compiled_blocks_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior\Compiled Blocks v2';
             info_filename = 'Info v2';    
         otherwise
             disp('Computer does not match known users')

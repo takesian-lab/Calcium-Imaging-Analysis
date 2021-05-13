@@ -113,11 +113,16 @@ end
 %--------------------------------------------------------------------------
 function [S, line] = parse_struct_array(fp, name, dim)
 
+line = '';
+
 while 1,
-   line = fgetl(fp);
+   if isempty(line),
+      line = fgetl(fp);
+   end
    line = strrep(line, '..', '.');
    idx = strfind(line, name);
-   if isempty(idx), break; end
+   ieq = find(line == '=');
+   if isempty(idx) || idx(1) > ieq(1), break; end
    line = line(idx:end);
    
    idot = find(line == '.');
@@ -127,18 +132,28 @@ while 1,
    if isempty(idot) || idot(1)>ieq,
       index = 1 + sscanf(line(length(name)+1:ieq(1)-1), '%d');
       val = parse_value(line(ieq(1)+1:end));
-      S{index} = val;
-        break;
+      if isscalar(index),
+         S{index} = val;
+      elseif length(index) == 2,
+         S(index(1), index(2)) = val;
+      else
+         error('Error parsing array.');
+      end
+      line = '';
+      continue;
    end
    
    index = 1 + sscanf(line(length(name)+1:idot(1)-1), '%d');
 
    curKey = create_valid_varname(line(idot(1)+1:ieq(1)-1));
    
-   parentVars = strsplit(name, '.');
+   parentVars = strtrim(strsplit(name, '.'));
    curVars = strsplit(curKey, '.');
    if strcmp(parentVars{end}, curVars{1}) || strcmp(parentVars{end}, [curVars{1} 's']) ...
-         || (strcmp(parentVars{end}, 'StimChans') && strcmp(curVars{1}, 'Stimulus'))
+         || (strcmp(parentVars{end}, 'StimChans') && strcmp(curVars{1}, 'Stimulus')) ...
+         || (strcmp(parentVars{end}, 'Families') && strcmp(curVars{1}, 'Family')) ...
+         || (strcmp(parentVars{end}, 'Vars') && strcmp(curVars{1}, 'Element')) ...
+         || (strcmp(parentVars{end}, 'Flowchart') && strcmp(curVars{1}, 'Flow_Element')) 
       curKey = '';
       for k = 2:length(curVars),
          curKey = [curKey '.' curVars{k}];
@@ -150,7 +165,9 @@ while 1,
    
    [val, IsStructArray] = parse_value(line(ieq(1)+1:end));
    if IsStructArray,
-      val = parse_struct_array(fp, line(idot(end)+1:ieq(1)-1));
+      [val, line] = parse_struct_array(fp, line(idot(end)+1:ieq(1)-1));
+   else
+      line = '';
    end
    
    if ischar(val),

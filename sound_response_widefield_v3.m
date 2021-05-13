@@ -141,10 +141,10 @@ for i=1:length(setup.Imaging_sets)
                     length_sound_trial(sound) = closest_frame_after-closest_frame_before;
                     trace_around_sound(:,:,:,sound) =  Tile(:,:,closest_frame_before:closest_frame_after);
                 end
-                
-            end
-            traces.(['Tile' loop_num]){f,lv}=trace_around_sound;
+                traces.(['Tile' loop_num]){f,lv}=trace_around_sound;
             clear trace_around_sound
+            end
+            
            
             
         end

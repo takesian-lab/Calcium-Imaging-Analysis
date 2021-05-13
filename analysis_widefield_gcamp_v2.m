@@ -29,7 +29,7 @@ else
     %Noiseburst_ITI = 10
     %Random air puff = 11
     
-    
+    stim_protocol = 4;
     parameters.stim_protocol = 4; % widefield RF = 4, noiseburst ITI = 10
     imaging_chan = 'Ch2'; %was the data collected Ch1 or Ch2?
     BOT_start = [1];
@@ -51,11 +51,11 @@ else
             save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
             info_filename = 'Info_widefield';
         case 'RD0332' %Carolyn
-            info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
+            info_path = 'Z:\Carolyn\2P Imaging data\Widefield Troubleshooting\Info Sheets';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
-            compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
-            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\NxDE102320M2\Gcamp RF\adjusted trials';
-            info_filename = 'Info_NxDE102320M2';
+            compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\Widefield Troubleshooting\Compiled Blocks';
+            save_path = 'Z:\Carolyn\2P Imaging data\Widefield Troubleshooting\Analyzed Widefield\YG121520M2\200ms tone';
+            info_filename = 'Info_YG121520M2';
             
         case 'RD-6-TAK2' %Esther's computer
             info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
@@ -74,8 +74,8 @@ else
     
     %Create data structure for files corresponding to stim_protocol
 
-    [data] = fillSetupFromInfoTable_v3(Info, compiled_blocks_path, stim_protocol);
-    %[data] = fillSetupFromInfoTable_v2(Info, compiled_blocks_path, stim_protocol); Use V2 for old compile_blocks format
+%     [data] = fillSetupFromInfoTable_v3(Info, compiled_blocks_path, stim_protocol);
+    [data] = fillSetupFromInfoTable_v2(Info, compiled_blocks_path, stim_protocol); %Use V2 for old compile_blocks format
     data.setup.imaging_chan = imaging_chan;
     data.setup.BOT_start = BOT_start;
     
@@ -352,7 +352,7 @@ clear t e i BOT_number
 % the data are divided into multiple 'tiles' to reduce memory issues. Tiles
 % go from rostral to caudal when going from 1:length(Tiles) i.e.
 % Tile1==most rostral
-tile_to_view = [2];
+tile_to_view = [1];
 tilenum = num2str(tile_to_view);
 
 for i=1:length(data.setup.Imaging_sets)
@@ -372,7 +372,7 @@ end
 clear BOT_number FullTile_df i Sound_Time timestamp
 %% create frequency and level indicies and find responses to sound across stim
 % [parameters] = indexStimuli(parameters,setup);
-parameters.use_adjusted=1;
+parameters.use_adjusted=0;
 
 for i=1:length(data.setup.Imaging_sets)
     mouseID=data.setup.mousename{i};
@@ -570,7 +570,7 @@ clear tempBase idx b count ll loop_num lv m mean_base
 %% what do the individual traces look like for a given tile?
 %pick a tile to look at here, and set level to look at that intensity
 %1=10...8=80dB
-loop_num=num2str(1);
+loop_num=num2str(5);
 
 
 if parameters.stim_protocol==10;
@@ -695,7 +695,7 @@ for f=1:length(parameters.frequencies)
         TF = isempty(a1);
         if TF ==0
             a2 = squeeze(mean(mean(a1,1),2));
-            plot(smooth(a2)); hold on
+            plot(smooth(a2,2)); hold on
         end
     end
 end
@@ -880,7 +880,7 @@ meanAccumBaseline = mean(accumBase,3);
 
 %plot response window
 % y=DFF0_mean{5,2};%RF
-y=DFF0_mean{1,9};
+y=DFF0_mean{1,2};
 %y=y(150:180,170:200,:);
 y= squeeze(mean(mean(y,2),1));
 x=1:length(y);
@@ -930,7 +930,7 @@ for f=1:length(parameters.frequencies);
         axis image;
 %         set(gca,'XTick',[], 'YTick', [])
 lim = caxis
-caxis([0 3])
+caxis([0 8])
 
     end
 end
@@ -954,7 +954,7 @@ for f=1:length(parameters.frequencies);
     axis image;
 %     set(gca,'XTick',[], 'YTick', [])
 lim = caxis
-caxis([0 3])
+caxis([0 20])
 end
 
 %% zscore data
@@ -1009,7 +1009,8 @@ for f=1:length(parameters.frequencies);
     title(sprintf('Freq %d', f));
     axis image;
     set(gca,'XTick',[], 'YTick', [])
-    %   caxis([2 15]);
+    lim = caxis
+caxis([0 14])
     colormap jet
 end
 
@@ -1060,7 +1061,7 @@ end
 %% determine CFs for each pixel
 [dim1 dim2 dim3] = size(imageData.Cropped_Imaging_Data);
 CF=NaN(dim1,dim2,1);
-response_threshold = 2;
+response_threshold = 2 ;
 
 
 for x= 1:dim1 % go through all x pixels

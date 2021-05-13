@@ -10,11 +10,11 @@ clear all;
 
 loadPreviousData = 0;
 
-if loadPreviousData
-    %Load data
-    [FileName,PathName] = uigetfile('.mat');
-    load([PathName '/' FileName])
-else
+% if loadPreviousData
+%     %Load data
+%     [FileName,PathName] = uigetfile('.mat');
+%     load([PathName '/' FileName])
+% else
     
     %% Magic numbers and define what type of analysis you are doing
     %stim protocol code is:
@@ -30,12 +30,11 @@ else
     %Random air puff = 11
     
    
-    stim_protocol = 3; % this is the code for "widefield"
+    parameters.stim_protocol = 4; % widefield RF = 4, noiseburst ITI = 10
     imaging_chan = 'Ch2'; %was the data collected Ch1 or Ch2?
     BOT_start = [1];
     detrend_filter = [300 10];
     parameters.sort_loco =[1]; % 0 = all trials, 1 = non motor trials only
-    
     
     
     %% Load Info.mat
@@ -54,8 +53,8 @@ else
             info_path = 'Z:\Carolyn\2P Imaging data\5HT sensor\Info Sheets';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
             compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\5HT sensor\Compiled Blocks';
-            save_path = 'Z:\Carolyn\2P Imaging data\5HT sensor\Analyzed Data\YF090820M2\YF090820M2 FLX FMsweep';
-            info_filename = 'Info_YF090820M2';
+            save_path = 'Z:\Carolyn\2P Imaging data\5HT sensor\Analyzed Data\Cn0012621F2\Metergoline test 1\RF Met post';
+            info_filename = 'Info_Cn0012621F2';
             
         case 'RD-6-TAK2' %Esther's computer
             info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
@@ -73,7 +72,7 @@ else
     Info = importfile(info_filename);
     
     %Create data structure for files corresponding to stim_protocol
-    [data] = fillSetupFromInfoTable_v2(Info, compiled_blocks_path, stim_protocol);
+    [data] = fillSetupFromInfoTable_v3(Info, compiled_blocks_path, parameters.stim_protocol);
     data.setup.imaging_chan = imaging_chan;
     data.setup.BOT_start = BOT_start;
     
@@ -83,20 +82,62 @@ else
     %     %%% If no pool, do not create new one.
     %     parpool('local',10);
     % end
-end
+% end
 %% crop the window
-[imageData,data,parameters] = crop_window(data);
+if loadPreviousData ==1
+    cd(save_path)
+    load('Full_Tile_Matrix.mat')
+    figure;
+        imageData.Full_Tile_Mean = mat2gray(mean(Full_Tile_Matrix,3));
+        imshow(imageData.Full_Tile_Mean);
 
-
+        title(sprintf('Mean Window Tile'));
+%         data.([setup.mousename]).(['Tile' BOT_number]).Window_Image = Full_Tile_Mean;
+        
+        
+        % CROP IMAGE: Crop the image to the cranial window using the mean image generated above
+        figure;
+        h_im = imshow(imageData.Full_Tile_Mean); hold on; 
+        message = sprintf('Draw a circle and then hit the space bar,');
+        uiwait(msgbox(message));
+        h = imellipse;
+        pause;
+        BW = createMask(h);
+        pos_window = getPosition(h); %returns [x min, y min, width, height]
+        %csvwrite('[mouseID] 'window_position'']) to mouse folder
+        parameters.x_min = pos_window(1)
+        parameters.y_min = pos_window(2)
+        parameters.x_max = pos_window(3)+parameters.x_min
+        parameters.y_max = pos_window(4)+parameters.y_min
+        Tile_Mean_ROI = imageData.Full_Tile_Mean;
+        Tile_Mean_ROI(BW==0)=0;
+        figure; imshow(Tile_Mean_ROI);title(sprintf('Masked Window'));
+        pause;
+        
+        Tile_Mean_ROI=Tile_Mean_ROI(parameters.y_min:parameters.y_max,parameters.x_min:parameters.x_max);
+        figure; imshow(Tile_Mean_ROI); title(sprintf('Cropped Window'));
+        pause;
+        parameters.Window_Postion = [parameters.x_min parameters.x_max parameters.y_min parameters.y_max];
+        imageData.Cropped_Imaging_Data = Full_Tile_Matrix(parameters.y_min:parameters.y_max,parameters.x_min:parameters.x_max,:);
+%         clear Full_Tile_Matrix
+        clear Cropped
+        clear Tile_Mean_ROI
+   
+else
+[imageData,data,parameters,Full_Tile_Matrix] = crop_window(data,parameters);
+cd(save_path)
+save('Full_Tile_Matrix.mat','Full_Tile_Matrix','-v7.3');
+clear Full_Tile_Matrix;
+end
 %% anne's "old code" to test for window quality and check sound stimulation
 
 % we are still trying to determine whether the sounds are off by
 % approximately 500ms. Set this value here, to visually test the shift.
 % (the adjust_factor is in seconds)
 adjust_factor = 0.5; % in seconds 
-
+ 
 for i=1:length(data.setup.Imaging_sets)
-    mouseID=data.setup.mousename{i};
+    mouseID=data.setup.mousename{i}; 
     unique_block_name = data.setup.unique_block_names{i};
     block = data.([mouseID]).([unique_block_name]);
     Full_Tile_Mean = mean(mean(imageData.Cropped_Imaging_Data,1),2);
@@ -110,7 +151,7 @@ for i=1:length(data.setup.Imaging_sets)
     fo =squeeze(Full_Tile_Mean)-squeeze(Full_Tile_Mean_Detrend);
     f = squeeze(Full_Tile_Mean);
     plot(timestamp(1:length(timestamp)), squeeze(Full_Tile_Mean_Detrend),'c');
-    plot(timestamp(1:length(timestamp)), smooth(f-1750,3),'b');
+%     plot(timestamp(1:length(timestamp)), smooth(f-1750,3),'b');
     plot(timestamp(1:length(timestamp)), fo,'m');
     
     h=vline(block.adjusted_times(:),'k'); hold on % adjusted sound times
@@ -166,8 +207,15 @@ for i=1:length(data.setup.Imaging_sets)
     %AT added 4/15/20 to center window around peak response across window
     clear all_trials
     [amp_average_response,time_average_response] = max(mean_across_all_trials);
+    try % this is a try statement to account for old vs new info sheets, April 2021
     estimated_peak = data.setup.FrameRate{i}*1.2; %the peak should be about 0.8sec after stim (1s)
     estimated_time = (time_average_response-estimated_peak)*(1/data.setup.FrameRate{i});
+    catch
+        estimated_peak = block.setup.framerate*1.2;
+        estimated_time = (time_average_response-estimated_peak)*(1/block.setup.framerate);
+    end
+    
+  
     parameters.adjusted_times_est = block.Sound_Time+estimated_time;
     
     %  repeat this average trace around sound with the estimated times
@@ -205,7 +253,7 @@ for i=1:length(data.setup.Imaging_sets)
     %       data.([mouseID]).(['Tile' BOT_number]).Average_Sound_Response = mean_across_all_trials;
     pause;
     % look at sound responses in high/low/med frequency trials
-    if stim_protocol==4;
+    if parameters.stim_protocol==4;
         figure;
         index_high_levels = find(data.([mouseID]).parameters.variable2>60);
         mean_across_all_high_trials = mean(all_trials(:,index_high_levels),2);
@@ -262,7 +310,7 @@ for i=1:length(data.setup.Imaging_sets)
 end
 
 %% check for memory
-[loops] = memorycheck(imageData);
+[loops] = 1;% memorycheck(imageData);
 
 %% DETREND: Grab a coffee - this will take approx. 2 hours (for ful ReceptiveField, 45mins for new/reduced field)
 t = cputime;
@@ -276,7 +324,8 @@ clear Cropped
 %
 e = cputime-t
 clear t e i BOT_number
-
+cd(save_path);
+save('All_Images_df_over_f.mat','All_Images_df_over_f','-v7.3');
 %% view df_over_f
 
 % the data are divided into multiple 'tiles' to reduce memory issues. Tiles
@@ -339,11 +388,19 @@ for i=1:length(data.setup.Imaging_sets)
     end
 end
 [traces,parameters]=sound_response_widefield_v3(parameters,data,All_Images_df_over_f);
+
+
 %% pull out baseline and window
 length_trial=size(traces.Tile1{1,1},3);
-baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});
-% window=(length(baseline)+1):(data.setup.FrameRate{1}*block.setup.constant.response_window);
-window=(length(baseline)+1):(data.setup.FrameRate{1}*1.5);
+try %try/catch to accound for old vs new style of info sheet April 2021
+    baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});
+    window=(length(baseline)+1):(data.setup.FrameRate{1}*block.setup.constant.response_window);
+catch
+    baseline=1:(block.setup.constant.baseline_length*block.setup.framerate);
+    window=(length(baseline)+1):(block.setup.framerate*block.setup.constant.response_window);
+end
+
+% window=(length(baseline)+1):(data.setup.FrameRate{1}*1.5);
 for ll=1:loops
     loop_num=num2str(ll);
     for f=1:length(parameters.frequencies);
@@ -366,6 +423,51 @@ for ll=1:loops
                 base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
                 %             wind.(['Tile' loop_num]){f,lv}(:,:,:,:)=traces.(['Tile' loop_num]){f,lv}(:,:,window,:);
             end
+        end
+    end
+end
+
+%% normalize to baseline and plot all traces...
+count =0;
+for ll=1:loops
+    loop_num=num2str(ll);
+    for f=1:length(parameters.frequencies);
+        fnum=num2str(parameters.frequencies(f));
+        for lv=1:length(parameters.levels);
+            lvnum=num2str(parameters.levels(lv));
+            if parameters.sort_loco ==0
+                idx=parameters.stimIDX{f,lv};
+                if lv ==1 & f==1 & ll==1
+                    display('...creating baseline for all trials...')
+                end
+            else idx = parameters.loco_0.stimIDX{f,lv};
+                if lv ==1 & f==1 & ll==1
+                    display('...creating baseline for non-motor trials...')
+                end
+            end
+            
+            TF = isempty(idx); %the index of freq x level does not always have a value for every combination
+            if TF==0
+                count= count+1;
+                ntr = size(base.(['Tile' loop_num]){f,lv},4) %number of stim that are non-motor
+                figure;
+                hold all
+                title(['all traces for ' fnum 'khz ' lvnum 'dB'])
+                for ntr1 = 1:ntr
+                    Rxy = squeeze(mean(mean(traces.(['Tile' loop_num]){f,lv}(:,:,:,ntr1),1),2));%trace averaged over xy
+%                     Bxy= squeeze(mean(mean(mean(base.(['Tile' loop_num]){f,lv}(:,:,:,ntr1),1),2),3)); %mean baseline for xy
+%                     DFxy = (Rxy-Bxy)./Bxy;
+%                      subplot(length(parameters.frequencies),length(parameters.levels),count);
+                    plot(smooth(Rxy,10));
+%                    clear DFxy
+                end
+                ras = squeeze(mean(mean(traces.(['Tile' loop_num]){f,lv}(:,:,:,:),1),2))';
+                figure;
+                title(['all traces for ' fnum 'khz ' lvnum 'dB'])
+                imagesc(ras);
+             
+            end
+            
         end
     end
 end
@@ -417,7 +519,7 @@ clear tempBase idx f b count ll loop_num lv m mean_base
 loop_num=num2str(1);
 
     for f=1:length(parameters.frequencies);
-        for lv=1;%1:length(parameters.levels);
+        for lv=7;%1:length(parameters.levels);
             if parameters.sort_loco ==0
                 idx=parameters.stimIDX{f,lv};
             else idx = parameters.loco_0.stimIDX{f,lv};
@@ -465,6 +567,9 @@ for f=1:length(parameters.frequencies)
 end
 %    clear mm avgTrace
 
+
+
+
 %% what do the stim averages look like?
 figure;
 for f=1:length(parameters.frequencies)
@@ -504,60 +609,14 @@ for f=1:length(parameters.frequencies);
         end
     end
 end
-
-%% normalize traces to mean 0 and std 1 - in progress....
-% folder = save_path;
-% cd(folder)
-% d = dir([folder '/*.tif']);%extract tiffs
-% total_stim = length(parameters.levels)*length(parameters.frequencies);
-% accumBase = zeros(size(imageData.Cropped_Imaging_Data,1),size(imageData.Cropped_Imaging_Data,2),total_stim*length(baseline));
-% for f=1:length(parameters.frequencies);
-%     numF=num2str(round(parameters.frequencies(f)));
-%     fieldName = matlab.lang.makeValidName(['kHz' numF]);
-%     for lv=1:length(parameters.levels);
-%         numLV=num2str(parameters.levels(lv));
-%         % fname = (['SpatDenoise' numF 'khz' numLV 'db.tif']);
-%         % fname = (['TempDenoise' numF 'khz' numLV 'db.tif']);
-%         fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
-%         fname= ([fileName 'db.tif']);
-%          a1 = stimAverages.(fieldName){lv};
-%         TF = isempty(a1);
-%         if TF ==0
-%         %        fname = (['avgStim' numF 'khz' numLV 'db.tif']);
-%         info = imfinfo(fname);
-%         num_images = numel(info)
-%         for k = 1:num_images
-%             AA = imread(fname, k);
-%             stack(:,:,k)=AA(:,:);
-%             stack=double(stack);
-%         end
-%         dimx = size(stack,1);
-%         dimy = size(stack,2)
-%         for x = 1:dimx
-%             for y =  1:dimy
-%                 normz = zscore(stack,0,3); %cgs left off here
-%             end
-%         end
-%         
-%         %TODO: CGS - put the zscore here?
-%         
-%         
-%         ResponseWindow{f,lv}=stack(:,:,window);
-%         DFF0_mean{f,lv} = stack (:,:,:);
-%         baseLoc = stack(:,:,baseline);
-%         accumBase = cat(3, accumBase, baseLoc); % why is this such a large number?
-%         end
-%         
-%         %         base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
-%         %             wind.(['Tile' loop_num]){f,lv}(:,:,:,:)=traces.(['Tile' loop_num]){f,lv}(:,:,window,:);
-%         clear stack AA
-%     end
-% end
-
-
 %% %% find cumulative baseline and the response window
-baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});%TODO magic number
-window=(length(baseline)):(data.setup.FrameRate{1}*block.setup.constant.response_window);
+try % try/catch to account for old vs new info sheets april 2021
+    baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});%TODO magic number
+    window=(length(baseline)):(data.setup.FrameRate{1}*block.setup.constant.response_window);
+catch
+    baseline=1:(block.setup.constant.baseline_length*block.setup.framerate);%TODO magic number
+    window=(length(baseline)):(block.setup.framerate*block.setup.constant.response_window);
+end
 folder = save_path;
 % folder = 'C:\Anne';
 cd(folder)
@@ -681,7 +740,7 @@ for f=1:length(parameters.frequencies);
         [ d1 d2 frames ] =size(zscR);%size of response window data
         
         
-        maxResponse{f,lv} = max(mainResponse,[],3);%max of response window (not zscored)
+        maxResponse{f,lv} = min(mainResponse,[],3);%max of response window (not zscored)
         meanR{f,lv} = mean(mainResponse);%average of sound response window
         meanZresponse{f,lv} = mean(zscR(:,:,:),3);
         plot(squeeze(mean(mean(zscR(:,:,:),1),2)));
@@ -760,7 +819,7 @@ end
 %% determine CFs for each pixel
 [dim1 dim2 dim3] = size(imageData.Cropped_Imaging_Data);
 CF=NaN(dim1,dim2,1);
-response_threshold = 1;
+response_threshold = 2;
 
 
 for x= 1:dim1 % go through all x pixels
@@ -937,3 +996,4 @@ end
 % end
 cd(save_path)
 save('imageData.mat','imageData','-v7.3');
+save('parameters.mat','parameters','-v7.3');

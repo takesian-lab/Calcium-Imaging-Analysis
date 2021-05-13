@@ -27,7 +27,7 @@
 
 visualize = 0; %1 to plot figures of the block immediately, 0 to skip
 recompile = 0; %1 to save over previously compiled blocks, 0 to skip
-checkOps = 1; %1 to check Fall.ops against user-specified ops.mat file
+checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
 %% set up values for 'align to stim'
 
@@ -35,10 +35,12 @@ checkOps = 1; %1 to check Fall.ops against user-specified ops.mat file
 constant.baseline_length = 0.5;
 
 % How many seconds after stim should we look at?
-constant.after_stim = 2;
+constant.after_stim = 2.5;
+%5,2
 
 % Define (in seconds) where to look for the response peak?
-constant.response_window = 1.5;
+constant.response_window = 2;
+%3,1.5;
 
 % define where to look for locomotor responses, in sec?
 constant.locowindow = 1;
@@ -70,9 +72,9 @@ switch PC_name
         info_filename = 'Info';    
         
     case 'RD0332' %Carolyn
-       info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
-        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
-        info_filename = 'Info_NxDE102320M2';
+       info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets v1';
+        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks\For testing Ca transients';
+        info_filename = 'Info_VxDD033120F2';
         
     case 'RD-6-TAK2' %Esther's computer
         info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';

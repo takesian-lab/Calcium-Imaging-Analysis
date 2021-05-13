@@ -58,11 +58,9 @@ switch PC_name
     case 'RD0366' %Maryse
         info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
         save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_V2';
-        %info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
-        %save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_BehaviorStim';
         %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
         %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks v2';
-        info_filename = 'Info_NxDE102320M2';
+        info_filename = 'Info_VxDG011121F1and2';
         ops_filename = 'Maryse_ops2.mat';
          
     case 'TAKESIANLAB2P' %2P computer
@@ -124,11 +122,11 @@ for i = 1:size(currentInfo,1)
     setup.pathname          =   [currentInfo{i,2}];     %first part of the path
     setup.mousename         =   [currentInfo{i,3}];     %part of the path, no underscores
     setup.expt_date         =   [currentInfo{i,4}];     %part of the path, YYYY-MM-DD
-    setup.block_name        =   [currentInfo{i,5}];     %part of the path - full block name used for BOT
+    setup.block_name        =   [currentInfo{i,5}];     %part of the path, full block name used for BOT
     setup.FOV               =   [currentInfo{i,6}];     %which data to consider as coming from the same field of view, per mouse
     setup.Tosca_session     =   [currentInfo{i,7}];     %Tosca session
     setup.Tosca_run         =   [currentInfo{i,8}];     %Tosca run
-    setup.analysis_name     =   [currentInfo{i,9}];    %part of the path, folder where fall.mats are stored
+    setup.analysis_name     =   [currentInfo{i,9}];     %part of the path, folder where fall.mats are stored
     setup.run_redcell       =   [currentInfo{i,10}];    %do you have red cells? 0 or 1
     setup.VR_name           =   [currentInfo{i,11}];    %full voltage recording name (if widefield only)
     setup.stim_name         =   [currentInfo{i,12}];    %type of stim presentation in plain text
@@ -169,9 +167,9 @@ for i = 1:size(currentInfo,1)
     setup.block_filename = strcat('Compiled_', setup.mousename, FOVtag, '_', setup.expt_date, ...
         '_Session', sprintf('%02d',setup.Tosca_session), '_Run', sprintf('%02d',setup.Tosca_run),...
         blockTag, '_', widefieldTag, setup.stim_name);
-    setup.block_supname = strcat(setup.mousename, '-', FOVtag, '-', setup.expt_date, ...
+    setup.block_supname = strcat(setup.mousename, '-', FOVtag(2:end), '-', setup.expt_date, ...
         '-', setup.stim_name, '-Session', sprintf('%02d',setup.Tosca_session), '-Run', sprintf('%02d',setup.Tosca_run),...
-        blockTag);
+        blockTag(2:end));
     
     %Skip files that have previously been compiled
     if ~recompile

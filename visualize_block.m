@@ -1,4 +1,4 @@
-function visualize_block(block)
+function visualize_block(block,plane)
 % DOCUMENTATION IN PROGRESS
 % 
 % This function allows you to preview the data from a single block by
@@ -6,13 +6,18 @@ function visualize_block(block)
 % 
 % Argument(s): 
 %   block (struct)
-%   m (struct)
+%   plane (int) for multiplane data, number (0,1,2...) of the plane you want to anaylze
 % 
 % Returns:
 %   
 % 
 % Notes:
-%
+%   To save figures to edit in Illustrator:
+%   If MATLAB thinks the figure is too complicated it will produce an
+%   embedded image in the EPS file, rather than vectorized content. You can
+%   force MATLAB to produce vectorized output by using the -painters option
+%   when calling the print command, as in:
+%       print -painters -depsc output.eps
 %
 % TODO: determine best way to measuer df/F. Currently, using mean trace as
 % Fo; however, there are other (better?) ways to do this.
@@ -20,11 +25,20 @@ function visualize_block(block)
 
 %% Magic numbers and setup
 
-% neuCorrect = 0.7; %Neuropil correction coefficient
+if nargin > 1
+    multiplaneData = true;
+    planeName = ['plane' num2str(plane)];
+    nPlanes = block.ops.nplanes;
+elseif nargin == 1 && isfield(block,'MultiplaneData')
+    error('Please choose plane number: visualize_block(block,plane)')
+else
+    multiplaneData = false;
+end
+
 bin = 10; %Number of cells to plot at a time (for visibility)
 SF = 0.5; %Shrinking factor for traces to appear more spread out
 z = 1; %Portion of recording to plot e.g. 0.5, 0.33, 1
-Zframes = 15000000; %Plot red lines for stim onset if there is less than this many frames
+Zframes = 1500; %Plot red lines for stim onset if there is less than this many frames
 
 setup = block.setup;
 
@@ -35,24 +49,27 @@ else
 
     %% Plot locomotor activity
 
-    %THIS IS TEMPORARILY MESSED UP
-    if isfield(block, 'loco_activity')
+    if isfield(block, 'locomotion_trace')
+        %Time-corrected loco trace matched to Bruker data
+        loco_time = block.locomotion_trace;
+        loco_speed = block.loco_activity;
+    elseif isfield(block, 'loco_activity')
+        %Time-corrected loco traces
         loco_time = block.loco_times;
         loco_speed = block.loco_activity;
-        active_time = loco_speed;
-        active_time(active_time < block.setup.constant.locoThresh) = 0;
-
-%     elseif isfield(block, 'locomotion_data')
-%         loco_time = block.locomotion_data(:,1);
-%         loco_speed = block.locomotion_data(:,3);
-%     else
-%         loco_time = block.loco_data(:,1);
-%         loco_speed = block.loco_data(:,3);
+        warning('Missing block.locomotion_trace. You may need to update code and recompile block.')
+    else
+        error('Missing block.locomotion_trace. Update code and recompile block.')
     end
-%         
-%     if isfield(block, 'active_time')
-%         active_time = block.active_time;
-%     end
+
+    if length(loco_speed) ~= length(loco_time)
+        shorter_loco = min(length(loco_speed),length(loco_time));
+        loco_time = loco_time(1:shorter_loco);
+        loco_speed = loco_speed(1:shorter_loco);
+        warning('locomotion_trace and loco_activity are not the same length')
+    end               
+    active_time = loco_speed;
+    active_time(active_time < block.setup.constant.locoThresh) = 0;
 
     figure; 
 
@@ -66,9 +83,7 @@ else
     ylabel('Considered active')
     xlabel('Seconds')
     set(gca, 'ytick', [0 1])
-    %if isfield(block, 'active_time') 
-        plot(loco_time, active_time > 0); hold on;
-    %end
+    plot(loco_time, active_time > 0); hold on;
     suptitle(block.setup.block_supname)
    
 
@@ -84,21 +99,29 @@ else
         Sound_Time = block.Sound_Time;
     end
     
-    cell_number = block.cell_number;
-    redcell = block.redcell;
-    F = block.F; %all the cell fluorescence data
-    Fneu = block.Fneu; %neuropil
-    F7 = F-setup.constant.neucoeff*Fneu; %neuropil corrected traces
-
-    if isfield(block, 'timestamp')
-        timestamp = block.timestamp;
-        timeUnit = 'Timestamp';
+    if multiplaneData
+        cell_number = block.cell_number.(planeName);
+        redcell = block.redcell.(planeName);
+        F = block.F.(planeName); %all the cell fluorescence data
+        Fneu = block.Fneu.(planeName); %neuropil
+        
+        %Timestamp includes times for all planes
+        %Resample to only include times for this plane
+        planeInd = [1:nPlanes:length(block.timestamp)] + plane;
+        planeInd(planeInd > length(block.timestamp)) = []; %remove 1 frame over, which can happen with : function
+        timestamp = block.timestamp(planeInd);
     else
-        timestamp = 1:size(F7,2);
-        timeUnit = 'Frames';
+        cell_number = block.cell_number;
+        redcell = block.redcell;
+        F = block.F; %all the cell fluorescence data
+        Fneu = block.Fneu; %neuropil
+        timestamp = block.timestamp;
     end
+
+    F7 = F-setup.constant.neucoeff*Fneu; %neuropil corrected traces
     
     Z = round(length(timestamp)*z);
+    timeUnit = 'Timestamp';
         
     %Divide into red and green cells
     %ones variable = row number
@@ -119,7 +142,11 @@ else
     
     %% Plot raster from spikes (divided into red and green)
    
-    spikes = block.spks;
+    if multiplaneData
+        spikes = block.spks.(planeName);
+    else
+        spikes = block.spks;
+    end
     
     for f = 1:2
         if f == 1
@@ -257,8 +284,18 @@ else
 
     %% Plot mean image from suite2p with ROIs outlined and labelled
 
-    stat = block.stat;
-    stat = stat(:,2:end); %python to matlab correction
+    if multiplaneData
+        stat = block.stat.(planeName);
+        refImg = block.img.(planeName).refImg;
+        meanImg = block.img.(planeName).meanImg;
+        meanImgE = block.img.(planeName).meanImgE;
+    else
+        stat = block.stat;
+        refImg = block.img.refImg;
+        meanImg = block.img.meanImg;
+        meanImgE = block.img.meanImgE;
+    end
+    %stat = stat(:,2:end); %python to matlab correction
 
     %Plot maps twice, second will have ROI labels,
     %third will have red cell labels
@@ -286,16 +323,14 @@ else
 
             if m == 1
                 figtitle = 'Ref Image';
-                img = block.img.refImg;
-                %img = block.img.meanImg;
-                image(img);
+                image(refImg);
+                %image(meanImg);
                 if ismissing(block.setup.VR_name)
-                    imagesc(img);
+                    imagesc(refImg);
                 end
             elseif m == 2 
                 figtitle = 'Mean Image Enhanced';
-                img = block.img.meanImgE;
-                imagesc(img);
+                imagesc(meanImgE);
             end
 
             title(figtitle)
@@ -310,8 +345,8 @@ else
 
             for a = 1:length(currentCells)
                 row_num = currentCells(a);
-                xcirc = double(block.stat{1,row_num}.xcirc);
-                ycirc = double(block.stat{1,row_num}.ycirc);
+                xcirc = double(stat{1,row_num}.xcirc);
+                ycirc = double(stat{1,row_num}.ycirc);
 
                 subplot(1,2,1);
                 if f == 2

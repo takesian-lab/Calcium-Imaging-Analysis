@@ -2,10 +2,12 @@
 
 Fall = load('Fall.mat'); %Must load like this because iscell is a matlab function and might lead to unexpected errors.
 
-cellsToPlot = [11, 11, 11,11,11,11,11,11,11,11,11];
-runIDsToPlot = [6,7,8,9,10,11,5,2,3,4,1];
-power = [10,20,30,50,70,80,100,30,50,80,100];
-peak = nan(1,3);
+cellsToPlot = zeros(1,7)+9;
+%runIDsToPlot = [18,19,20,21,22,23,31]; %Series 1
+runIDsToPlot = [24:30]; %Series 2
+power = [10,30,50,80,100,120,150];
+peak = nan(1,length(power));
+error = nan(1,length(power));
 
 for r = 1:length(runIDsToPlot)
     
@@ -92,12 +94,15 @@ end
 
 %average by trial
 baselineMat = mean(baselineMat,3);
+activationMatError = std(activationMat,[],3);
 activationMat = mean(activationMat,3);
 avgTrialMat = [baselineMat, activationMat];
 
-activation_peaks = max(activationMat,[],2);
+[activation_peaks, peaks_ind] = max(activationMat,[],2);
+activation_peaks_error = activationMatError(peaks_ind);
 cellInd = find(block.cell_number == currentCellToPlot);
 peak(r) = activation_peaks(cellInd);
+error(r) = activation_peaks_error(cellInd);
 
 
 
@@ -122,10 +127,21 @@ peak(r) = activation_peaks(cellInd);
 
 end
 
-figure
+figure; hold on
 bar(peak)
+errorbar(peak, error)
 ylabel('Peak dff')
 xlabel('Power')
 set(gca, 'XTick', 1:length(power))
 set(gca, 'XTickLabel', power)
-title('YE083020F2 Cell 2')
+%title('YE083020F2 Cell 2')
+
+%%
+
+figure
+plot(powerr', 'Linewidth', 2)
+ylabel('Peak dff')
+xlabel('Power')
+set(gca, 'XTick', 1:length(power))
+set(gca, 'XTickLabel', power)
+legend(num2str([1:8]'))

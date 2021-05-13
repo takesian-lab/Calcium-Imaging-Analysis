@@ -152,10 +152,23 @@ cd(setup.block_path)
 filedir = dir;
 filenames = {filedir(:).name};
 BOT_files = filenames(contains(filenames,'botData'));
-BOT_filename = BOT_files{contains(BOT_files,'.csv')};
+BOT_files_ind = contains(BOT_files,'.csv');
+if sum(BOT_files_ind) == 1 %Regular BOT
+    BOT_filename = BOT_files{BOT_files_ind};
+    display(['Loading ' BOT_filename])
+    frame_data = csvread(BOT_filename, 1,0);
+else %T-series or multi-plane BOT
+    display(['Loading ' num2str(sum(BOT_files_ind)) ' BOT files'])
+    BOT_filename = nan;
+    frame_data = [];
+    for b = 1:length(BOT_files)
+        if BOT_files_ind(b) == 1
+            temp_frame_data = csvread(BOT_files{b}, 1,0);
+            frame_data = [frame_data; temp_frame_data];
+        end
+    end       
+end
 
-display(['Loading ' BOT_filename])
-frame_data = csvread(BOT_filename, 1,0);
 timestamp = frame_data(:,1)-frame_data(1,1);% this is where we make that small correction
 block.timestamp = timestamp;
 block.active_trials = active_trials;
@@ -198,7 +211,7 @@ else %2p
     
     framerate = ceil(1/str2double(XML.framePeriod));
     if framerate ~= 15 && framerate ~= 30
-        warning('Check frame rate')
+        warning(['Check frame rate. Detected rate is: ' num2str(1/str2double(XML.framePeriod))])
     end
 end
 

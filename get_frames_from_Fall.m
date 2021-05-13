@@ -1,4 +1,4 @@
-function [Frame_set, Frame_set_range] = get_frames_from_Fall(ops, block_name, displayTable) 
+function [Frame_set, Frame_set_range, Block_position] = get_frames_from_Fall(ops, block_name, displayTable) 
 % This function gets frame numbers for each recording block from the Suite2p Fall.mat file
 % Returns Frame_set and Frame_set_range for the block specified by block_name
 % Optionally displays a complete table of block names and frame numbers for the current Fall.mat
@@ -41,7 +41,7 @@ redChannel = 1; %Number of the red channel, i.e. Ch1 or Ch2
 %Filepath access
 frameA = 13; %number of chars to start of frame number
 frameB = 8;  %number of chars to end of frame number
-blockA = 32; %number of chars to start of block umber
+blockA = 32; %number of chars to start of block number
 blockB = 30; %number of chars to end of block number
 chanA  = 15; %number of chars to channel number
 
@@ -52,7 +52,7 @@ filelist_char = ops.filelist;
 filelist_str = string(ops.filelist);
 
 %The filelist format should be as follows:
-%D:/FILEPATH/BOT_MOUSEID_DETAILS-###/BOT_MOUSEID_DETAILS-###_Cycle#####_Ch2_######.ome.tif
+%D:/FILEPATH/BOT_FILENAME-###/BOT_FILENAME-###_Cycle#####_Ch2_######.ome.tif
 % ### is the block number
 % ##### is the cycle number (used for t-series)
 % ###### is the tif/frame number
@@ -128,8 +128,15 @@ end
 
 if returnFrameSet
     %Convert blockFrames into Frame_set based on block_name
-    matching_blocks = strcmp(blockNames, block_name);
 
+    %Accommodate Z-corrected data
+    char_block_name = char(block_name);
+    if isequal(char_block_name(1:11),'Zcorrected-')
+        block_name = char_block_name(12:end);
+    end
+        
+    matching_blocks = strcmp(blockNames, block_name);
+    
     if sum(matching_blocks) == 0
         error('block_name is not contained in dataset')
     elseif sum(matching_blocks) > 1
@@ -138,6 +145,7 @@ if returnFrameSet
     currentFrames = blockFrames(matching_blocks,:);
     Frame_set = currentFrames(1,1):currentFrames(1,2);
     Frame_set_range = blockFrames(matching_blocks,:); %Use for troubleshooting
+    Block_position = find(matching_blocks); %Use for function output
     disp(['Current frame set is:   ' num2str(Frame_set_range)])
 end
 

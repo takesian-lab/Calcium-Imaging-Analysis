@@ -111,8 +111,6 @@ try
     % marker. (note, Ken suggested 200ms, but Carolyn changed it on 10/6/20
 
     % to better correct for a loco error).
-    
-
     ikeep = false(size(tloco));
     for k = 1:length(tloco)
         minDiff = min(abs(tloco(k) - ttr));

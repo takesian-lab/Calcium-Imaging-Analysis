@@ -30,7 +30,7 @@ else
     %Random air puff = 11
     
     
-    parameters.stim_protocol = 10; % widefield RF = 4, noiseburst ITI = 10
+    parameters.stim_protocol = 4; % widefield RF = 4, noiseburst ITI = 10
     imaging_chan = 'Ch2'; %was the data collected Ch1 or Ch2?
     BOT_start = [1];
     detrend_filter = [300 10];
@@ -51,11 +51,11 @@ else
             save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
             info_filename = 'Info_widefield';
         case 'RD0332' %Carolyn
-            info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
+            info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info sheets v2';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
-            compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
-            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\NxDE102320M2\Gcamp noise';
-            info_filename = 'Info_NxDE102320M2';
+            compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks\Widefield';
+            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\VxDG022421F6\widefield_RF';
+            info_filename = 'Info_VxDG022421F6';
             
         case 'RD-6-TAK2' %Esther's computer
             info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
@@ -73,7 +73,7 @@ else
     Info = importfile(info_filename);
     
     %Create data structure for files corresponding to stim_protocol
-    [data] = fillSetupFromInfoTable_v2(Info, compiled_blocks_path, parameters.stim_protocol);
+    [data] = fillSetupFromInfoTable_v3(Info, compiled_blocks_path, parameters.stim_protocol);
     data.setup.imaging_chan = imaging_chan;
     data.setup.BOT_start = BOT_start;
     
@@ -148,10 +148,10 @@ figure;
 
 
  %% crop the window - I will take registerd images and add it to this function once I am done editing
-% [imageData,data,parameters,Full_Tile_Matrix] = crop_window(data,parameters);
-% cd(save_path)
-% save('Full_Tile_Matrix.mat','Full_Tile_Matrix','-v7.3');
-% clear Full_Tile_Matrix;
+[imageData,data,parameters,Full_Tile_Matrix] = crop_window(data,parameters);
+cd(save_path)
+save('Full_Tile_Matrix.mat','Full_Tile_Matrix','-v7.3');
+clear Full_Tile_Matrix;
 
 
 
@@ -160,8 +160,7 @@ figure;
 % we are still trying to determine whether the sounds are off by
 % approximately 500ms. Set this value here, to visually test the shift.
 % (the adjust_factor is in seconds)
-adjust_factor = 0.5; % in seconds
-
+adjust_factor = 0.5; % in seconds   
 for i=1:length(data.setup.Imaging_sets)
     mouseID=data.setup.mousename{i};
     unique_block_name = data.setup.unique_block_names{i};
@@ -343,6 +342,9 @@ clear Cropped
 %
 e = cputime-t
 clear t e i BOT_number
+
+cd(save_path);
+save('All_Images_df_over_f.mat','All_Images_df_over_f','-v7.3');
 
 %% view df_over_f
 
@@ -567,7 +569,7 @@ clear tempBase idx b count ll loop_num lv m mean_base
 %% what do the individual traces look like for a given tile?
 %pick a tile to look at here, and set level to look at that intensity
 %1=10...8=80dB
-loop_num=num2str(2);
+loop_num=num2str(3);
 
 
 if parameters.stim_protocol==10;
@@ -872,7 +874,7 @@ meanAccumBaseline = mean(accumBase,3);
 
 %plot response window
 % y=DFF0_mean{5,2};%RF
-y=DFF0_mean{1,9};
+y=DFF0_mean{1,4};
 %y=y(150:180,170:200,:);
 y= squeeze(mean(mean(y,2),1));
 x=1:length(y);
@@ -914,9 +916,9 @@ for f=1:length(parameters.frequencies);
         
         %         n = ((f-1)*length(parameters.frequencies))+lv
         n=n+1
-        subplot(length(parameters.levels),length(parameters.frequencies),n);
+        subplot(length(parameters.frequencies),length(parameters.levels),n);
         imagesc(y);
-        %    caxis([250 300]);
+           caxis([0 3]);
         title(sprintf('Freq %d', round(parameters.frequencies(f),2)));
         axis image;
         set(gca,'XTick',[], 'YTick', [])
@@ -1222,3 +1224,4 @@ end
 % end
 cd(save_path)
 save('imageData.mat','imageData','-v7.3');
+save('parameters.mat','parameters','-v7.3');

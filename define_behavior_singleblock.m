@@ -87,6 +87,10 @@ try
     tloco = loco_data.t(loco_data.ch > 0); % times of trial markers in locomotion data
     mark_loco = find(loco_data.ch>0);
     ntr = length(Data);% number of trials
+         if size(mark_loco,1) ~= ntr
+            FN=[mouseID '-Session' Tosca_Session '-Run' Tosca_Run_number '.txt'];
+            TL = tosca_create_log(FN)
+        end
     %Make sure number of trials from Data matches number of Tosca text files
     %Added by Maryse Oct. 7
     inblock=trials(contains(trials,['Run' Tosca_Run_number '-']));
@@ -105,8 +109,8 @@ try
     % milliseconds. Here, we'll check each locomotion marker and see if there
     % is a real trial starting within 50 ms. If so, keep that locomotion
     % marker. (note, Ken suggested 200ms, but Carolyn changed it on 10/6/20
+
     % to better correct for a loco error).
-    
     ikeep = false(size(tloco));
     for k = 1:length(tloco)
         minDiff = min(abs(tloco(k) - ttr));
@@ -117,8 +121,10 @@ try
         end
     end
     
+
     tloco = tloco(ikeep); %updated start times for loco data, 9/24/20 cgs
     mark_loco= mark_loco(ikeep);% loco trial start idx, with extra/error loco removed
+%    
     
     
 catch
@@ -289,8 +295,13 @@ for m = 1:length(Data)
         V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
     elseif setup.stim_protocol == 4 %widefield,RF
+        try
         V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
         V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
+        catch
+            V1(1,m)  = Data{m}.Sound.Signal.Tone.Frequency_kHz;
+        V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
+        end
     elseif setup.stim_protocol == 5 %SAM
         try
             V1(1,m)  = Data{m}.Sound.Signal.SAM.Rate_Hz;
@@ -301,8 +312,13 @@ for m = 1:length(Data)
             V2(1,m)  = nan;
         end
     elseif setup.stim_protocol == 3 %FM sweep
+        try
         V1(1,m)  = Data{m}.Sound.Signal.FMSweep.Rate_oct_s;
         V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
+        catch
+             V1(1,m)  = Data{m}.Sound.Signal.Sweep.Rate;
+        V2(1,m)  = Data{m}.Sound.Signal.Level.dB_SPL;
+        end
     elseif setup.stim_protocol == 6 %SAM freq
         try
             V1(1,m)  = Data{m}.Sound.Signal.Waveform.Frequency_kHz;
@@ -317,8 +333,10 @@ for m = 1:length(Data)
             V1(1,m)  = Data{m}.cue.Signal.Waveform.Frequency_kHz;
             V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
         catch
-            V1(1,m)  = Params.Output_States(2).StimChans.Stimulus.Waveform.Tone.Frequency_kHz;
-            V2(1,m)  = Params.Output_States(2).StimChans.Stimulus.Level.Level;
+%             V1(1,m)  = Params.Output_States(2).StimChans.Stimulus.Waveform.Tone.Frequency_kHz;
+%             V2(1,m)  = Params.Output_States(2).StimChans.Stimulus.Level.Level;
+            V1(1,m)  = Data{m}.cue.Signal.Tone.Frequency_kHz;
+            V2(1,m)  = Data{m}.cue.Signal.Level.dB_SPL;
          end
     elseif setup.stim_protocol == 8 %Behavior ABI
         V1(1,m)  = Data{m}.cue.CurrentSource.Level.dB_re_1_Vrms;
@@ -380,8 +398,10 @@ if ~isempty(k)
     licks(k,:) = [];
     b_Outcome(:,k) = [];
     trialType(:,k) = [];
-    if ~isnan(targetFreq)
-        targetFreq(:,k) = [];
+    if setup.stim_protocol~=7
+        if ~isnan(targetFreq)
+            targetFreq(:,k) = [];
+        end
     end
     zero_loc(:,k) = [];
     activity_trial(:,k) = [];

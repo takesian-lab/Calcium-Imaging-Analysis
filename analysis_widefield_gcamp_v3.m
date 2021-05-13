@@ -29,7 +29,7 @@ else
     %Noiseburst_ITI = 10
     %Random air puff = 11
     
-    stim_protocol = 4;
+    
     parameters.stim_protocol = 4; % widefield RF = 4, noiseburst ITI = 10
     imaging_chan = 'Ch2'; %was the data collected Ch1 or Ch2?
     BOT_start = [1];
@@ -51,11 +51,11 @@ else
             save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
             info_filename = 'Info_widefield';
         case 'RD0332' %Carolyn
-            info_path = 'Z:\Carolyn\2P Imaging data\Widefield Troubleshooting\Info Sheets';
+            info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info sheets v2';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
-            compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\Widefield Troubleshooting\Compiled Blocks';
-            save_path = 'Z:\Carolyn\2P Imaging data\Widefield Troubleshooting\Analyzed Widefield\YG121520M2\200ms tone';
-            info_filename = 'Info_YG121520M2';
+            compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks\Widefield';
+            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\VxDG022421F6\widefield_RF';
+            info_filename = 'Info_VxDG022421F6';
             
         case 'RD-6-TAK2' %Esther's computer
             info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
@@ -73,9 +73,7 @@ else
     Info = importfile(info_filename);
     
     %Create data structure for files corresponding to stim_protocol
-
-%     [data] = fillSetupFromInfoTable_v3(Info, compiled_blocks_path, stim_protocol);
-    [data] = fillSetupFromInfoTable_v2(Info, compiled_blocks_path, stim_protocol); %Use V2 for old compile_blocks format
+    [data] = fillSetupFromInfoTable_v3(Info, compiled_blocks_path, parameters.stim_protocol);
     data.setup.imaging_chan = imaging_chan;
     data.setup.BOT_start = BOT_start;
     
@@ -111,7 +109,6 @@ end
 moving = Full_Tile_Matrix;
 [optimizer, metric] = imregconfig('monomodal'); %can I optimize these settings? (currently default settings)
 moving_reg = imregister(moving,fixed,'translation',optimizer,metric);
-donereg =1
 
 
 
@@ -152,9 +149,9 @@ figure;
 
  %% crop the window - I will take registerd images and add it to this function once I am done editing
 [imageData,data,parameters,Full_Tile_Matrix] = crop_window(data,parameters);
-% cd(save_path)
-% save('Full_Tile_Matrix.mat','Full_Tile_Matrix','-v7.3');
-% clear Full_Tile_Matrix;
+cd(save_path)
+save('Full_Tile_Matrix.mat','Full_Tile_Matrix','-v7.3');
+clear Full_Tile_Matrix;
 
 
 
@@ -163,8 +160,7 @@ figure;
 % we are still trying to determine whether the sounds are off by
 % approximately 500ms. Set this value here, to visually test the shift.
 % (the adjust_factor is in seconds)
-adjust_factor = 0.5; % in seconds
-
+adjust_factor = 0.5; % in seconds   
 for i=1:length(data.setup.Imaging_sets)
     mouseID=data.setup.mousename{i};
     unique_block_name = data.setup.unique_block_names{i};
@@ -236,8 +232,8 @@ for i=1:length(data.setup.Imaging_sets)
     %AT added 4/15/20 to center window around peak response across window
     clear all_trials
     [amp_average_response,time_average_response] = max(mean_across_all_trials);
-    estimated_peak = block.setup.framerate*1.2; %the peak should be about 0.8sec after stim (1s)
-    estimated_time = (time_average_response-estimated_peak)*(1/block.setup.framerate);
+    estimated_peak = data.setup.FrameRate{i}*1.2; %the peak should be about 0.8sec after stim (1s)
+    estimated_time = (time_average_response-estimated_peak)*(1/data.setup.FrameRate{i});
     parameters.adjusted_times_est = block.Sound_Time+estimated_time;
     
     %  repeat this average trace around sound with the estimated times
@@ -347,12 +343,15 @@ clear Cropped
 e = cputime-t
 clear t e i BOT_number
 
+cd(save_path);
+save('All_Images_df_over_f.mat','All_Images_df_over_f','-v7.3');
+
 %% view df_over_f
 
 % the data are divided into multiple 'tiles' to reduce memory issues. Tiles
 % go from rostral to caudal when going from 1:length(Tiles) i.e.
 % Tile1==most rostral
-tile_to_view = [1];
+tile_to_view = [2];
 tilenum = num2str(tile_to_view);
 
 for i=1:length(data.setup.Imaging_sets)
@@ -443,9 +442,9 @@ for i=1:length(data.setup.Imaging_sets)
 
 %% pull out baseline and window
 length_trial=size(traces.Tile1{1,1},3);
-baseline=1:(block.setup.constant.baseline_length*block.setup.framerate);
+baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});
 % window=(length(baseline)+1):(data.setup.FrameRate{1}*block.setup.constant.response_window);
-window=(length(baseline)+1):(block.setup.framerate*1.5);
+window=(length(baseline)+1):(data.setup.FrameRate{1}*1.5);
 for ll=1:loops
     loop_num=num2str(ll);
     if parameters.stim_protocol ==10;
@@ -570,7 +569,7 @@ clear tempBase idx b count ll loop_num lv m mean_base
 %% what do the individual traces look like for a given tile?
 %pick a tile to look at here, and set level to look at that intensity
 %1=10...8=80dB
-loop_num=num2str(5);
+loop_num=num2str(3);
 
 
 if parameters.stim_protocol==10;
@@ -579,14 +578,12 @@ if parameters.stim_protocol==10;
         if parameters.sort_loco ==0
             idx=parameters.stimIDX{lv};
         else idx = parameters.loco_0.stimIDX{lv};
-       
         end
         % occasionally, a stim will be empty, and this will correct
         % for when this occurs
         TF = isempty(idx);
         if TF == 0
             m=traces.(['Tile' loop_num]){lv};
-            size(traces.(['Tile' loop_num]){lv},4)
             figure;
             for mm = 1:size(traces.(['Tile' loop_num]){lv},4);
                 sTrace = traces.(['Tile' loop_num]){lv}(:,:,:,mm);
@@ -695,7 +692,7 @@ for f=1:length(parameters.frequencies)
         TF = isempty(a1);
         if TF ==0
             a2 = squeeze(mean(mean(a1,1),2));
-            plot(smooth(a2,2)); hold on
+            plot(smooth(a2)); hold on
         end
     end
 end
@@ -708,7 +705,6 @@ tic
 if parameters.stim_protocol==10
     for lv=1:length(parameters.levels);
         numLV=num2str(parameters.levels(lv));
-         fieldName = matlab.lang.makeValidName(['db' numLV]);
         idx=parameters.stimIDX{lv};
         fileName = matlab.lang.makeValidName(['avgStim_' numLV]);
         a1 = stimAverages.(fieldName);
@@ -793,9 +789,8 @@ end
 
 
 %% %% find cumulative baseline and the response window
-
-baseline=1:(block.setup.constant.baseline_length*block.setup.framerate);
-window=(length(baseline)):(block.setup.framerate*block.setup.constant.response_window);
+baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});
+window=(length(baseline)):(data.setup.FrameRate{1}*block.setup.constant.response_window);
 folder = save_path;
 % folder = 'C:\Anne';
 cd(folder)
@@ -812,7 +807,6 @@ accumBase = zeros(size(imageData.Cropped_Imaging_Data,1),size(imageData.Cropped_
 if parameters.stim_protocol==10
     for lv=1:length(parameters.levels);
         numLV=num2str(parameters.levels(lv));
-         fieldName = matlab.lang.makeValidName(['db' numLV]);
         % fname = (['SpatDenoise' numF 'khz' numLV 'db.tif']);
         % fname = (['TempDenoise' numF 'khz' numLV 'db.tif']);
         fileName = matlab.lang.makeValidName(['avgStim_' numLV]);
@@ -880,7 +874,7 @@ meanAccumBaseline = mean(accumBase,3);
 
 %plot response window
 % y=DFF0_mean{5,2};%RF
-y=DFF0_mean{1,2};
+y=DFF0_mean{1,4};
 %y=y(150:180,170:200,:);
 y= squeeze(mean(mean(y,2),1));
 x=1:length(y);
@@ -900,12 +894,11 @@ if parameters.stim_protocol==10
 
     for lv=1:length(parameters.levels);
         numLV=num2str(parameters.levels(lv))
-        lv
         y = mean(ResponseWindow{lv},3);
         
         %         n = ((f-1)*length(parameters.frequencies))+lv
         n=n+1
-        subplot(1,length(parameters.levels),n);
+        subplot(length(parameters.levels),1,n);
         imagesc(y);
         %    caxis([250 300]);
         title(sprintf('dB %d', round(parameters.levels(lv),2)));
@@ -925,13 +918,10 @@ for f=1:length(parameters.frequencies);
         n=n+1
         subplot(length(parameters.frequencies),length(parameters.levels),n);
         imagesc(y);
-        %    caxis([250 300]);
+           caxis([0 3]);
         title(sprintf('Freq %d', round(parameters.frequencies(f),2)));
         axis image;
-%         set(gca,'XTick',[], 'YTick', [])
-lim = caxis
-caxis([0 8])
-
+        set(gca,'XTick',[], 'YTick', [])
     end
 end
 end
@@ -952,9 +942,7 @@ for f=1:length(parameters.frequencies);
     imagesc(y);
     title(sprintf('Freq %d', f));
     axis image;
-%     set(gca,'XTick',[], 'YTick', [])
-lim = caxis
-caxis([0 20])
+    set(gca,'XTick',[], 'YTick', [])
 end
 
 %% zscore data
@@ -1009,8 +997,7 @@ for f=1:length(parameters.frequencies);
     title(sprintf('Freq %d', f));
     axis image;
     set(gca,'XTick',[], 'YTick', [])
-    lim = caxis
-caxis([0 14])
+    %   caxis([2 15]);
     colormap jet
 end
 
@@ -1061,7 +1048,7 @@ end
 %% determine CFs for each pixel
 [dim1 dim2 dim3] = size(imageData.Cropped_Imaging_Data);
 CF=NaN(dim1,dim2,1);
-response_threshold = 2 ;
+response_threshold = 2;
 
 
 for x= 1:dim1 % go through all x pixels
@@ -1237,3 +1224,4 @@ end
 % end
 cd(save_path)
 save('imageData.mat','imageData','-v7.3');
+save('parameters.mat','parameters','-v7.3');

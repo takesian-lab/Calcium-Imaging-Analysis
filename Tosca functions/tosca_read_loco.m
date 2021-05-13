@@ -12,11 +12,11 @@ function L = tosca_read_loco(fn)
 % L.speed : speed, cm/s
 %
 
-if isempty(strfind(fn, '.loco')),
+if ~contains(fn, '.loco')
    fn = strrep(fn, '.txt', '.loco.txt');
 end
 
-if ~exist(fn, 'file'),
+if ~exist(fn, 'file')
    error('Tosca locomotion file not found.');
 end
 

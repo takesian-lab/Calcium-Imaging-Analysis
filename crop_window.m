@@ -1,5 +1,5 @@
 
-function [imageData,data,parameters] = crop_window(data)
+function [imageData,data,parameters,Full_Tile_Matrix] = crop_window(data,parameters)
 setup = data.setup;
 for a=1:size(setup.mousename,1) %Mice
     for b=1:size(setup.mousename,2) %ROIs
@@ -82,7 +82,7 @@ for a=1:size(setup.mousename,1) %Mice
         pause;
         parameters.Window_Postion = [parameters.x_min parameters.x_max parameters.y_min parameters.y_max];
         imageData.Cropped_Imaging_Data = Full_Tile_Matrix(parameters.y_min:parameters.y_max,parameters.x_min:parameters.x_max,:);
-        clear Full_Tile_Matrix
+%         clear Full_Tile_Matrix
         clear Cropped
         clear Tile_Mean_ROI
    

@@ -29,9 +29,11 @@ end
 %% find hitrate; determine if it is above threshold
 if block.setup.stim_protocol==7
     Hits = find(block.Outcome==1);
+    misses =find(block.Outcome==0);
     FA = find(block.Outcome==4);
-    block.HitRate = length(Hits)./length(block.Outcome);
-    block.FARate = length(FA)./length(block.Outcome);
+    withold = find(block.Outcome==3);
+    block.HitRate = length(Hits)./(length(Hits)+length(misses));
+    block.FARate = length(FA)./(length(FA)+length(withold));
 end
 %% visualize the data?
 %set sound time to zero

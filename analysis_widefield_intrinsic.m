@@ -62,7 +62,7 @@ else
     %Random air puff = 11
     
     
-    stim_protocol = 4; % this is the code for "widefield"
+    parameters.stim_protocol = 4; % this is the code for "widefield"
     
     % which channel was the data collected with?
     imaging_chan = 'Ch2';
@@ -88,8 +88,8 @@ else
            info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
             compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
-            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\VxDD053120M2\intrinsic_630';
-            info_filename = 'Info_VxDD053120M2';
+            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\VxDG011121F2\intrinsic630';
+            info_filename = 'Info_VxDG011121F2';
         case 'RD-6-TAK2' %Carolyn
             info_path = '\\apollo\research\ENT\Takesian Lab\Nick\Microglia Project\COVID_timeline';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
@@ -119,7 +119,11 @@ else
     end
 end
 %% crop the window
-[imageData,data,parameters] = crop_window(data);
+[imageData,data,parameters,Full_Tile_Matrix] = crop_window(data,parameters);
+cd(save_path)
+save('Full_Tile_Matrix.mat','Full_Tile_Matrix','-v7.3');
+clear Full_Tile_Matrix;
+
 
 
 %% anne's "old code" to test for window quality and check sound stimulation
@@ -377,7 +381,7 @@ for i=1:length(data.setup.Imaging_sets)
 end
 
 
-[traces]=sound_response_widefield_v3(parameters,data,All_Images_df_over_f);
+[traces,parameters]=sound_response_widefield_v3(parameters,data,All_Images_df_over_f);
 %% pull out baseline and window
 length_trial=size(traces.Tile1{1,1},3);
 baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});
@@ -515,7 +519,7 @@ end
 
 %% %% find cumulative baseline and the response window
 baseline=1:(0.5*data.setup.FrameRate{1});%TODO magic numbers - change to values from compile blocks
-window=(length(baseline)):(data.setup.FrameRate{1}*5);%TODO magic numbers - change to values from compile blocks
+window=(length(baseline)):(data.setup.FrameRate{1}*2);%TODO magic numbers - change to values from compile blocks
 folder = save_path;
 % folder = 'C:\Anne';
 cd(folder)
@@ -525,16 +529,16 @@ image = imageData.Cropped_Imaging_Data;
 total_stim = length(parameters.levels)*length(parameters.frequencies);
 accumBase = zeros(size(image,1),size(image,2),total_stim*length(baseline));
 for f=1:length(parameters.frequencies);
-    numF=num2str(round(parameters.frequencies(f)))
+    numF=num2str(round(parameters.frequencies(f)));
     fieldName = matlab.lang.makeValidName(['kHz' numF]);
     for lv=1:length(parameters.levels);
-        numLV=num2str(parameters.levels(lv))
-        % fname = (['SpatDenoise' numF 'khz' numLV 'db.tif']);
-        % fname = (['TempDenoise' numF 'khz' numLV 'db.tif']);
+        numLV=num2str(parameters.levels(lv));
         fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
         
-        fname= ([fileName 'db.tif']);
+        fname= ([fileName 'db.tif'])
         %        fname = (['avgStim' numF 'khz' numLV 'db.tif']);
+        ex = exist(fname);
+        if ex==2
         info = imfinfo(fname);
         num_images = numel(info);
         for k = 1:num_images
@@ -551,6 +555,7 @@ for f=1:length(parameters.frequencies);
         %         base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
         %             wind.(['Tile' loop_num]){f,lv}(:,:,:,:)=traces.(['Tile' loop_num]){f,lv}(:,:,window,:);
         clear stack AA
+        end
     end
 end
 
@@ -558,7 +563,7 @@ stdBaseline=std(accumBase,0,3);
 meanAccumBaseline = mean(accumBase,3);
 
 %plot response window
-y=DFF0_mean{4,1};
+y=DFF0_mean{4,2};
 %y=y(150:180,170:200,:);
 y= squeeze(mean(mean(y,2),1));
 x=1:length(y);
@@ -566,7 +571,7 @@ figure;
 plot(x,y)
 
 %what does a whole response window look like
-g = mean(ResponseWindow{1,1},3);
+g = mean(ResponseWindow{3,2},3);
 %         CLIM = [0 350];
 imagesc(g);
 
@@ -580,7 +585,7 @@ for f=1:length(parameters.frequencies);
         numLV=num2str(parameters.levels(lv))
         y = mean(ResponseWindow{f,lv},3);
         n = ((f-1)*length(parameters.frequencies))+lv;
-        subplot(length(parameters.levels),length(parameters.frequencies),n);
+        subplot(2,12,n);
         imagesc(y);
         %    caxis([250 300]);
         title(sprintf('Freq %d', round(parameters.frequencies(f),2)));
@@ -595,9 +600,11 @@ figure;
 for f=1:length(parameters.frequencies);
     numF=num2str(round(parameters.frequencies(f)))
     for k = 1:length(parameters.levels);
+        if ~isempty(ResponseWindow{f,lv})
         AA = mean(ResponseWindow{f,lv},3);
         stack(:,:,k)=AA(:,:);
         stack=double(stack);
+        end
     end
     
     y = mean(stack,3);
@@ -614,6 +621,7 @@ for f=1:length(parameters.frequencies);
     figure;
     for lv=1:length(parameters.levels);
         numLV=num2str(parameters.levels(lv));
+            if ~isempty(ResponseWindow{f,lv})
         mainResponse = ResponseWindow{f,lv};%temporally/spatially filtered response (2s post  sound)
         Df_f0 = DFF0_mean{f,lv};%temporally/spatially filtered mean response (entire trace i.e. baseline and 3s post sound)
         %z score of every frame of response window
@@ -638,7 +646,7 @@ for f=1:length(parameters.frequencies);
         title(sprintf('Freq %d', round(parameters.frequencies(f),2)));
         
         hold on;
-        
+            end
     end
 end
 
@@ -650,6 +658,7 @@ clear stack
 
 for f=1:length(parameters.frequencies);
     numF=num2str(round(parameters.frequencies(f)))
+       if ~isempty(meanZresponse{f,lv})
         for k = 1:length(parameters.levels);
             AA = meanZresponse{f,lv};
             stack(:,:,k)=AA(:,:);
@@ -665,7 +674,7 @@ for f=1:length(parameters.frequencies);
     %    set(gca,'XTick',[], 'YTick', [])
     %    caxis([2 5]);
         colormap jet
-        
+        end      
 end
 %imageData.z = y_stack; 
 clear stack

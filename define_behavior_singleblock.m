@@ -114,7 +114,7 @@ try
     ikeep = false(size(tloco));
     for k = 1:length(tloco)
         minDiff = min(abs(tloco(k) - ttr));
-        if minDiff < 0.05
+        if minDiff < 0.2
             ikeep(k) = true;
         else
             minDiff

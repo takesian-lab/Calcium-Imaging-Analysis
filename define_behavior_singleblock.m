@@ -121,7 +121,6 @@ try
         end
     end
     
-
     tloco = tloco(ikeep); %updated start times for loco data, 9/24/20 cgs
     mark_loco= mark_loco(ikeep);% loco trial start idx, with extra/error loco removed
 %    
@@ -369,7 +368,8 @@ for m = 1:length(Data)
         try
             stim_level = Params.Output_States(2).StimChans(1).Stimulus.Level.Level;
         catch
-            stim_level = Params.Tosca.Flowchart(3).State.SigMan.Channels(1).Channel.Level.Level;
+            stim_level = Params.Tosca.Schedule.Families.Vars(3).expr;
+            %stim_level = Params.Tosca.Flowchart(3).State.SigMan.Channels(1).Channel.Level.Level;
         end
     else %stim_protocol doeesn't match any of the above
         warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])

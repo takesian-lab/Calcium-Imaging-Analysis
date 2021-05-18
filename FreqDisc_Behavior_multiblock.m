@@ -105,7 +105,8 @@ css(css==0.01)=0;
 figure;
 
 pc_session100 = pc_session*100;
-errorbar(css,pc_session100,var_session,'-bo','LineWidth',2)
+% errorbar(css,pc_session100,var_session,'-bo','LineWidth',2)
+errorbar(css,pc_session,var_session,'-bo','LineWidth',2)
 % plot(css,pc_session,'-bo','LineWidth',2)
 hold on
 %errorbar(ucss,pc_uncued,var_uncued,'-ko','LineWidth',2)
@@ -121,9 +122,11 @@ targets = [0.25 0.5 0.75] % 25 50 75 % performanc
 weights = ones(1,length(css)) % No weighting
 
 % Fit
+% [coeffspc_session, ~, curvepc_session, thresholdpc_session] = ...
+%     FitPsycheCurveLogit_cgs(css, ypsych_size, session_Length, targets);
+% 
 [coeffspc_session, ~, curvepc_session, thresholdpc_session] = ...
-    FitPsycheCurveLogit_cgs(css, ypsych_size, session_Length, targets);
-
+    FitPsycheCurveLogit_cgs(css, pc_session, weights, targets);
 
 % Plot psychometic curves
 plot(curvepc_session(:,1), curvepc_session(:,2), 'LineStyle', '--')

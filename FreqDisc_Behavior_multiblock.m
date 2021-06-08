@@ -1,7 +1,7 @@
 %% Find blocks of interest/day
-info_path = 'Z:\Carolyn\Behavior\SSRI_mice\Info_sheets';
-compiled_blocks_path = 'Z:\Carolyn\Behavior\SSRI_mice\compiled blocks\Cn0012621M4';
-save_path = 'Z:\Carolyn\Behavior\SSRI_mice\Analyzed data';
+info_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\Behavior\SSRI_mice\Info_sheets';
+compiled_blocks_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\Behavior\SSRI_mice\compiled blocks\Cn0012621M4';
+save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\Behavior\SSRI_mice\Analyzed data';
 info_filename = 'Info_Cn0012621M4';
 
 stim_protocol = 7;

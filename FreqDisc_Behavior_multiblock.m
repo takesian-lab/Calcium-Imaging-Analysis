@@ -84,19 +84,22 @@ for i2 = 1:length(mice)
         datamat(:,1) = stim_list';
         dprimemat(:,1) = stim_list(2:end)';
         
-        % get the results!
-%         for f=1:length(stim_list) %loop through the stimuli
-%             stim_percent(f)=nanmean(Outcome(find(Freq(:)==stim_list(f)))); % percent 'go'
-%             go_n = Outcome(find(Freq(:)==stim_list(f)));
-%             stim_n(f,:)=length(find(Freq(1,:)==stim_list(f))); % n trials per stim
-%             if f>1 % FA's are identified as a 4 and His are 1 - this makes the math the same for the two conditions
-%                 stim_percent(f)=stim_percent(f)-3;
-%                 go_n = go_n -3;
-%             end
-%             corrects = find(go_n==1);
-%             ypsych_size(f) = length(corrects); % number of 'go'
-%         end
-%         
+
+for i=1:length(Freq)
+    if Freq(i)>0
+        freq1=Freq(1,i);
+        log=log10(freq1);
+        logtarg=log10(target);
+        diffFreq=abs(log-logtarg);
+        percFreq=diffFreq/0.3010;
+        percFreq=round(percFreq,1)
+        Freq(1,i)= percFreq;
+    end
+    
+end
+
+Freq(Freq(:,1) < 0, :) = [];
+stim_list=unique(Freq(1,:));
         
              %loop through the stimuli
         for f=1:length(stim_list) 
@@ -111,7 +114,7 @@ for i2 = 1:length(mice)
                 stim_percent(f)=stim_percent(f)-3;
                 go_n = go_n -3;
             end
-            
+           
             
             corrects = find(go_n==1);
             ypsych_size(f) = length(corrects); % number of 'go'
@@ -170,38 +173,9 @@ for i2 = 1:length(mice)
         [x,fitted_yes,fitted_dprime,threshold,slope] = ...
     plotPsych_dprime_cgs(results_dp,dprimemat,results_dp.options,plotOptions,zHR);
        
-%         plot(stim_list(2:end),smooth(dprime,4));
-%         hold on
-%         newcolors = {'#3C33FF','#3364FF','#3380FF','#3399FF','#33B8FF','#33E0FF','#33FFE6','#33FFBB','#33FF8A','#33FF39','#86FF33','#C7FF33','#ECFF33'};
-%         colororder(newcolors)
+   
         
-%         pc_session100 = stim_percent*100;
-%         plot(stim_list,stim_percent,'-bo','LineWidth',2)
-%         hold on
-%         xlabel('Octaves from Target')
-%         ylabel('Go probability')
-%         set(gca,'FontSize',14)
-        
-        
-        % Fit psychometirc functions
-%         targets = [0.25 0.5 0.75] % 25 50 75 % performanc
-%         
-%         weights = ones(1,length(stim_list)) % No weighting
-%         
-%         % Fit
-%         [coeffspc_session, ~, curvepc_session, thresholdpc_session] = ...
-%             FitPsycheCurveLogit_cgs(stim_list, ypsych_size, stim_n, targets);
-%         
-%         [ffit_WH, curve_WH] = ...
-%             fitPsycheCurveWH(stim_list,stim_percent)
-%         
-%         
-%         % Plot psychometic curves
-%         % plot(curvepc_session(:,1), curvepc_session(:,2), 'LineStyle', '--')
-%         % legend('Performance', 'Fit');
-%         
-%         plot(curve_WH(:,1), curve_WH(:,2), 'LineStyle', '--')
-%         legend('Performance', 'Fit');
+      
         
         %store data
         datenumber = strcat('day',num2str(datenum(uniquedays{j2})));

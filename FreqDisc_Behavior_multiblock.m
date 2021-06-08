@@ -1,8 +1,8 @@
 %% Find blocks of interest/day
 info_path = 'Z:\Carolyn\Behavior\SSRI_mice\Info_sheets';
-compiled_blocks_path = 'Z:\Carolyn\Behavior\SSRI_mice\compiled blocks\Cn0012621M3';
+compiled_blocks_path = 'Z:\Carolyn\Behavior\SSRI_mice\compiled blocks\Cn0012621M4';
 save_path = 'Z:\Carolyn\Behavior\SSRI_mice\Analyzed data';
-info_filename = 'Info_Cn0012621M3';
+info_filename = 'Info_Cn0012621M4';
 
 stim_protocol = 7;
 Hit_threshold = 0.7;
@@ -16,45 +16,74 @@ by_date = 1;
 cd(info_path)
 Info = importfile(info_filename);
 [data] = fillSetupFromInfoTable_v3(Info, compiled_blocks_path,stim_protocol);
+[options_fit, plotOptions] = setOptions;
+options_dp = options_fit;
 
 %the save_path is where the data are
 % block_path = 'Z:\Carolyn\Behavior\SSRI_mice\compiled blocks\Cn0012621M3';
 % cd(block_path)
 % allfiles=dir('*Compiled*');
-%% fix the looping problem
+%% Go through the days
 mouselist = data.setup.mousename;
 mice = unique(mouselist);
-% date = convertStringsToChars(data.setup.expt_date);
 date = string(data.setup.expt_date);
-uniquedays = unique(date); %still not working because of dashes - need to be removed?
+uniquedays = unique(date);
 sessionlist = string(data.setup.Session);
 sessions = unique(sessionlist);
 Outcome = [];
 Freq = [];
-for i2 = 1:length(mice) %loop through unique mice
+
+%%
+ %loop through unique mice
+for i2 = 1:length(mice)
     mouseIDX = find(strcmp(mouselist, mice{i2}));
     
-%     for k2 = 1:length(sessions) %loop through unique sessions
-%         sesIDX = find(strcmp(sessionlist, sessions{k2}));
-        for j2 = 1:length(uniquedays) %loop through unique days
-            dayIDX = find(strcmp(date, uniquedays{j2}));
+%loop through unique days
+    for j2 = 1:length(uniquedays) 
+        dayIDX = find(strcmp(date, uniquedays{j2}));
+        
+        RunsOfInterest = intersect(mouseIDX,dayIDX);
+        Outcome = [];
+        Freq = [];
+        for m2=1:length(RunsOfInterest)
+            runnum = num2str(data.setup.Tosca_Runs{(RunsOfInterest(m2))});
+            sessionname = strcat('Session', sessionlist{RunsOfInterest(m2)}, '_Run', runnum);
+            blockname = strcat('data.', mouselist{RunsOfInterest(m2)}, '.Session', sessionlist{RunsOfInterest(m2)}, '_Run', runnum);
+            block = eval(blockname);
             
-            RunsOfInterest = intersect(mouseIDX,dayIDX);
-            Outcome = [];
-            Freq = [];
-            for m2=1:length(RunsOfInterest)
-                runnum = num2str(data.setup.Tosca_Runs{(RunsOfInterest(m2))});
-                sessionname = strcat('Session', sessionlist{RunsOfInterest(m2)}, '_Run', runnum);
-                blockname = strcat('data.', mouselist{RunsOfInterest(m2)}, '.Session', sessionlist{RunsOfInterest(m2)}, '_Run', runnum)
-                block = eval(blockname);
-                if block.HitRate>Hit_threshold  & block.prepTrial ==0
-                    Outcome = [Outcome,block.Outcome];
-                    Freq = [Freq, block.parameters.variable1];
-                    target = block.TargetFreq;
-                end
+            % only look at blocks that meet hit threshold and exclude the
+            % daily prep trials.
+            if block.HitRate>Hit_threshold  & block.prepTrial ==0
+                Outcome = [Outcome,block.Outcome];
+                Freq = [Freq, block.parameters.variable1];
+                target = block.TargetFreq;
             end
-           
-
+        end
+        
+       %% 
+        % convert frequencies to difference in octaves
+        for i=1:length(Freq)
+            if Freq(i)>0
+                freq1=Freq(1,i);
+                log=log10(freq1);
+                logtarg=log10(target);
+                diffFreq=abs(log-logtarg);
+                percFreq=diffFreq/0.3010;
+                percFreq=round(percFreq,1);
+                Freq(1,i)= percFreq;
+            end
+        end
+        
+        %older scripts had -1000 khz tones - this will remove those if needed
+        Freq(Freq(:,1) < 0, :) = [];
+        stim_list=unique(Freq(1,:));
+        
+        
+        %%
+        %create data structure for psignifit
+        datamat(:,1) = stim_list';
+        dprimemat(:,1) = stim_list(2:end)';
+        
 
 for i=1:length(Freq)
     if Freq(i)>0
@@ -70,79 +99,94 @@ for i=1:length(Freq)
 end
 
 Freq(Freq(:,1) < 0, :) = [];
-css=unique(Freq(1,:));
-
-%Cued==session
-for f=1:length(css)
-    pc_session(f)=nanmean(Outcome(find(Freq(:)==css(f))));
-    pc_val = Outcome(find(Freq(:)==css(f)));
-    session_Length(f,:)=length(find(Freq(1,:)==css(f)));
-    if f>1
-        pc_session(f)=pc_session(f)-3;
-        pc_val = pc_val -3;
-    end
-    corrects = find(pc_val==1);
-    ypsych_size(f) = length(corrects);
-end
-
-%Estimated variance by bootstrap
-%SI
-
-for f=1:length(css)
-    clear meansamp
-    for i=1:10000
-        clear samp tempmat
-        samp=datasample(1:session_Length(f),20,'Replace',true);
-        tempmat=Freq(:,find(Freq(1,:)==css(f)));
-        meansamp(i)=nanmean(tempmat(samp));
-    end
-    var_session(f)=std(meansamp);
-end
-
-
-
-css(css==0.01)=0;
-figure;
-
-pc_session100 = pc_session*100;
-% errorbar(css,pc_session100,var_session,'-bo','LineWidth',2)
-errorbar(css,pc_session,var_session,'-bo','LineWidth',2)
-% plot(css,pc_session,'-bo','LineWidth',2)
-hold on
-%errorbar(ucss,pc_uncued,var_uncued,'-ko','LineWidth',2)
-xlabel('Frequency (8 is go)')
-ylabel('Go probability')
-set(gca,'FontSize',14)
-%title(num'cued vs. uncued day 1')
-legend({'Cued','Uncued'})
-
-% Fit psychometirc functions
-targets = [0.25 0.5 0.75] % 25 50 75 % performanc
-
-weights = ones(1,length(css)) % No weighting
-
-% Fit
-% [coeffspc_session, ~, curvepc_session, thresholdpc_session] = ...
-%     FitPsycheCurveLogit_cgs(css, ypsych_size, session_Length, targets);
-% 
-[coeffspc_session, ~, curvepc_session, thresholdpc_session] = ...
-    FitPsycheCurveLogit_cgs(css, pc_session, weights, targets);
-
-% Plot psychometic curves
-plot(curvepc_session(:,1), curvepc_session(:,2), 'LineStyle', '--')
-legend('Performance', 'Fit');
-
+stim_list=unique(Freq(1,:));
+        
+             %loop through the stimuli
+        for f=1:length(stim_list) 
+            stim_percent(f)=nanmean(Outcome(find(Freq(:)==stim_list(f)))); % percent 'go'
+            go_n = Outcome(find(Freq(:)==stim_list(f)));
+            go_nan = isnan(go_n); %correct for occasional NaN
+            go_n(go_nan) = [];%correct for occasional NaN
+            stim_n(f,:)=sum(~isnan(find(Freq(1,:)==stim_list(f)))); % n trials per stim
             
-            %store data
-            datenumber = strcat('day',num2str(datenum(uniquedays{j2})));
-            FrequencyDisc.([mice{i2}]).([datenumber]).Outcome = Outcome;
-            FrequencyDisc.([mice{i2}]).([datenumber]).Frequencies = Freq;
-            FrequencyDisc.([mice{i2}]).([datenumber]).targetFrequency = target;
-            FrequencyDisc.([mice{i2}]).([datenumber]).threshold =thresholdpc_session;
+            % FA's are identified as a 4 and His are 1 - this makes the math the same for the two conditions
+            if f>1 
+                stim_percent(f)=stim_percent(f)-3;
+                go_n = go_n -3;
+            end
+           
             
+            corrects = find(go_n==1);
+            ypsych_size(f) = length(corrects); % number of 'go'
+            datamat(f,2) = length(corrects);
+            datamat(f,3) = stim_n(f);
             
+            % hit rate is rate_response(1) and rest are FA rates
+            responseRate(f) = sum(go_n)/stim_n(f);
+            
+            % dprime measure doesnt allow for hit=1 or =0. This will
+            % correct for those such that we dont have inf values
+            %Correct floor
+            if  responseRate(f) <0.05
+                responseRate(f) = 0.05;
+            end
+            
+            %Correct ceiling
+            if responseRate(f) >0.95
+                responseRate(f) = 0.95;
+            end
+            
+            % correct number of FA/hit trials to match the rate
+            response_n(f) = responseRate(f)*stim_n(f);
+            datamat(f,2) = response_n(f);
+            
+            if f ==1 %hits
+            z_hit = sqrt(2)*erfinv(2*(responseRate(f))-1);
+            else % FAs
+                z_FA(f-1) = sqrt(2)*erfinv(2*(responseRate(f))-1);
+                dprime(f-1) = z_hit - z_FA(f-1);
+            end
         end
+        
+        
+        datamat(:,1) = datamat(:,1)*-1; % make x values negative to correct for fitting 
+        dprimemat(:,1) = datamat(2:end,1);
+        dprimemat(:,2) = dprime';
+        
+        
+        % generate results for psychometric fit. This will give a threshold
+        % at 0.5% go. 
+        results_fit = psignifit(datamat,options_fit);
+        [threshold_fit,~] = getThreshold(results_fit, results_fit.options.threshPC, 1);
+        
+        figure;
+        subplot(2,1,1)
+        h = plotPsych(results_fit,plotOptions);
+        
+        options_dp.dprimeThresh =1;
+        [options_dp,results_dp,zHR] = find_threshPC(datamat,options_dp);
+        options_dp = results_dp.options;
+          
+     
+
+  subplot(2,1,2)
+        [x,fitted_yes,fitted_dprime,threshold,slope] = ...
+    plotPsych_dprime_cgs(results_dp,dprimemat,results_dp.options,plotOptions,zHR);
+       
+   
+        
+      
+        
+        %store data
+        datenumber = strcat('day',num2str(datenum(uniquedays{j2})));
+        FrequencyDisc.([mice{i2}]).([datenumber]).Outcome = Outcome;
+        FrequencyDisc.([mice{i2}]).([datenumber]).Frequencies = Freq;
+        FrequencyDisc.([mice{i2}]).([datenumber]).targetFrequency = target;
+        FrequencyDisc.([mice{i2}]).([datenumber]).threshold =threshold_fit;
+        
+        
     end
+end
 
 
 
@@ -152,9 +196,9 @@ for i = 1:length(mice)
     daycount = 0;
     for j = 1:length(uniquedays)
         daynumber = strcat('day',num2str(datenum(uniquedays{j})))
-        try 
-            th = FrequencyDisc.([mice{i}]).([daynumber]).threshold(1,2)
-             daycount = daycount+1;
+        try
+            th = abs(FrequencyDisc.([mice{i}]).([daynumber]).threshold(1));
+            daycount = daycount+1;
             FrequencyDisc.allThresh(i,daycount) = th;
         catch
             warning('no thresholds for date')
@@ -163,7 +207,7 @@ for i = 1:length(mice)
 end
 figure;
 plot (FrequencyDisc.allThresh);
-
+% 
 
 
 %%

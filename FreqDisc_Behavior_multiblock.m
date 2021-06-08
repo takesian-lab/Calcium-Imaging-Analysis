@@ -37,7 +37,7 @@ Freq = [];
  %loop through unique mice
 for i2 = 1:length(mice)
     mouseIDX = find(strcmp(mouselist, mice{i2}));
-    
+    count = 0;
 %loop through unique days
     for j2 = 1:length(uniquedays) 
         dayIDX = find(strcmp(date, uniquedays{j2}));
@@ -57,7 +57,12 @@ for i2 = 1:length(mice)
                 Outcome = [Outcome,block.Outcome];
                 Freq = [Freq, block.parameters.variable1];
                 target = block.TargetFreq;
+                
             end
+        end
+        
+        if ~isempty(Outcome)
+            count = count+1;
         end
         
        %% 
@@ -85,21 +90,7 @@ for i2 = 1:length(mice)
         dprimemat(:,1) = stim_list(2:end)';
         
 
-for i=1:length(Freq)
-    if Freq(i)>0
-        freq1=Freq(1,i);
-        log=log10(freq1);
-        logtarg=log10(target);
-        diffFreq=abs(log-logtarg);
-        percFreq=diffFreq/0.3010;
-        percFreq=round(percFreq,1)
-        Freq(1,i)= percFreq;
-    end
-    
-end
 
-Freq(Freq(:,1) < 0, :) = [];
-stim_list=unique(Freq(1,:));
         
              %loop through the stimuli
         for f=1:length(stim_list) 
@@ -159,8 +150,11 @@ stim_list=unique(Freq(1,:));
         results_fit = psignifit(datamat,options_fit);
         [threshold_fit,~] = getThreshold(results_fit, results_fit.options.threshPC, 1);
         
+         name =strcat(' Day#', num2str(count));
+        
         figure;
         subplot(2,1,1)
+         suptitle(name)
         h = plotPsych(results_fit,plotOptions);
         
         options_dp.dprimeThresh =1;
@@ -195,7 +189,7 @@ end
 for i = 1:length(mice)
     daycount = 0;
     for j = 1:length(uniquedays)
-        daynumber = strcat('day',num2str(datenum(uniquedays{j})))
+        daynumber = strcat('day',num2str(datenum(uniquedays{j})));
         try
             th = abs(FrequencyDisc.([mice{i}]).([daynumber]).threshold(1));
             daycount = daycount+1;
@@ -204,9 +198,13 @@ for i = 1:length(mice)
             warning('no thresholds for date')
         end
     end
+    
+    mousetitle = mice{(i)};
+    figure;
+    plot (FrequencyDisc.allThresh);
+    title([mousetitle]);
 end
-figure;
-plot (FrequencyDisc.allThresh);
+
 % 
 
 

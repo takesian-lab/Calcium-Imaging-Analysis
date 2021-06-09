@@ -1,4 +1,4 @@
-function S = tosca_read_trial(Params, Data, Trial)
+function [S, FN] = tosca_read_trial(Params, Data, Trial)
 % TOSCA_READ_TRIAL -- read detailed data for a single Tosca trial.
 % Usage: S = tosca_read_trial(Params, Data)
 % 
@@ -32,11 +32,15 @@ if ~exist(fn, 'file')
    end
 end
 
-fp = fopen(fn, 'rt');
+% fp = fopen(fn, 'rt');
 
 % Parse header row
-s = fgetl(fp);
-c = textscan(s, '%s', 'delimiter', '\t');
+s = fileread(fn);
+isplit = regexp(s, '\n', 'once');
+
+
+% s = fgetl(fp);
+c = textscan(s(1:isplit), '%s', 'delimiter', '\t');
 names = c{1};
 for k = 1:length(names)
    names{k} = strrep(names{k}, ' ', '_');
@@ -44,9 +48,19 @@ for k = 1:length(names)
    names{k} = strrep(names{k}, ')', '');
 end
 
-c = textscan(fp, '%f', 'delimiter', '\t');
+c = textscan(s(isplit+1:end), '%f', 'delimiter', '\t');
+% c = textscan(fp, '%f', 'delimiter', '\t');
+% fclose(fp);
+
 nc = length(names);
 nr = length(c{1})/nc;
+
+if nr ~= round(nr)
+   disp('removing double tabs');
+   s = regexprep(s, '\t\t', '\t');
+   c = textscan(s(isplit+1:end), '%f', 'delimiter', '\t');
+   nr = length(c{1})/nc;
+end
 
 val = reshape(c{1}, nc, nr);
 val = val';
@@ -65,7 +79,7 @@ elseif isfield(S, 'block')
    S.name = regexprep(S.name, '-Trial[\d]+', sprintf(': Block %d Trial %d', S.block, S.trial));
 end
 
-if Params.Info.Version < 2777 %originally 2734, CGS changed to 2776 to get air to run
+if Params.Info.Version < 2734
    S.frameSize = 1 / Params.DAQ.Poll_Rate_Hz;
 else
    S.frameSize = 1 / Params.Tosca.DAQ.Poll_Rate_Hz;
@@ -75,6 +89,7 @@ for k = 1:length(names)
    S.(names{k}) = val(:, k)';
 end
 
-fclose(fp);
-
+if nargout > 1
+   FN = fn;
+end
 

@@ -3,8 +3,14 @@
 %% Load files
 
 stim_protocol = 13; %Maryse behavior
-stim_name = 'behavior'; %training or testing or behavior
+stim_name = 'testing'; %training or testing or behavior
+dB_to_include = 1; %0 = both, 1 = 60 only, 2 = 40 only, 3 = 60 unless no 60 for that day, 4 = 40 unless no 40 for that day
+binCurves = 0; %Bin by 2 = 1
+removeBadDays = 0; %don't include sessions where mouse performed badly on easy frequencies
+easyFreqThreshold = 0.2; %easy frequency octaves
+easyPerfThreshold = 0.8; %minimum hit rate
 
+%%
 saveData = 0;
 loadPreviousData = 0;
 
@@ -46,12 +52,12 @@ for i = 1:nMice
     nDatesPerMouse(i) = length(dates{i});
 end
     
-    batch_hitRate = nan(nMice, max(nDatesPerMouse));
-    batch_FPrate = nan(nMice, max(nDatesPerMouse));    
+    batch.hitRate = nan(nMice, max(nDatesPerMouse));
+    batch.FPrate = nan(nMice, max(nDatesPerMouse));    
 if strcmp(stim_name, 'testing')    ||  strcmp(stim_name, 'behavior') 
-    batch_freqs = cell(nMice, max(nDatesPerMouse));
-    batch_hitRatePerFreq = cell(nMice, max(nDatesPerMouse)); 
-    batch_rxnTimesPerFreq = cell(nMice, max(nDatesPerMouse)); 
+    batch.freqs = cell(nMice, max(nDatesPerMouse));
+    batch.hitRatePerFreq = cell(nMice, max(nDatesPerMouse)); 
+    batch.rxnTimesPerFreq = cell(nMice, max(nDatesPerMouse)); 
 end
 
 %% Extract data from blocks
@@ -65,6 +71,7 @@ for a = 1:nMice %Mice
        matchingBlocks = data.setup.unique_block_names(a,dateInd);
        
        %Prepare variables to combine blocks together
+       combinedLevels = [];
        combinedFreqs = [];
        combinedHits = [];
        combinedMisses = [];
@@ -81,11 +88,27 @@ for a = 1:nMice %Mice
            stimLevels(c) = block.stim_level;
        end
        
-       if unique(stimLevels) == 60
-           
-       else
-           matchingBlocks(stimLevels == 40) = [];
+       switch dB_to_include
+           case 1
+               matchingBlocks(stimLevels == 40) = [];
+               
+           case 2
+               matchingBlocks(stimLevels == 60) = [];
+               
+           case 3
+               if unique(stimLevels) ~= 60
+                   matchingBlocks(stimLevels == 40) = [];
+               end
+               
+           case 4
+               if unique(stimLevels) ~= 40
+                   matchingBlocks(stimLevels == 40) = [];
+               end
+               
+           otherwise
+               %do nothing
        end
+
            
        for c = 1:length(matchingBlocks)
            unique_block_name = matchingBlocks{c};
@@ -108,8 +131,12 @@ for a = 1:nMice %Mice
 
             allFrequencies = log2(block.TargetFreq(~earlyLicks)); %in log scale
             repeatingFrequency = mode(allFrequencies);
-            allFrequencies = round(abs(allFrequencies - repeatingFrequency),2); %in octave difference
+            allFrequencies = round(abs(allFrequencies - repeatingFrequency),3); %in octave difference
             holdingPeriod = block.holdingPeriod(~earlyLicks);
+            try
+                holdingPeriod = holdingPeriod + block.waitPeriod(~earlyLicks);
+            catch
+            end
 
             %I removed the holding period in later versions of the task
             noHoldingPeriod = false;
@@ -120,6 +147,15 @@ for a = 1:nMice %Mice
                 end
             end
 
+            %If mouse is not responsive to easy frequencies, skip block
+            if removeBadDays
+                easyFrequencies = allFrequencies > easyFreqThreshold;
+                easyPerformance = hits(easyFrequencies);
+                if sum(easyPerformance)/length(easyPerformance) < easyPerfThreshold
+                    continue
+                end
+            end
+            
             %Reaction times from the start of the sound
             raw_reactionTimes = block.rxn_time(~earlyLicks);
             raw_reactionTimes(raw_reactionTimes < 0) = nan; %trials with no responses become NaN
@@ -131,6 +167,7 @@ for a = 1:nMice %Mice
             end
             
             %Store data to combine with other blocks
+            combinedLevels   = [combinedLevels, block.stim_level];
             combinedFreqs    = [combinedFreqs, allFrequencies];
             combinedHits     = [combinedHits, hits];
             combinedMisses   = [combinedMisses, misses];
@@ -141,12 +178,13 @@ for a = 1:nMice %Mice
        end
        
         %Training data
-        batch_hitRate(a,b) = sum(combinedHits)/(sum(combinedHits) + sum(combinedMisses));
-        batch_FPrate(a,b) = sum(combinedFPs)/(sum(combinedFPs) + sum(combinedWitholds));
+        batch.levels{a,b} = combinedLevels;
+        batch.hitRate(a,b) = sum(combinedHits)/(sum(combinedHits) + sum(combinedMisses));
+        batch.FPrate(a,b) = sum(combinedFPs)/(sum(combinedFPs) + sum(combinedWitholds));
         
         %Pscyhometric data
         if strcmp(stim_name, 'testing') || strcmp(stim_name, 'behavior')
-            if isempty(combinedFreqs) %No 60dB data
+            if isempty(combinedFreqs) %No data
                 continue
             end
             table = tabulate(combinedFreqs);
@@ -162,9 +200,9 @@ for a = 1:nMice %Mice
             end
             hitRatePerFrequency = hitsPerFrequency./nRepsPerFrequency;
 
-            batch_freqs{a,b} = uniqueFrequencies;
-            batch_hitRatePerFreq{a,b} = hitRatePerFrequency; 
-            batch_rxnTimesPerFreq{a,b} = rxnTimesPerFrequency;
+            batch.freqs{a,b} = uniqueFrequencies;
+            batch.hitRatePerFreq{a,b} = hitRatePerFrequency; 
+            batch.rxnTimesPerFreq{a,b} = rxnTimesPerFrequency;
         end
     end
 end
@@ -176,16 +214,16 @@ if strcmp(stim_name, 'training')
     %HIT RATE AND FP RATE
     figure;
     
-    %subplot(1,2,1)
-    plot(batch_hitRate'); hold on
+    subplot(1,2,1)
+    plot(batch.hitRate'); hold on
     ylim([0 1])
     ylabel('Percent')
     xlabel('Training day')
-    %title('Hit rate')
+    title('Hit rate')
     legend(mice, 'Location', 'southwest')
     
-    %subplot(1,2,2)
-    plot(batch_FPrate')
+    subplot(1,2,2)
+    plot(batch.FPrate')
     ylim([0 1])
     xlabel('Training day')
     title('FP rate')
@@ -197,8 +235,8 @@ elseif strcmp(stim_name, 'testing') || strcmp(stim_name, 'behavior')
     
     %Combine all freqs into one x axis
     tempFreqs = [];
-    for i = 1:numel(batch_freqs)
-        tempFreqs = [tempFreqs, batch_freqs{i}];
+    for i = 1:numel(batch.freqs)
+        tempFreqs = [tempFreqs, batch.freqs{i}];
     end
     x = unique(tempFreqs);
     
@@ -209,27 +247,33 @@ elseif strcmp(stim_name, 'testing') || strcmp(stim_name, 'behavior')
         for b = 1:nDatesPerMouse(a)
             for i = 1:length(x)
                 current_x = x(i);
-                freq_ind = find(batch_freqs{a,b} == current_x);
+                freq_ind = find(batch.freqs{a,b} == current_x);
                 if isempty(freq_ind)
                     continue
                 end
-                y_mat(b,i,a) = batch_hitRatePerFreq{a,b}(freq_ind);
-                rxn_mat(b,i,a) = batch_rxnTimesPerFreq{a,b}(freq_ind);
+                y_mat(b,i,a) = batch.hitRatePerFreq{a,b}(freq_ind);
+                rxn_mat(b,i,a) = batch.rxnTimesPerFreq{a,b}(freq_ind);
             end
         end
     end
-
+    
     %Estimate and plot psychometric functions
-    batch_threshold = nan(nMice, max(nDatesPerMouse));
-    batch_curves = nan(size(y_mat));
-    binCurves = 0;
-
-    figure
+    %FIRST all plots per mice to show goodness of fit [figType = 1]
+    %SECOND all mice in same graph [figType = 2]
+    batch.threshold = nan(nMice, max(nDatesPerMouse));
+    batch.curves = nan(size(y_mat));
+    
     c = parula(18); %Colormap
+
+    for figType = 1:2
+        if figType == 2; figure; end
     
     for a = 1:nMice
+        if figType == 1; figure; end
         dateLegend = {};
         for b = 1:nDatesPerMouse(a)
+            nPlotsX = ceil(nDatesPerMouse(a)/5);
+            nPlotsY = ceil(nDatesPerMouse(a)/nPlotsX);
             
             % Plot psychometric curve with bins of size 2
             y = y_mat(b,:,a);
@@ -251,52 +295,91 @@ elseif strcmp(stim_name, 'testing') || strcmp(stim_name, 'behavior')
 
             % Raw psychometric curves
             % Plot these on log scale
-            subplot(4,nMice,a); hold all
-            plot(1:length(binned_x),binned_y, 'Color', c(b,:), 'Linewidth', 2)
+            if figType == 1
+                subplot(nPlotsX, nPlotsY, b); hold all
+                plot(1:length(binned_x),binned_y, 'Linewidth', 2)
+                title(batch.levels{a,b})
+            elseif figType == 2
+                subplot(4,nMice,a); hold all
+                plot(1:length(binned_x),binned_y, 'Color', c(b,:), 'Linewidth', 2)
+                title(mice{a})
+            end
             ylabel('Hit rate')
             set(gca, 'XTick', 1:length(binned_x))
             set(gca, 'XTickLabel', x(1:floor(length(x)/length(binned_x)):length(x)))
-            title(mice{a})
             xlim([1 length(binned_x)])
+            ylim([0 1])
             dateLegend{b} = ['Day ' num2str(b)]; 
             
             % Fit psychometric functions
             targets = [0.25 0.5 0.75]; % 25 50 75 performance
-            weights = ones(1,length(binned_y)); % No weighting
-            [~, fit_curve, fit_threshold] = fitPsycheCurveLogit(1:length(binned_x), binned_y, weights, targets); %FOR GRAPH ONLY
-            [~, ~, actual_threshold] = fitPsycheCurveLogit(binned_x, binned_y, weights, targets);
-
-            if actual_threshold(2) > binned_x(end)
-                batch_threshold(a,b) =  binned_x(end);
-                warning(['Threshold ' num2str(actual_threshold(2)) ' out of bounds'])
-            elseif actual_threshold(2) < binned_x(1)
-                batch_threshold(a,b) = binned_x(1);
-                warning(['Threshold ' num2str(actual_threshold(2)) ' out of bounds'])
-            else
-                batch_threshold(a,b) = actual_threshold(2);
+            u = mean(hitRatePerFrequency);
+            v = std(hitRatePerFrequency);
+            SPs = [0.1, 0.1,  inf, inf; % Upper limits for g, l, u ,v
+                   0.01, 0.05, u,  v;  % Start points for g, l, u ,v
+                   0,    0,    0,  0]; % Lower limits for g, l, u ,v
+               
+            [~, fit_curve] = FitPsycheCurveWH(1:length(binned_x), binned_y, SPs); %FOR GRAPH ONLY
+            fit_threshold = nan(1,length(targets));
+            for f = 1:length(targets)
+                [~, min_ind] = min(abs(fit_curve(:,2) - targets(f)));
+                fit_threshold(f) = fit_curve(min_ind,1);
             end
             
-            subplot(4,nMice,nMice + a); hold all
-            plot(fit_curve(:,1),fit_curve(:,2), 'Color', c(b,:), 'Linewidth', 2)
-            %scatter(fit_threshold(2), targets(2), 'x', 'k')
+            %Actual values
+            [coeffs, fit_curve2] = FitPsycheCurveWH(binned_x, binned_y, SPs); %FOR GRAPH ONLY
+            actual_threshold = nan(1,length(targets));
+            for f = 1:length(targets)
+                [~, min_ind] = min(abs(fit_curve2(:,2) - targets(f)));
+                actual_threshold(f) = fit_curve2(min_ind,1);
+            end
+            %weights = ones(1,length(binned_y)); % No weighting
+            %[~, fit_curve, fit_threshold] = fitPsycheCurveLogit(1:length(binned_x), binned_y, weights, targets); %FOR GRAPH ONLY
+            %[~, ~, actual_threshold] = fitPsycheCurveLogit(binned_x, binned_y, weights, targets);
+
+            if actual_threshold(2) > binned_x(end)
+                batch.threshold(a,b) =  binned_x(end);
+                warning(['Threshold ' num2str(actual_threshold(2)) ' out of bounds'])
+            elseif actual_threshold(2) < binned_x(1)
+                batch.threshold(a,b) = binned_x(1);
+                warning(['Threshold ' num2str(actual_threshold(2)) ' out of bounds'])
+            else
+                batch.threshold(a,b) = actual_threshold(2);
+            end
+            
+            if figType == 1
+                subplot(nPlotsX, nPlotsY, b); hold all
+                plot(fit_curve(:,1),fit_curve(:,2), 'Color', 'g', 'Linewidth', 2)
+                hline(0.5, 'r')
+                scatter(fit_threshold, targets, 'x', 'k')
+            elseif figType == 2
+                subplot(4,nMice,nMice + a); hold all
+                plot(fit_curve(:,1),fit_curve(:,2), 'Color', c(b,:), 'Linewidth', 2)
+            end
             ylabel('Hit rate')
             xlabel('deltaF (octaves)')
             xlim([1 length(binned_x)])
+            ylim([0 1])
             set(gca, 'XTick', 1:length(binned_x))
             set(gca, 'XTickLabel', x(1:floor(length(x)/length(binned_x)):length(x)))
         end
         %legend(dateLegend, 'Location', 'northwest')
+        if figType == 1
+            suptitle(mice{a})
+        end
+    end
+
     end
 
     % PLOT THRESHOLDS
-    batch_threshold(batch_threshold == 0) = nan;
+    batch.threshold(batch.threshold == 0) = nan;
     subplot(4,nMice,[2*nMice + 1: 3*nMice]); hold all
-    c = bone(5);
+    c = bone(nMice);
     for a = 1:nMice
-        plot(batch_threshold(a,:), 'Color', c(a,:))       
+        plot(batch.threshold(a,:), 'Color', c(a,:))       
     end
     legend(mice)
-    plot(nanmean(batch_threshold),'LineWidth', 2, 'Color', 'k')
+    plot(nanmean(batch.threshold),'LineWidth', 2, 'Color', 'k')
     ylim([0 0.5])
     xlim([1 10])
     ylabel('Threshold (octaves)')
@@ -307,11 +390,11 @@ elseif strcmp(stim_name, 'testing') || strcmp(stim_name, 'behavior')
     c1 = autumn(8);
     c2 = cool(8);
     for a = 1:nMice
-        plot(batch_hitRate(a,:), 'Color', c1(a,:))
-        plot(batch_FPrate(a,:), 'Color', c2(a,:))  
+        plot(batch.hitRate(a,:), 'Color', c1(a,:))
+        plot(batch.FPrate(a,:), 'Color', c2(a,:))  
     end
-    plot(nanmean(batch_hitRate),'LineWidth', 2, 'Color', 'k')
-    plot(nanmean(batch_FPrate),'LineWidth', 2, 'Color', 'k')
+    plot(nanmean(batch.hitRate),'LineWidth', 2, 'Color', 'k')
+    plot(nanmean(batch.FPrate),'LineWidth', 2, 'Color', 'k')
     ylim([0 1])
     xlim([1 10])
     ylabel('Percent')

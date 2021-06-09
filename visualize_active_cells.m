@@ -1,18 +1,13 @@
-function visualize_cell(block, cellnum) 
+function visualize_active_cells(block) 
 % This function allows you to preview the stimulus-evoked responses from
-% a single cell (neuron) or selection of cells from a block
+% neurons deemed to be significantly active within a block
 %
-% cellnum is a 1-D array of cell numbers matching the Suite2p GUI
-% If the array is horizontal, the results from all cells will be averaged
-% and plotted together. If the array is vertical, each cell will be plotted
-% independently
 %
 % Error bars are SEM when N > 1 (showing inter-cell variability)
 % and STD when N == 1 (showing inter-trial variability)
 %
 % Argument(s): 
 %   block (struct)
-%   cellnum (1-D array of cell numbers)
 % 
 % Returns:
 % 
@@ -25,6 +20,21 @@ function visualize_cell(block, cellnum)
 
 %% Magic numbers & Setup
 
+%Determine if cell is active
+STDlevel = 2;
+AUC_F_level = 5;
+AUC_S_level = 10;
+sort_active = 1;  % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
+analyze_by_stim_condition = 1; %determine if cell is active based on individual stim conditions
+
+disp('===========PARAMETERS===========')
+disp(['STD level = ' num2str(STDlevel)])
+disp(['AUC level for df/f = ' num2str(AUC_F_level)])
+disp(['AUC level for spks = ' num2str(AUC_S_level)])
+disp(['Sort active = ' num2str(sort_active)])
+disp(['Analyze by stim condition = ' num2str(analyze_by_stim_condition)])
+        
+%For plotting
 SF = 0.5; %Shrinking factor for traces to appear more spread out (for visualization purposes)
 z = 1; %Portion of recording to plot between 0 and 1 e.g. 0.5, 0.33, 1 (for visualization purposes)
 ws = 0.15; %Multiplication factor for adding white space to the top of each graph (Above max value)
@@ -35,10 +45,6 @@ if ~isfield(block,'aligned_stim')
     error('No stim-aligned data to plot');
 end    
 
-if size(cellnum,1) > 1 && size(cellnum,2) > 1
-    error('cellnum should be a 1-D array')
-end
-
 setup = block.setup;
 stim_protocol = setup.stim_protocol;
 code = {'Noiseburst', 'Receptive Field', 'FM sweep', 'Widefield', 'SAM', 'SAM freq' , 'Behavior', 'Behavior', 'Random H20', 'Noiseburst ITI', 'Random Air', 'Spontaneous', 'Behavior Maryse'};
@@ -48,7 +54,7 @@ disp(['Plotting figures for ' currentStim '...'])
 %Raw activity
 Sound_Time = block.Sound_Time;
 all_cell_numbers = block.cell_number;    
-F7 = block.F - (setup.constant.neucoeff*block.Fneu); %neuropil corrected traces
+F7_full = block.F - (setup.constant.neucoeff*block.Fneu); %neuropil corrected traces
 timestamp = block.timestamp; %In seconds
 Z = round(length(timestamp)*z);
 
@@ -63,6 +69,148 @@ trial_duration_in_frames = size(F7_stim,3);
 x_in_seconds = 0:0.5*(trial_duration_in_frames/trial_duration_in_seconds):trial_duration_in_frames;
 x_label_in_seconds = 0:0.5:trial_duration_in_seconds;
 
+%% Find significantly responsive cells
+
+stim_v1 = block.parameters.variable1';
+stim_v2 = block.parameters.variable2';
+
+%Identify loco trials to remove
+remove = [];
+if sort_active == 1
+    remove = find(block.active_trials == 1); %active trials
+elseif sort_active == 2
+    remove = find(block.active_trials == 0); %inactive trials
+end
+
+%Separate 0dB 'blank' sound trials
+%depending on stim type, 0dB trials are stored in variable1 or variable2
+switch currentStim
+    case {'FM sweep','Receptive Field'}
+        stim_v0 = stim_v2;
+
+    case {'Noiseburst ITI', 'Random H20', 'Random Air'}
+        %Regular noise is not accounted for yet
+        stim_v0 = stim_v1;
+        stim_v2 = zeros(size(stim_v1));
+
+    case {'SAM', 'SAM freq'} %NAN trials instead of zeros           
+        stim_v0 = stim_v1;
+        stim_v0(isnan(stim_v0)) = 0;
+
+    otherwise
+        error('Stim type is currently not compatible with removing 0dB trials')
+end
+
+%Separate blank and stim trials
+blankTrials = stim_v0 == 0; %0dB trials
+stimTrials = ~blankTrials;
+
+%Remove loco trials
+blankTrials(remove,:) = 0;
+stimTrials(remove,:) = 0;
+
+%Get trial indices
+blankTrials = find(blankTrials);
+stimTrials = find(stimTrials);
+
+%Only keep stim values for non-blank trials
+stim_v1 = stim_v1(stimTrials);
+stim_v2 = stim_v2(stimTrials);
+
+%Store stim values in case they change for some cells
+store_stim_v1 = stim_v1;
+store_stim_v2 = stim_v2;
+store_stimTrials = stimTrials;
+store_blankTrials = blankTrials;
+    
+responsiveCells_F = zeros(size(block.cell_number));
+responsiveCells_S = zeros(size(block.cell_number));
+
+for c = 1:size(block.cell_number,1)
+
+    %when we remove inf below stim might change so refresh it with original stim list
+    stim_v1 = store_stim_v1;
+    stim_v2 = store_stim_v2;
+    stimTrials = store_stimTrials;
+    blankTrials = store_blankTrials;
+
+    F7 = squeeze(block.aligned_stim.F7_stim(c,:,:));
+    F7_baseline = F7(:,1:nBaselineFrames); %baseline for each trial
+    F7_df_f = (F7-nanmean(F7_baseline,2))./nanmean(F7_baseline,2); %compute df/f: (total-mean)/mean
+    spks = squeeze(block.aligned_stim.spks_stim(c,:,:));
+
+    %Remove trials with infinite values [this was a bug in a small number of blocks]
+    [inf_rows,~] = find(isinf(F7_df_f));
+    remove_inf = unique(inf_rows);
+    if ~isempty(remove_inf)
+        stim_v1(stimTrials == remove_inf) = [];
+        stim_v2(stimTrials == remove_inf) = [];
+        stimTrials(stimTrials == remove_inf) = [];
+        blankTrials(blankTrials == remove_inf) = [];
+    end
+
+    %Separate stim and blank trials
+    F = F7_df_f(stimTrials,:);
+    F_blanks = F7_df_f(blankTrials,:);
+    S = spks(stimTrials,:);
+    S_blanks = spks(blankTrials,:);
+
+    %GET AVERAGED AND SMOOTHED RESPONSES
+    %check if each condition is active, then concatenate and keep only active conditions
+    nStimConditions = size(unique([stim_v1,stim_v2],'rows'),1); %skip if there's only one stim condition (e.g. NoiseITI)
+    if analyze_by_stim_condition &&  nStimConditions > 1 
+
+        F_by_Stim = [];
+        S_by_Stim = [];
+
+        unique_stim_v1 = unique(stim_v1);
+        unique_stim_v2 = unique(stim_v2);
+
+        for v = 1:length(unique_stim_v1)
+            for vv = 1:length(unique_stim_v2)
+                stim_rows = intersect(find(stim_v1 == unique_stim_v1(v)), find(stim_v2 == unique_stim_v2(vv)));
+                F_temp = F(stim_rows,:);
+                S_temp = S(stim_rows,:);
+
+                F_temp_smoothed = smooth(nanmean(F_temp,1),3)';
+                S_temp_smoothed = smooth(nanmean(S_temp,1),3)';
+                [F_active, ~, ~, ~] = checkIfActive_v2(F_temp_smoothed, nBaselineFrames, STDlevel, AUC_F_level, 0);
+                [S_active, ~, ~, ~] = checkIfActive_v2(S_temp_smoothed, nBaselineFrames, STDlevel, AUC_F_level, 0);
+
+                if F_active
+                    F_by_Stim = [F_by_Stim; F_temp];
+                end
+
+                if S_active
+                    S_by_Stim = [S_by_Stim; S_temp];
+                end
+            end
+        end
+
+        %Unless none of the stim conditions end up being significant,
+        %use significant conditions only for average
+        if ~isempty(F_by_Stim) 
+            F = F_by_Stim;
+        end
+
+        if ~isempty(S_by_Stim)
+            S = S_by_Stim;
+        end
+    end
+
+    avg_F = smooth(nanmean(F,1),3)';
+    avg_S = smooth(nanmean(S,1),3)';
+
+    %CHECK IF RESPONSIVE
+    [responsiveCells_F(c), ~, ~, ~] = checkIfActive_v2(avg_F, nBaselineFrames, STDlevel, AUC_F_level, 0);
+    [responsiveCells_S(c), ~, ~, ~] = checkIfActive_v2(avg_S, nBaselineFrames, STDlevel, AUC_S_level, 0);
+end
+
+disp(['Found ' num2str(sum(responsiveCells_F)) ' responsive F traces and ' num2str(sum(responsiveCells_S)) ' responsive spike traces'])
+
+responsiveCells = find(or(responsiveCells_F, responsiveCells_S));
+responsiveCellNums = block.cell_number(responsiveCells);
+
 %% Plot raw activity of cell(s) for duration of block
 %Raw activity of each cell vs. time with locomoter activity beneath
 %Each cell is a separate trace
@@ -70,17 +218,14 @@ x_label_in_seconds = 0:0.5:trial_duration_in_seconds;
 figure('units','normalized','outerposition',[0 0 1 1])
 count = 1; %for staggering plot lines
 
-for c = 1:length(cellnum)
-    current_cellnum = cellnum(c);
+for c = 1:length(responsiveCellNums)
+    current_cellnum = responsiveCellNums(c);
 
     subplot(3,4,1:8); hold on
 
     row_num = find(all_cell_numbers == current_cellnum);
-    if isempty(row_num)
-        error(['Cell ' num2str(current_cellnum) ' was not found']);
-    end
-
-    cell_trace = F7(row_num,:);%pull out the full trace for each cell
+    
+    cell_trace = F7_full(row_num,:);%pull out the full trace for each cell
 
     mean_gCAMP = nanmean(cell_trace);% average green for each cell
     df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
@@ -95,7 +240,7 @@ title('DF/F')
 xlim([0 timestamp(Z)])
 xlabel('Time (s)')
 set(gca, 'YTick', [1:1:count-1])
-set(gca, 'YTickLabel', [cellnum(1:count-1)])
+set(gca, 'YTickLabel', [responsiveCellNums(1:count-1)])
 ylabel('Cell')
 
 %Vertical lines for sound times
@@ -137,8 +282,8 @@ end
 %% Plot graphs according to stim presentation
 
 % Average response to all stim
-for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
-        current_cells = cellnum(f,:);
+for f = 1:size(responsiveCellNums,1) %Individual figures if cellnum is vertical
+        current_cells = responsiveCellNums(f,:);
         
         row_nums = nan(length(current_cells),1);
         for c = 1:length(current_cells)
@@ -208,10 +353,10 @@ for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
         
         if length(current_cells) == 1
             suptitle([block.setup.block_supname...
-                strcat(' Cell #', num2str(cellnum(f)))])
+                strcat(' Cell #', num2str(responsiveCellNums(f)))])
         else
             suptitle([block.setup.block_supname...
-                strcat('Average of ', num2str(length(cellnum)), ' cells')])
+                strcat('Average of ', num2str(length(responsiveCellNums)), ' cells')])
         end
         
 end
@@ -252,8 +397,8 @@ end
 
 if plotAirOrH20
     
-    for f = 1:size(cellnum,1) %Individual figures if cellnum is vertical
-        current_cells = cellnum(f,:);
+    for f = 1:size(responsiveCellNums,1) %Individual figures if cellnum is vertical
+        current_cells = responsiveCellNums(f,:);
         
         row_nums = nan(length(current_cells),1);
         for c = 1:length(current_cells)
@@ -532,10 +677,10 @@ if plotReceptiveField
             
             if length(current_cells) == 1
                 suptitle([block.setup.block_supname...
-                strcat(' Cell #', num2str(cellnum(f)))])
+                strcat(' Cell #', num2str(responsiveCellNums(f)))])
             else
                 suptitle([block.setup.block_supname...
-                strcat('Average of ', num2str(length(cellnum)), ' cells')])
+                strcat('Average of ', num2str(length(responsiveCellNums)), ' cells')])
             end 
         end
                 
@@ -577,10 +722,10 @@ if plotReceptiveField
             
             if length(current_cells) == 1
                 suptitle([block.setup.block_supname...
-                strcat(' Cell #', num2str(cellnum(f)))])
+                strcat(' Cell #', num2str(responsiveCellNums(f)))])
             else
                 suptitle([block.setup.block_supname...
-                strcat('Average of ', num2str(length(cellnum)), ' cells')])
+                strcat('Average of ', num2str(length(responsiveCellNums)), ' cells')])
             end 
             
             %Spike average
@@ -606,10 +751,10 @@ if plotReceptiveField
 
             if length(current_cells) == 1
                 suptitle([block.setup.block_supname...
-                strcat(' Cell #', num2str(cellnum(f)))])
+                strcat(' Cell #', num2str(responsiveCellNums(f)))])
             else
                 suptitle([block.setup.block_supname...
-                strcat('Average of ', num2str(length(cellnum)), ' cells')])
+                strcat('Average of ', num2str(length(responsiveCellNums)), ' cells')])
             end 
         end
         
@@ -637,10 +782,10 @@ if plotReceptiveField
 
             if length(current_cells) == 1
                 suptitle([block.setup.block_supname...
-                    strcat(' Cell #', num2str(cellnum(f)))])
+                    strcat(' Cell #', num2str(responsiveCellNums(f)))])
             else
                 suptitle([block.setup.block_supname...
-                    strcat('Average of ', num2str(length(cellnum)), ' cells')])
+                    strcat('Average of ', num2str(length(responsiveCellNums)), ' cells')])
             end            
         end   
     end

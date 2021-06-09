@@ -2,6 +2,10 @@
 
 %% Get information from block
 
+%Magic numbers
+responseWindow = 1;%3; %seconds
+dynamicTask = 1; %use for version of task where waiting period dynamically changes
+
 %Block data
 mousename = char(block.setup.mousename);
 expt_date = char(block.setup.expt_date);
@@ -11,7 +15,7 @@ plotTitle = strjoin({mousename, expt_date, num2str(dB_level), 'dB'});
 %Behavioral data
 trial_type = block.trialType;
 outcomes = block.Outcome; %get outcomes (hit, miss, FP, witholds) from block
-earlyLicks = isnan(outcomes);
+earlyLicks = isnan(outcomes); %OR timeouts in some versions of the task
 outcomes_removeEL = outcomes(~earlyLicks);
 nTrials = length(outcomes_removeEL);
 misses      = outcomes_removeEL == 0;
@@ -22,7 +26,7 @@ FPs         = outcomes_removeEL == 4;
 %Stimulus data
 allFrequencies = log2(block.TargetFreq(~earlyLicks)); %in log scale
 repeatingFrequency = mode(allFrequencies);
-allFrequencies = round(abs(allFrequencies - repeatingFrequency),2); %in octave difference
+allFrequencies = round(abs(allFrequencies - repeatingFrequency),3); %in octave difference
 table = tabulate(allFrequencies); %use the function tabulate to extract how many times each frequency was played
 uniqueFrequencies = table(:,1)';
 nRepsPerFrequency = table(:,2)'; %number of repetitions per frequency 
@@ -36,12 +40,22 @@ if length(unique(holdingPeriod)) == 1
         holdingPeriod(:) = 0;
     end
 end
+
+%In dynamic task, the wait period differs based on mouse's licking behavior
+%and extends the duration of the holding period
+if dynamicTask
+    waitPeriod = block.waitPeriod(~earlyLicks);
+    if any(isnan(waitPeriod))
+        error('NaNs present in waitPeriod')
+    end
+    holdingPeriod = holdingPeriod + waitPeriod;
+end
     
 %Reaction times from the start of the sound
 raw_reactionTimes = block.rxn_time(~earlyLicks);
 raw_reactionTimes(raw_reactionTimes < 0) = nan; %trials with no responses become NaN
 raw_reactionTimes = raw_reactionTimes/1000; %convert to seconds
-if noHoldingPeriod
+if noHoldingPeriod || nanmean(raw_reactionTimes) < 5 %In later versions of the Tosca program reaction time doesn't include holding period
     reaction_times = raw_reactionTimes;
 else
     reaction_times = raw_reactionTimes - holdingPeriod; %subtract holding period
@@ -76,13 +90,12 @@ responseWindowStart = nan(1,nTrials);
 for i = 1:length(soundTimes_removeEL)
     currentResponseWindowTime = soundTimes_removeEL(i) + holdingPeriod(i);
     [~, responseWindowStart(i)] = min(abs(block.concat_times - currentResponseWindowTime));
-
 end
 
 %How much time to look at
-baselinePeriodInSeconds = 1; %seconds before response window
+baselinePeriodInSeconds = 5; %seconds before response window
 responsePeriodInSeconds = 5; %seconds after response window
-validResponsePeriodInSeconds = 3; %seconds where lick sounds as a hit
+validResponsePeriodInSeconds = responseWindow; %seconds where lick sounds as a hit
 
 trialFrameRate = block.concat_times(end)/length(block.concat_times);
 baselinePeriodInFrames = round(baselinePeriodInSeconds/trialFrameRate);
@@ -204,14 +217,26 @@ end
 
 if isequal(blockType, 'Testing')
     
+uniqueFrequencies = table(:,1)';
+nRepsPerFrequency = table(:,2)';
+    
 %Calculate hit rate per frequency
 hitsPerFrequency = nan(1,length(uniqueFrequencies)); %make empty vector to fill with data
+stdPerFrequency = nan(1,length(uniqueFrequencies));
 for i = 1:length(uniqueFrequencies)
     hits_and_FPs = hits + FPs;
     freqResponse = hits_and_FPs(allFrequencies == uniqueFrequencies(i));
     hitsPerFrequency(i) = sum(freqResponse);
+    stdPerFrequency(i) = std(freqResponse);
 end
 hitRatePerFrequency = hitsPerFrequency./nRepsPerFrequency;
+
+%REMOVE EASY FREQUENCIES
+% hitRatePerFrequency(nRepsPerFrequency == 2) = [];
+% hitsPerFrequency(nRepsPerFrequency == 2) = [];
+% stdPerFrequency(nRepsPerFrequency == 2) = [];
+% uniqueFrequencies(nRepsPerFrequency == 2) = [];
+% nRepsPerFrequency(nRepsPerFrequency == 2) = [];
 
 %set up axes
 x = 1:length(hitRatePerFrequency);
@@ -220,25 +245,84 @@ y = hitRatePerFrequency;
 %make figure
 figure;
 subplot(3,1,1); hold all
-plot(x,y,'Linewidth',2) %plot psychometric curve
+errorbar(x, y, stdPerFrequency/2, 'Linewidth', 2)
+%plot(x,y,'Linewidth',2) %plot psychometric curve
+line([0 x(end)+1], [0.5, 0.5], 'Color', 'r') %plot horizontal red line at 50% hit rate (chance)
 line([0 x(end)+1], [0.5, 0.5], 'Color', 'r') %plot horizontal red line at 50% hit rate (chance)
 ylabel('Hit Rate')
-xlabel('Frequency difference in octaves')
+%xlabel('Frequency difference in octaves')
 set(gca, 'XTick', x)
-set(gca, 'XTickLabel', uniqueFrequencies)
-title(plotTitle)
+%set(gca, 'XTickLabel', uniqueFrequencies)
+ylim([0 1])
+
+subplot(3,1,3); hold all
+errorbar(uniqueFrequencies, y, stdPerFrequency/2, 'Linewidth', 2)
+%plot(uniqueFrequencies,y,'Linewidth',2) %plot psychometric curve
+line([0 uniqueFrequencies(end)], [0.5, 0.5], 'Color', 'r') %plot horizontal red line at 50% hit rate (chance)
+ylabel('Hit Rate')
+xlabel('Frequency difference in octaves')
+ylim([0 1])
 
 % Fit psychometric functions
+
+%For weighted fits
+weights = nRepsPerFrequency;
+yy = hitsPerFrequency;
+
+%For WH fit
+%Mean (u): The mean value of the distribution representing subject bias.
+%Standard deviation (v): The variation of the distribution representing the subjects discrimination sensitivity.
+%Guess rate (g) and lapse rate (l): Two additional parameters representing the subjects fallibility (ie. potential inability to ever reach 100% performance) at each end of the distribution/stimulus spectrum. 
+u = mean(hitRatePerFrequency);
+v = std(hitRatePerFrequency);
+SPs = [0.1, 0.1,  inf, inf; % Upper limits for g, l, u ,v
+       0.01, 0.05, u,  v;  % Start points for g, l, u ,v
+       0,    0,    0,  0]; % Lower limits for g, l, u ,v
+
+subplot(3,1,1)
 targets = [0.25 0.5 0.75]; % 25 50 75 performance
-weights = ones(1,length(y)); % No weighting
-[~, fit_curve, fit_threshold] = fitPsycheCurveLogit(x, y, weights, targets); %FOR GRAPH ONLY
+[~, ~, fit_curve, fit_threshold] = FitPsycheCurveLogit_cgs(x, y, ones(size(uniqueFrequencies)), targets); %FOR GRAPH ONLY
+[~, ~, fit_curve2, fit_threshold2] = FitPsycheCurveLogit_cgs(x, yy, weights, targets); %FOR GRAPH ONLY
+[~, fit_curve3] = FitPsycheCurveWH(x, y, SPs); %FOR GRAPH ONLY
+fit_threshold3 = nan(1,length(targets));
+for f = 1:length(targets)
+    [~, min_ind] = min(abs(fit_curve3(:,2) - targets(f)));
+    fit_threshold3(f) = fit_curve3(min_ind,1);
+end
 
 % Plot psychometic curves
-plot(fit_curve(:,1), fit_curve(:,2), 'Linewidth', 2, 'LineStyle', '--', 'Color', 'g')
-%legend('Performance', 'Fit');
-scatter(fit_threshold, targets, 'x', 'k')
+%plot(fit_curve(:,1), fit_curve(:,2), 'Linewidth', 2, 'LineStyle', '--', 'Color', 'g')
+%plot(fit_curve2(:,1), fit_curve2(:,2)./100, 'Linewidth', 2, 'LineStyle', '--', 'Color', 'm')    
+plot(fit_curve3(:,1), fit_curve3(:,2), 'Linewidth', 2, 'LineStyle', '--', 'Color', 'g')    
+%scatter(fit_threshold, targets, 'x', 'g')
+%scatter(fit_threshold2, targets, 'x', 'm')
+scatter(fit_threshold3, targets, 'x', 'k')
+%title(['Threshold = ' num2str(fit_threshold3(2))])
 
-[~, ~, actual_threshold] = fitPsycheCurveLogit(uniqueFrequencies, y, weights, targets)
+subplot(3,1,3)
+targets = [0.25 0.5 0.75]; % 25 50 75 performance
+[~, ~, fit_curve, fit_threshold] = FitPsycheCurveLogit_cgs(uniqueFrequencies, y, ones(size(uniqueFrequencies)), targets); %FOR GRAPH ONLY
+[~, ~, fit_curve2, fit_threshold2] = FitPsycheCurveLogit_cgs(uniqueFrequencies, yy, weights, targets); %FOR GRAPH ONLY
+[coeffs, fit_curve3] = FitPsycheCurveWH(uniqueFrequencies, y, SPs); %FOR GRAPH ONLY
+fit_threshold3 = nan(1,length(targets));
+for f = 1:length(targets)
+    [~, min_ind] = min(abs(fit_curve3(:,2) - targets(f)));
+    fit_threshold3(f) = fit_curve3(min_ind,1);
+end
+
+% THIS DOESNT WORK BECAUSE FIT IS NOT STRETCHED TO LINEAR AXIS
+% %Change curve x from octave to linear scale
+% fit_curve_percent = fit_curve3(:,1)./max(fit_curve3(:,1));
+% fit_curve_linear = 1 + fit_curve_percent*(length(uniqueFrequencies)-1);
+
+% Plot psychometic curves
+%plot(fit_curve(:,1), fit_curve(:,2), 'Linewidth', 2, 'LineStyle', '--', 'Color', 'g')
+%plot(fit_curve2(:,1), fit_curve2(:,2)./100, 'Linewidth', 2, 'LineStyle', '--', 'Color', 'm')    
+plot(fit_curve3(:,1), fit_curve3(:,2), 'Linewidth', 2, 'LineStyle', '--', 'Color', 'g')    
+%scatter(fit_threshold, targets, 'x', 'g')
+%scatter(fit_threshold2, targets, 'x', 'm')
+scatter(fit_threshold3, targets, 'x', 'k')
+title(['Threshold = ' num2str(fit_threshold3(2))])
 
 % Plot 2 - Reaction time vs. frequency (Esther)
 
@@ -253,14 +337,17 @@ end
 
 %set up axes
 x = 1:length(reaction_timesPerFrequency);
-y = reaction_timesPerFrequency;
-upper = y + reaction_timesPerFrequency_STD;
-lower = y - reaction_timesPerFrequency_STD;
+yy = reaction_timesPerFrequency;
+upper = yy + reaction_timesPerFrequency_STD;
+lower = yy - reaction_timesPerFrequency_STD;
 
 %make figure
 %figure; 
 subplot(3,1,2); hold on
-bar(x,y)
+bar(x,yy)
+for t = 1:length(x)
+    text(x(t)-0.2,  0.9, num2str(nRepsPerFrequency(t)))
+end
 %errorbar(x,y',lower,upper) %Plot standard deviation error bars
 scatterx = nan(1,length(reaction_times));
 for i = 1:length(uniqueFrequencies)
@@ -269,40 +356,41 @@ end
 scatter(scatterx,reaction_times, 'k')
 
 ylabel('Reaction Time')
-xlabel('Frequency difference in octaves')
+%xlabel('Frequency difference in octaves')
 set(gca, 'XTick', x)
 set(gca, 'XTickLabel', uniqueFrequencies)
-title(plotTitle)
+ylim([0 1])
 xlim([x(1)-1 x(end)+1])
 
 % Plot psychometric curve with bins of size 2
 
-%set up axes
-A = hitRatePerFrequency;
-y = mean([A(1:2:end-1);A(2:2:end)]);
-x = 1:length(y);
+% %set up axes
+% A = hitRatePerFrequency;
+% y = mean([A(1:2:end-1);A(2:2:end)]);
+% x = 1:length(y);
+% 
+% %make figure
+% subplot(3,2,5); hold all
+% plot(x,y,'Linewidth',2) %plot psychometric curve
+% line([0 x(end)+1], [0.5, 0.5], 'Color', 'r') %plot horizontal red line at 50% hit rate (chance)
+% ylabel('Hit Rate')
+% xlabel('Frequency difference in octaves binned by 2')
+% set(gca, 'XTick', x)
+% set(gca, 'XTickLabel', uniqueFrequencies(2:2:end))
+% 
+% % Fit psychometric functions
+% targets = [0.25 0.5 0.75]; % 25 50 75 performance
+% weights = ones(1,length(y)); % No weighting
+% [fit_coeffs, fit_curve_bin2, fit_threshold_bin2] = fitPsycheCurveLogit(x, y, weights, targets);
+% 
+% % Plot psychometic curves
+% plot(fit_curve_bin2(:,1), fit_curve_bin2(:,2), 'Linewidth', 2, 'LineStyle', '--', 'Color', 'g')
+% %legend('Performance', 'Fit');
+% scatter(fit_threshold_bin2, targets, 'x', 'k')
+% 
+% [~, ~, actual_threshold_bin2] = fitPsycheCurveLogit(uniqueFrequencies(2:2:end), y, weights, targets)
 
-%make figure
-subplot(3,1,3); hold all
-plot(x,y,'Linewidth',2) %plot psychometric curve
-line([0 x(end)+1], [0.5, 0.5], 'Color', 'r') %plot horizontal red line at 50% hit rate (chance)
-ylabel('Hit Rate')
-xlabel('Frequency difference in octaves binned by 2')
-set(gca, 'XTick', x)
-set(gca, 'XTickLabel', uniqueFrequencies(2:2:end))
-title(plotTitle)
-
-% Fit psychometric functions
-targets = [0.25 0.5 0.75]; % 25 50 75 performance
-weights = ones(1,length(y)); % No weighting
-[fit_coeffs, fit_curve_bin2, fit_threshold_bin2] = fitPsycheCurveLogit(x, y, weights, targets);
-
-% Plot psychometic curves
-plot(fit_curve_bin2(:,1), fit_curve_bin2(:,2), 'Linewidth', 2, 'LineStyle', '--', 'Color', 'g')
-%legend('Performance', 'Fit');
-scatter(fit_threshold_bin2, targets, 'x', 'k')
-
-[~, ~, actual_threshold_bin2] = fitPsycheCurveLogit(uniqueFrequencies(2:2:end), y, weights, targets)
+suptitle(plotTitle)
 
 end
 
@@ -422,7 +510,7 @@ for i = 1:size(sortedTrialRaster,1)
     validPoints = currentPoints(currentPoints > baselinePeriodInFrames);
     if ~isempty(validPoints) && sortedHits(i) == 1
         firstPoint = validPoints(1);
-        if firstPoint <= validResponsePeriodInFrames
+        if firstPoint <= validResponsePeriodInFrames + baselinePeriodInFrames
             scatter(firstPoint,zeros(1,length(firstPoint)) + i, 50, 'b', 'filled');
         end
     end
@@ -454,30 +542,30 @@ xlim([0 loco_times(end)])
 
 %% Plot mouse's lick times during early lick trials
 
-if sum(earlyLicks) > 0
-    
-soundTimes_onlyEL = soundTimes(earlyLicks);
-earlyLick_times = nan(size(soundTimes_onlyEL));
-for i = 1:length(soundTimes_onlyEL)
-    earlyLick_ind = find(lick_times > soundTimes_onlyEL(i), 1, 'first');
-    if isempty(earlyLick_ind)
-        continue
-    end
-    earlyLick_times(i) = lick_times(earlyLick_ind) - soundTimes_onlyEL(i);
-end
-
-figure;
-hist(earlyLick_times)
-title(['N early licks = ' num2str(length(earlyLick_times))])
-xlabel('Time after sound start (frames)')
-ylabel('N early licks')
-suptitle(plotTitle)
-
-end
+% if sum(earlyLicks) > 0
+%     
+% soundTimes_onlyEL = soundTimes(earlyLicks);
+% earlyLick_times = nan(size(soundTimes_onlyEL));
+% for i = 1:length(soundTimes_onlyEL)
+%     earlyLick_ind = find(lick_times > soundTimes_onlyEL(i), 1, 'first');
+%     if isempty(earlyLick_ind)
+%         continue
+%     end
+%     earlyLick_times(i) = lick_times(earlyLick_ind) - soundTimes_onlyEL(i);
+% end
+% 
+% figure;
+% hist(earlyLick_times)
+% title(['N early licks = ' num2str(length(earlyLick_times))])
+% xlabel('Time after sound start (frames)')
+% ylabel('N early licks')
+% suptitle(plotTitle)
+% 
+% end
 
 %% Plot mouse's lick times during holding period
 
-if sum(earlyLicks) == 0
+%if sum(earlyLicks) == 0
     
 %Convert soundTimes to indices
 soundTimes_ind = nan(size(soundTimes_removeEL)); 
@@ -524,7 +612,7 @@ end
 sorted_holdingPeriodRaster = holdingPeriodRaster(sort_RW_ind,:);
 
 figure;
-subplot(2,1,1); hold all
+subplot(3,1,1); hold all
 imagesc(sorted_holdingPeriodRaster)
 ylim([1 nTrials])
 xlim([1 totalPeriodInFrames])
@@ -533,17 +621,23 @@ ylabel('Sorted trial')
 title('Lick raster (full trials)')
 
 for i = 1:length(sorted_responseWindows)
-    xstart = sorted_responseWindows(i);
+    xstart = sorted_responseWindows(i) + baselinePeriodInFrames;
     line([xstart xstart], [i - 0.5, i + 0.5], 'Color', 'r')
 end
 
-subplot(2,1,2)
+subplot(3,1,2)
 area(sum(sorted_holdingPeriodRaster))
 ylabel('Licks')
 xlabel('Time after sound start (frames)')
 xlim([1 totalPeriodInFrames])
 title('Lick PSTH')
 
+subplot(3,1,3)
+hist(holdingPeriod)
+xlabel('Hold duration (s)')
+ylabel('N trials')
+title('Holding period histogram')
+
 suptitle(plotTitle)
 
-end
+%end

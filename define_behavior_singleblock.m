@@ -161,8 +161,15 @@ for t=1:length(inblock) %Hypothesis is trial 00 is generated abberantly, so star
             New_sound_idx(y) = n;
         end
 
-        if setup.stim_protocol == 13
-            holdingPeriod(t) = s.Script.output; %Variable for Maryse behavior stim
+        if setup.stim_protocol == 13  %Variables for Maryse behavior stim
+            holdingPeriod(t) = s.Script.output; %should be equivalent to allStateChangesInS(2) - allStateChangesInS(1);
+            try
+                allStateChanges = find(states{1,t});
+                allStateChangesInS = zero_times{t}(allStateChanges);
+                waitPeriod(t) = allStateChangesInS(3) - allStateChangesInS(2);
+            catch %for error trials that didn't reach all states
+                waitPeriod(t) = nan;
+            end
         end
                 
         %Get CS+/CS- results
@@ -413,6 +420,7 @@ if ~isempty(k)
     end
     if setup.stim_protocol == 13
     	holdingPeriod(:,k) = [];
+        waitPeriod(:,k) = []; 
     end
 end
 
@@ -446,6 +454,7 @@ block.setup = setup;
 block.locIDX = locTrial_idx;
 if setup.stim_protocol == 13
     block.holdingPeriod = holdingPeriod;
+    block.waitPeriod = waitPeriod;
     block.stim_level = stim_level;
 end
 end

@@ -70,13 +70,19 @@ switch PC_name
         
     case 'RD0332' %Carolyn
        info_path = 'Z:\Carolyn\Behavior\SSRI_mice\Info_sheets';
-        save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\Behavior\SSRI_mice\compiled blocks\Cn0012621M3';
-        info_filename = 'Info_Cn0012621M3';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\Behavior\SSRI_mice\compiled blocks\Cn0012621M4';
+        info_filename = 'Info_Cn0012621M4';
         
     case 'RD-6-TAK2' %Esther's computer
         info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';
         save_path = 'D:\test';
         info_filename = 'Info_VxDD053120M2';
+   
+    case 'RD0385' %Kasey's computer
+        info_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\Behavior\SSRI_mice\Info_sheets';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\Behavior\SSRI_mice\compiled blocks\Cn0012621F1';
+        info_filename = 'Info_Cn0012621F1';
+        
         
     case 'RD0386' %Wisam
         % INSERT PATHS HERE

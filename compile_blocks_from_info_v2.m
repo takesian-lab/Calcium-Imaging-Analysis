@@ -58,9 +58,9 @@ switch PC_name
     case 'RD0366' %Maryse
         info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
         save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_V2';
-        %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots';
-        %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior Pilots\Compiled Blocks v2';
-        info_filename = 'Info_VxDG011121F1and2';
+        info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior\Compiled Blocks v2';
+        info_filename = 'Info v2';
         ops_filename = 'Maryse_ops2.mat';
          
     case 'TAKESIANLAB2P' %2P computer

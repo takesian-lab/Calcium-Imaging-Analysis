@@ -39,7 +39,7 @@ figure;
 figsize([15 4]);
 cmap = get(gca, 'ColorOrder');
 
-if ~isempty(TR),
+if ~isempty(TR)
    tmin = 0;
    t0 = tmin:frameSize:max(t);
    
@@ -47,7 +47,7 @@ if ~isempty(TR),
    
    xx = [0 0 1 1 0];
    yy = [0 1 1 0 0];
-   for k = 2:2:length(t0),
+   for k = 2:2:length(t0)
       h = patch(frameSize*xx + t0(k), yy*(length(names)+ 1), 'c');
       set(h, 'EdgeColor', frameColor, 'FaceColor', frameColor);
    end
@@ -56,13 +56,13 @@ if ~isempty(TR),
    tRep = [-Inf t(1) t(find(diff(S.Rep_Trigger)>0) + 1) t(end) Inf];
    krep = 1;
    kfr = 0;
-   for k = 1:length(t0),
-      if t0(k) >= tRep(krep+1)-0.005 && tRep(krep+1)>=0,
+   for k = 1:length(t0)
+      if t0(k) >= tRep(krep+1)-0.005 && tRep(krep+1)>=0
          kfr = 0;
          krep = krep + 1;
       end
       
-      if labelFrames,
+      if labelFrames
          h = text(t0(k)+frameSize/2, numRows+0.25, num2str(kfr));
          set(h, 'HorizontalAlignment', 'center', 'FontSize', 8);
       end
@@ -121,18 +121,22 @@ end
 figsize([15 0.5*length(names)]);
 yaxis(0, numRows);
 
-xaxis(-0.025*tmax, 1.025*tmax);
+if isempty(TR)
+   xaxis(-0.025*tmax, 1.025*tmax);
+else
+   xaxis(min(-0.025*tmax, TR.Time(TR.Event==1)-S.Time_s(1)), 1.025*tmax);
+end
 set(gca, 'YTick', 0.5 + (0:length(names)-1));
 set(gca, 'YTickLabel', names);
 
 xlabel('Time (s)');
 reference('x', tStateChange, 'k:');
 
-if ~isempty(TR),
+if ~isempty(TR)
    t = double(TR.Time - S.Time_s(1));
 
    % 0: Unspecified
-   if any(TR.Event == 0),
+   if any(TR.Event == 0)
       val = TR.Data(TR.Event==0);
       h = reference('x', t(TR.Event == 0), 'g-', 'LineWidth', 2);
       set(h(val==1), 'LineStyle', ':');
@@ -144,31 +148,31 @@ if ~isempty(TR),
    % 3: Result
    reference('x', t(TR.Event == 3), 'r-', 'LineWidth', 1);
    % 4: Parser end received
-   if any(TR.Event == 4),
+   if any(TR.Event == 4)
       reference('x', t(TR.Event == 4), 'c-', 'LineWidth', 2);
    end
    
    % 5: Audio frame sent
-   if labelFrames,
+   if labelFrames
       ifr = TR.Event == 5;
       tfr = t(ifr);
       fr_num = TR.Data(ifr);
-      for k = 1:length(tfr),
+      for k = 1:length(tfr)
          h = text(tfr(k), numRows+0.75, num2str(fr_num(k)));
          set(h, 'HorizontalAlignment', 'center');
       end
    end
    
    % 6: State queue received by AO thread
-   if any(TR.Event == 6),
+   if any(TR.Event == 6)
       reference('x', t(TR.Event == 6), 'b-', 'LineWidth', 2);
    end
    % 7: Time out sent by AO thread
-   if any(TR.Event == 7),
+   if any(TR.Event == 7)
       reference('x', t(TR.Event == 7), 'm:', 'LineWidth', 2);
    end
    % 8: TTL change
-   if any(TR.Event == 9),
+   if any(TR.Event == 9)
       reference('x', t(TR.Event == 9), 'm-', 'LineWidth', 2, 'Color', [0.85 0.6 0]);
    end
    
@@ -180,16 +184,16 @@ set(gca, 'TickDir', 'out', 'TickLen', 0.005*[1 1]);
 box off;
 
 tStateChange(end+1) = max(t);
-for k = 1:2:length(S.History),
+for k = 1:2:length(S.History)
    ks = (k+1)/2;
-   if ks < length(tStateChange),
+   if ks < length(tStateChange)
       h = text(mean(tStateChange(ks:ks+1)), -0.25, strrep(S.History{k},'_','\_'));
       set(h, 'HorizontalAlignment', 'center');
    end
 end
-for k = 2:2:length(S.History)-1,
+for k = 2:2:length(S.History)-1
    ks = k/2 + 1;
-   if ks < length(tStateChange),
+   if ks < length(tStateChange)
       h = text(tStateChange(ks), length(names)+0.55, S.History{k});
       set(h, 'HorizontalAlignment', 'center');
    end

@@ -10,8 +10,12 @@ function TR = tosca_read_trace_data(FN)
 %   TR : structure array containing trace data (by trial).
 %
 
+if ~contains(FN, '.trace')
+   FN = strrep(FN, '.txt', '.trace.txt');
+end
+
 fp = fopen(FN, 'rt');
-if fp < 0,
+if fp < 0
    error('Could not find file: %s', FN);
 end
 

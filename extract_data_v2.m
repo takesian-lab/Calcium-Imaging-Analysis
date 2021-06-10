@@ -21,15 +21,15 @@ switch PC_name
         save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\APAN 2020\Code cleanup 2021';
         cellList_filename = 'Responsive cells v2';
        
-        stimType = 'behavior'; %To look at one stim type at a time - FM, SAM, SAMfreq, RF, NoiseITI, water, air
+        stimType = 'RF'; %To look at one stim type at a time - FM, SAM, SAMfreq, RF, NoiseITI, water, air
         STDlevel = 2; %minimum # standard deviations above baseline to be considered significant
         AUC_F_level = 5; %minimum area under the curve to be considered significant for df/f traces
         AUC_S_level = 10; %minimum area under the curve to be considered significant for spike traces
-        sort_active = 2;  %0= dont perform, 1= non-locomotor trials, 2= locomotor trials
-        plot_graphs = 0; %plot stim responses for each cell
-        plot_tuning = 0; %plot tuning for each cell (RF only)
+        sort_active = 1;  %0= dont perform, 1= non-locomotor trials, 2= locomotor trials
+        plot_graphs = 1; %plot stim responses for each cell
+        plot_tuning = 1; %plot tuning for each cell (RF only)
         save_data = 1;
-        save_figures = 0;
+        save_figures = 1;
         
     case 'RD0332' %Carolyn
         cellList_path = 'Z:\Carolyn\2P Imaging data\SSRI response stimuli pilot\VxDD062420M3';
@@ -129,9 +129,6 @@ for b = 1:length(uniqueBlocks)
     %Separate 0dB 'blank' sound trials
     %depending on stim type, 0dB trials are stored in variable1 or variable2
     switch stimType
-        case {'behavior'}
-            stim_v0 = stim_v1;
-            
         case {'FM','RF'}
             stim_v0 = stim_v2;
             

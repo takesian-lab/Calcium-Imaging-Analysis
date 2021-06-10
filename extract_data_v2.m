@@ -26,10 +26,10 @@ switch PC_name
         AUC_F_level = 5; %minimum area under the curve to be considered significant for df/f traces
         AUC_S_level = 10; %minimum area under the curve to be considered significant for spike traces
         sort_active = 1;  %0= dont perform, 1= non-locomotor trials, 2= locomotor trials
-        plot_graphs = 0; %plot stim responses for each cell
-        plot_tuning = 0; %plot tuning for each cell (RF only)
+        plot_graphs = 1; %plot stim responses for each cell
+        plot_tuning = 1; %plot tuning for each cell (RF only)
         save_data = 1;
-        save_figures = 0;
+        save_figures = 1;
         
     case 'RD0332' %Carolyn
         cellList_path = 'Z:\Carolyn\2P Imaging data\SSRI response stimuli pilot\VxDD062420M3';

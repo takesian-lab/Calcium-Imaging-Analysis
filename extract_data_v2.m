@@ -83,6 +83,7 @@ stimTypes = [cellList{:,4}]';
 cellList = cellList(strcmpi(stimTypes, stimType),:);
 
 data = {}; %Nominal data
+figures = cell(size(cellList,1),21); %Store figures
 activity = cell(size(cellList,1),2); %Auto-determined activity (activated/prolonged/suppressed)
 [data_F, data_S] = deal(nan(size(cellList,1),length(numericalColumnHeaders))); %Numerical data
 [raster_F, raster_S] = deal(nan(size(cellList,1),76)); %76 is a magic number
@@ -326,7 +327,7 @@ for b = 1:length(uniqueBlocks)
                 
         
         %COMPUTE LATENCIES, AMPLITUDES, AND WIDTHS
-        if plot_graphs; fig1 = figure; hold on; end
+        if plot_graphs; figures{count,1} = figure; hold on; end
         
         for i = 1:2 %F and S
             if i == 1
@@ -373,25 +374,25 @@ for b = 1:length(uniqueBlocks)
         %RECEPTIVE FIELD ONLY
         if strcmp(stimType, 'RF')
             %Compute tuning sparseness
-            [RF.F.data(count,1), RF.F.sp_by_int(count,:), RF.F.sp_by_freq(count,:), fig2] = compute_tuning_sparseness_v2(RF.F.peak(:,:,count), plot_tuning, 'df/f',  unique_stim_v1, unique_stim_v2, cellNumber);
-            [RF.S.data(count,1), RF.S.sp_by_int(count,:), RF.S.sp_by_freq(count,:), fig3] = compute_tuning_sparseness_v2(RF.S.peak(:,:,count), plot_tuning, 'spikes', unique_stim_v1, unique_stim_v2, cellNumber);  
+            [RF.F.data(count,1), RF.F.sp_by_int(count,:), RF.F.sp_by_freq(count,:), figures{count,2}] = compute_tuning_sparseness_v2(RF.F.peak(:,:,count), plot_tuning, 'df/f',  unique_stim_v1, unique_stim_v2, cellNumber);
+            [RF.S.data(count,1), RF.S.sp_by_int(count,:), RF.S.sp_by_freq(count,:), figures{count,3}] = compute_tuning_sparseness_v2(RF.S.peak(:,:,count), plot_tuning, 'spikes', unique_stim_v1, unique_stim_v2, cellNumber);  
 
             %Compute frequency tuning
             if any(any(RF.F.isResponsive(:,:,count)))
-                [RF.F.FRA{count,1}, RF.F.data(count,2:end), fig4, fig5, fig6, fig7, fig8] = ... 
+                [RF.F.FRA{count,1}, RF.F.data(count,2:end), figures{count,4:8}] = ... 
                 compute_frequency_tuning_v2(RF.F.isResponsive(:,:,count), RF.F.response(:,:,count),...
                 plot_tuning, unique_stim_v1, unique_stim_v2, cellNumber);
             end
             
             if any(any(RF.S.isResponsive(:,:,count)))
-                [RF.S.FRA{count,1}, RF.S.data(count,2:end), fig9, fig10, fig11, fig12, fig13] = ... 
+                [RF.S.FRA{count,1}, RF.S.data(count,2:end), figures{count,9:13}] = ... 
                 compute_frequency_tuning_v2(RF.S.isResponsive(:,:,count), RF.S.response(:,:,count),...
                 plot_tuning, unique_stim_v1, unique_stim_v2, cellNumber);
             end
             
             if plot_tuning
                 %Plot RF using various measures
-                fig14 = figure('units','normalized','outerposition',[0 0 0.5 1]); hold on
+                figures{count,14} = figure('units','normalized','outerposition',[0 0 0.5 1]); hold on
                 
                 subplot(5,2,1)
                 imagesc(RF.F.response(:,:,count))
@@ -443,116 +444,55 @@ for b = 1:length(uniqueBlocks)
                 suptitle(strcat(block.setup.block_supname, ' Cell ', num2str(cellNumber)))
                 set(findobj(gcf,'type','axes'),'XTickLabel',unique_stim_v1,'YTickLabel', unique_stim_v2,...
                        'XTick',1:length(unique_stim_v1), 'YTick',1:length(unique_stim_v2));
+            
+                %visualize_cell plots
+                [figures{count,15:21}] = visualize_cell_AT_v2(block,cellNumber,[1,2,4]);
             end
         end
         
-        if save_figures      
+        if save_figures
             mouse = num2str(block.setup.mousename);
             block_filename = num2str(block.setup.block_filename);
-            cell = num2str(cellNumber);
+            cellPath = num2str(cellNumber);
 
             cd(save_path)
             [~, ~, ~] = mkdir(save_path,mouse);
             [~, ~, ~] = mkdir(mouse,block_filename);
             cd([mouse '\' block_filename]);
-            [~, ~, ~] = mkdir(cell);
-            cd(cell); 
-
-            if plot_graphs
-                h_name = ['1_' mouse '_' cell '_detect_activity'];
-                saveas(fig1, h_name, 'fig')
-                saveas(fig1, h_name, 'jpg')
+            [~, ~, ~] = mkdir(cellPath);
+            cd(cellPath); 
+                        
+            figureNames = {'detect_activity'...
+                          'sparseness_F'...
+                          'sparseness_S'...
+                          'intensityfit_F'...
+                          'gaussfitCF_F'...
+                          'gaussfitBW20_F'...
+                          'gaussfitBF_F'...
+                          'FRA_F'...
+                          'intensityfit_S'...
+                          'gaussfitCF_S'...
+                          'gaussfitBW20_S'...
+                          'gaussfitBF_S'...
+                          'FRA_S'...
+                          'RFs'...
+                          'trace'...
+                          'trace_avg'...
+                          'trace_by_freq'...
+                          'trace_by_int'...
+                          'trace_RF_F'...
+                          'trace_RF_S'...
+                          'RF_simple'};           
+           
+            for f = 1:size(figures,2)           
+                
+                if isempty(figures{count,f}); continue; end
+                
+                h_name = [num2str(f) '_' mouse '_' cellPath '_' figureNames{f}];
+                saveas(figures{count,f}, h_name, 'fig')
+                saveas(figures{count,f}, h_name, 'jpg')               
             end
-        
-            if strcmp(stimType, 'RF') && plot_tuning
-                h_name = ['2_' mouse '_' cell '_sparseness_F'];
-                saveas(fig2, h_name, 'fig')
-                saveas(fig2, h_name, 'jpg')                
-                
-                h_name = ['3_' mouse '_' cell '_sparseness_S'];
-                saveas(fig3, h_name, 'fig')
-                saveas(fig3, h_name, 'jpg')
-                
-                if any(any(RF.F.isResponsive(:,:,count)))
-                    h_name = ['4_' mouse '_' cell '_intensityfit_F'];
-                    saveas(fig4, h_name, 'fig')
-                    saveas(fig4, h_name, 'jpg')
-
-                    h_name = ['5_' mouse '_' cell '_gaussfitCF_F'];
-                    saveas(fig5, h_name, 'fig')
-                    saveas(fig5, h_name, 'jpg')
-
-                    h_name = ['6_' mouse '_' cell '_gaussfitBW20_F'];
-                    saveas(fig6, h_name, 'fig')
-                    saveas(fig6, h_name, 'jpg')
-
-                    h_name = ['7_' mouse '_' cell '_gaussfitBF_F'];
-                    saveas(fig7, h_name, 'fig')
-                    saveas(fig7, h_name, 'jpg')
-
-                    h_name = ['8_' mouse '_' cell '_FRA_F'];
-                    saveas(fig8, h_name, 'fig')
-                    saveas(fig8, h_name, 'jpg')
-                end
-
-                if any(any(RF.S.isResponsive(:,:,count)))
-                    h_name = ['9_' mouse '_' cell '_intensityfit_S'];
-                    saveas(fig9, h_name, 'fig')
-                    saveas(fig9, h_name, 'jpg')
-
-                    h_name = ['10_' mouse '_' cell '_gaussfitCF_S'];
-                    saveas(fig10, h_name, 'fig')
-                    saveas(fig10, h_name, 'jpg')
-
-                    h_name = ['11_' mouse '_' cell '_gaussfitBW20_S'];
-                    saveas(fig11, h_name, 'fig')
-                    saveas(fig11, h_name, 'jpg')
-
-                    h_name = ['12_' mouse '_' cell '_gaussfitBF_S'];
-                    saveas(fig12, h_name, 'fig')
-                    saveas(fig12, h_name, 'jpg')
-
-                    h_name = ['13_' mouse '_' cell '_FRA_S'];
-                    saveas(fig13, h_name, 'fig')
-                    saveas(fig13, h_name, 'jpg')
-                end
-
-                h_name = ['14_' mouse '_' cell '_RFs'];
-                saveas(fig14, h_name, 'fig')
-                saveas(fig14, h_name, 'jpg')
-                
-                %visualize_cell plots
-                [fig15, fig16, fig17, fig18, fig19, fig20, fig21] = visualize_cell_AT_v2(block,cellNumber,[1,2,4]);
-
-                h_name = ['15_' mouse '_' cell '_trace'];
-                saveas(fig15, h_name, 'fig')
-                saveas(fig15, h_name, 'jpg')
-                
-                h_name = ['16_' mouse '_' cell '_trace_avg'];
-                saveas(fig16, h_name, 'fig')
-                saveas(fig16, h_name, 'jpg')
-                
-                h_name = ['17_' mouse '_' cell '_trace_by_freq'];
-                saveas(fig17, h_name, 'fig')
-                saveas(fig17, h_name, 'jpg')
-                
-                h_name = ['18_' mouse '_' cell '_trace_by_int'];
-                saveas(fig18, h_name, 'fig')
-                saveas(fig18, h_name, 'jpg')
-                
-                h_name = ['19_' mouse '_' cell '_trace_RF_F'];
-                saveas(fig19, h_name, 'fig')
-                saveas(fig19, h_name, 'jpg')
-                
-                h_name = ['20_' mouse '_' cell '_trace_RF_S'];
-                saveas(fig20, h_name, 'fig')
-                saveas(fig20, h_name, 'jpg')
-
-                h_name = ['21_' mouse '_' cell '_RF_simple'];
-                saveas(fig21, h_name, 'fig')
-                saveas(fig21, h_name, 'jpg')
-                
-            end
+  
             close all;
             cd(blocks_path)
         end
@@ -575,6 +515,10 @@ ExtractedData.Calcium_Raster = raster_F;
 ExtractedData.Spikes_Raster = raster_S;
 if strcmp(stimType, 'RF')
     ExtractedData.RF = RF;
+end
+if save_figures
+    ExtractedData.FigureNames = figureNames;
+    ExtractedData.Figures = figures;
 end
 
 %% Save extracted data

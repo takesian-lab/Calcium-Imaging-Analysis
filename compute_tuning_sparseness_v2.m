@@ -73,7 +73,7 @@ if plotFigure
     
     h = figure; hold on
     subplot(2,2,3)
-    imagesc(RF_orig); hold on
+    imagesc(RF); hold on
     ylabel('Intensity')
     xlabel('Frequency')
     set(gca,'YTick',1:length(ints))

@@ -4,9 +4,9 @@
 
 stim_protocol = 13; %Maryse behavior
 stim_name = 'testing'; %training or testing or behavior
-dB_to_include = 1; %0 = both, 1 = 60 only, 2 = 40 only, 3 = 60 unless no 60 for that day, 4 = 40 unless no 40 for that day
+dB_to_include = 4; %0 = both, 1 = 60 only, 2 = 40 only, 3 = 60 unless no 60 for that day, 4 = 40 unless no 40 for that day
 binCurves = 0; %Bin by 2 = 1
-removeBadDays = 0; %don't include sessions where mouse performed badly on easy frequencies
+removeBadDays = 1; %don't include sessions where mouse performed badly on easy frequencies
 easyFreqThreshold = 0.2; %easy frequency octaves
 easyPerfThreshold = 0.8; %minimum hit rate
 
@@ -26,7 +26,7 @@ else
             info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior';
             save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior';
             compiled_blocks_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior\Compiled Blocks v2';
-            info_filename = 'Info v2';    
+            info_filename = 'Info v2 for figures';    
         otherwise
             disp('Computer does not match known users')
             return
@@ -263,8 +263,11 @@ elseif strcmp(stim_name, 'testing') || strcmp(stim_name, 'behavior')
     batch.threshold = nan(nMice, max(nDatesPerMouse));
     batch.curves = nan(size(y_mat));
     
-    c = parula(18); %Colormap
+    c = parula(25); %Colormap
 
+    fitcurve_store_x = [];
+    fitcurve_store_y = [];
+    
     for figType = 1:2
         if figType == 2; figure; end
     
@@ -355,6 +358,8 @@ elseif strcmp(stim_name, 'testing') || strcmp(stim_name, 'behavior')
             elseif figType == 2
                 subplot(4,nMice,nMice + a); hold all
                 plot(fit_curve(:,1),fit_curve(:,2), 'Color', c(b,:), 'Linewidth', 2)
+%                 fitcurve_store_x = [fitcurve_store_x, fit_curve(:,1)];
+%                 fitcurve_store_y = [fitcurve_store_y, fit_curve(:,2)];
             end
             ylabel('Hit rate')
             xlabel('deltaF (octaves)')
@@ -414,3 +419,57 @@ else
         save(['Data_' d '.mat'], 'data', '-v7.3');
     end
 end
+
+% %%
+% 
+% ind1 = batch.threshold(1,[1,3,8]);
+% ind2 = batch.threshold(1,[2,4,7,9]);
+% e1 = std(ind1);
+% e2 = std(ind2);
+% [H,P,CI] = ttest2(ind1, ind2);
+% 
+% figure
+% subplot(1,3,1); hold on
+% bar([1 2], [mean(ind1) mean(ind2)])
+% errorbar([1 2], [mean(ind1) mean(ind2)], [e1 e2], 'k')
+% ylabel('threshold')
+% set(gca, 'XTick', [1 2])
+% set(gca, 'XTickLabel', {'NaCl', 'CNO'})
+% title(['p = ' num2str(P)])
+% 
+% ind1 = batch.hitRate(1,[1,3,8]);
+% ind2 = batch.hitRate(1,[2,4,7,9]);
+% e1 = std(ind1);
+% e2 = std(ind2);
+% [H,P,CI] = ttest2(ind1, ind2);
+% 
+% subplot(1,3,2); hold on
+% bar([1 2], [mean(ind1) mean(ind2)])
+% errorbar([1 2], [mean(ind1) mean(ind2)], [e1 e2], 'k')
+% ylabel('Hit rate')
+% set(gca, 'XTick', [1 2])
+% set(gca, 'XTickLabel', {'NaCl', 'CNO'})
+% title(['p = ' num2str(P)])
+% 
+% ind1 = batch.FPrate(1,[1,3,8]);
+% ind2 = batch.FPrate(1,[2,4,7,9]);
+% e1 = std(ind1);
+% e2 = std(ind2);
+% [H,P,CI] = ttest2(ind1, ind2);
+% 
+% subplot(1,3,3); hold on
+% bar([1 2], [mean(ind1) mean(ind2)])
+% errorbar([1 2], [mean(ind1) mean(ind2)], [e1 e2], 'k')
+% ylabel('FP rate')
+% set(gca, 'XTick', [1 2])
+% set(gca, 'XTickLabel', {'NaCl', 'CNO'})
+% title(['p = ' num2str(P)])
+
+%
+
+% figure; hold on
+% 
+% plot(fitcurve_store_x(:,[1 3 6]), fitcurve_store_y(:,[1 3 6]), 'c', 'Linewidth', 1)
+% plot(fitcurve_store_x(:,1), mean(fitcurve_store_y(:,[1 3 6]),2), 'c', 'Linewidth', 4)
+% plot(fitcurve_store_x(:,[2 4 5 7]), fitcurve_store_y(:,[2 4 5 7]), 'm', 'Linewidth', 1)
+% plot(fitcurve_store_x(:,1), mean(fitcurve_store_y(:,[2 4 5 7]),2), 'm', 'Linewidth', 4)

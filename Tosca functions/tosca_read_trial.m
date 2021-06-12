@@ -79,7 +79,7 @@ elseif isfield(S, 'block')
    S.name = regexprep(S.name, '-Trial[\d]+', sprintf(': Block %d Trial %d', S.block, S.trial));
 end
 
-if Params.Info.Version < 2734
+if Params.Info.Version < 2777 %Changed from 2734 by Maryse 6/12/21
    S.frameSize = 1 / Params.DAQ.Poll_Rate_Hz;
 else
    S.frameSize = 1 / Params.Tosca.DAQ.Poll_Rate_Hz;

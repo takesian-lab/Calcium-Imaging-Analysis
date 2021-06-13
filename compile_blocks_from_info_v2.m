@@ -70,8 +70,8 @@ switch PC_name
         
     case 'RD0332' %Carolyn
        info_path = 'Z:\Carolyn\Behavior\SSRI_mice\Info_sheets';
-        save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\Behavior\SSRI_mice\compiled blocks\Cn0012621M4';
-        info_filename = 'Info_Cn0012621M4';
+        save_path = 'Z:\Carolyn\Behavior\SSRI_mice\compiled blocks\Cn0012621F1';
+        info_filename = 'Info_Cn0012621F1';
         
     case 'RD-6-TAK2' %Esther's computer
         info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';

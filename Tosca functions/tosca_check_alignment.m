@@ -33,7 +33,7 @@ for k = 1:length(Data)
       Data{k}.N = idi;
       idi = idi + 1;
 
-      s = tosca_read_trial(P, Data, k);
+      [s, di_fn] = tosca_read_trial(P, Data, k);
       if isempty(s), continue; end
 
       % Check time stamps. The trial markers in the trace file (Event=1)
@@ -57,10 +57,14 @@ for k = 1:length(Data)
       
       % Does number of state changes match history length?
       numStateChange = sum(diff(s.State_Change) < 0); % use falling edge so we count them all
-      if numStateChange ~= length(s.History) / 2
-         ok = false;
-         cause = sprintf('State change/history mismatch: trial %d', k);
-         break;
+      if numStateChange ~= length(s.History) / 2 && ~any(contains(s.History, 'Error'))
+         ok = tosca_restore_di_markers(di_fn, s, tr(idi-1));
+         if ok
+            fprintf('Restored missing markers: trial %d\n', k);
+         else
+            cause = sprintf('State change/history mismatch: trial %d', k);
+            break;
+         end
       end
 
    end

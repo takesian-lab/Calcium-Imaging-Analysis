@@ -6,6 +6,8 @@ function [data] = fillSetupFromInfoTable_v3(Info, compiled_blocks_path, stim_pro
 %   Info - Info table loaded from Info excel spreadsheet
 %   compiled_blocks_path (string) - filepath where the compiled blocks are saved
 %   stim_protocol - number corresponding to stim type that will be analyzed
+%   stim_name - if this is included, use a specified stim name instead of protocol to choose which files to analyze
+%               For example, there could be multiple types of behavior stim compiled with the same stim_protocol
 %   
 % Returns:
 %   data(struct)
@@ -52,7 +54,7 @@ EG = 15; %name of experimental group or condition
 %Spontaneous = 12
 %Maryse's Behavior = 13
 
-if nargin < 4
+if nargin < 5
     matchStimName = 0;
 else
     matchStimName = 1;

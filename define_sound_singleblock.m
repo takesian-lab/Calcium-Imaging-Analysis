@@ -191,7 +191,7 @@ if ~ismissing(setup.VR_name) %widefield
     
     framerate = ceil(1/str2double(XML.framePeriod));
     if framerate ~= 20
-        warning('Check frame rate')
+        warning(['Check frame rate. Detected rate is: ' num2str(1/str2double(XML.framePeriod))])
     end
     
 else %2p

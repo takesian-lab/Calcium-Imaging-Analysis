@@ -25,7 +25,7 @@
 
 %% Load Info.mat and change user-specific options
 
-recompile = 0; %1 to save over previously compiled blocks, 0 to skip
+recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
 %% set up values for 'align to stim'

@@ -169,7 +169,6 @@ if nPlanes > 1
 
 for n = 1:nPlanes
     currentPlane = strcat('plane', num2str(n - 1));
-    disp(['Processing ' currentPlane])
     cd(strcat(setup.suite2p_path, '/', currentPlane))
     Fall = load('Fall.mat');
 
@@ -212,7 +211,8 @@ for n = 1:nPlanes
         end
         block.zcorr.(currentPlane) = Fall.ops.zcorr(:,Plane_set); %Dimensions are z-stack position vs. frame
     end
-        
+    
+    disp(['Processing ' currentPlane])        
 end
 
 end

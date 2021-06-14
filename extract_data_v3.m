@@ -25,7 +25,7 @@ switch PC_name
         info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
         blocks_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_V2';
         save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\ExtractedData';
-        info_filename = 'Info_NxDG021621F2';
+        info_filename = 'Info_NxDF011321F2';
        
         stimProtocol = 3; %See stimProtocol list above
         STDlevel = 2; %minimum # standard deviations above baseline to be considered significant

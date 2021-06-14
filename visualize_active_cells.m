@@ -16,7 +16,7 @@ function visualize_active_cells(block)
 
 %% Magic numbers & Setup
 
-STDlevel = 2;
+STDlevel = 5;
 AUC_F_level = 5;
 AUC_S_level = 20;
 sort_active = 1;  % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
@@ -63,7 +63,7 @@ switch stim_protocol
             error('Check stim parameters')
         end
         nTrials = length(block.Sound_Time);
-        [stim_v1, stim_v2, stim_v0] = deal(ones(1,nTrials));
+        [stim_v1, stim_v2, stim_v0] = deal(ones(nTrials,1));
         
     otherwise
         error('Stim type is currently not compatible with removing 0dB trials')

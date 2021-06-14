@@ -30,7 +30,7 @@ loadPreviousData = 0;
     %Random air puff = 11
     
    
-    parameters.stim_protocol = 4; % widefield RF = 4, noiseburst ITI = 10
+    parameters.stim_protocol = 3; % widefield RF = 4, noiseburst ITI = 10
     imaging_chan = 'Ch2'; %was the data collected Ch1 or Ch2?
     BOT_start = [1];
     detrend_filter = [300 10];
@@ -53,8 +53,8 @@ loadPreviousData = 0;
             info_path = 'Z:\Carolyn\2P Imaging data\5HT sensor\Info Sheets';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
             compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\5HT sensor\Compiled Blocks';
-            save_path = 'Z:\Carolyn\2P Imaging data\5HT sensor\Analyzed Data\Cn0012621F2\Metergoline test 1\RF Met post';
-            info_filename = 'Info_Cn0012621F2';
+            save_path = 'Z:\Carolyn\2P Imaging data\5HT sensor\Analyzed Data\Cn0012621F3\Passive imaging 1 FM';
+            info_filename = 'Info_Cn0012621F3';
             
         case 'RD-6-TAK2' %Esther's computer
             info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
@@ -310,7 +310,7 @@ for i=1:length(data.setup.Imaging_sets)
 end
 
 %% check for memory
-[loops] = 1;% memorycheck(imageData);
+[loops] = memorycheck(imageData);
 
 %% DETREND: Grab a coffee - this will take approx. 2 hours (for ful ReceptiveField, 45mins for new/reduced field)
 t = cputime;
@@ -519,7 +519,7 @@ clear tempBase idx f b count ll loop_num lv m mean_base
 loop_num=num2str(1);
 
     for f=1:length(parameters.frequencies);
-        for lv=7;%1:length(parameters.levels);
+        for lv=2;%1:length(parameters.levels);
             if parameters.sort_loco ==0
                 idx=parameters.stimIDX{f,lv};
             else idx = parameters.loco_0.stimIDX{f,lv};
@@ -755,7 +755,7 @@ end
 figure;
 for f=1:length(parameters.frequencies);
     numF=num2str(round(parameters.frequencies(f)))
-    for k = 1:length(parameters.levels);
+    for k = 2;%1:length(parameters.levels);
         AA = meanZresponse{f,lv};
         stack(:,:,k)=AA(:,:);
         stack=double(stack);

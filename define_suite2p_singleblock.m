@@ -147,10 +147,12 @@ if nPlanes == 1
     block.F = Fall.F(keep_ind,Frame_set);
     block.Fneu = Fall.Fneu(keep_ind,Frame_set);
     block.spks = Fall.spks(keep_ind,Frame_set);
-    redcell = Fall.redcell;
-    block.redcell = redcell(keep_ind);
-    if any(block.redcell)
-        disp('Found red cells')
+    if isfield(Fall, 'redcell')
+        redcell = Fall.redcell;
+        block.redcell = redcell(keep_ind);
+        if any(block.redcell)
+            disp('Found red cells')
+        end
     end
 
     %Update zcorr frame set
@@ -167,7 +169,6 @@ if nPlanes > 1
 
 for n = 1:nPlanes
     currentPlane = strcat('plane', num2str(n - 1));
-    disp(['Processing ' currentPlane])
     cd(strcat(setup.suite2p_path, '/', currentPlane))
     Fall = load('Fall.mat');
 
@@ -195,9 +196,12 @@ for n = 1:nPlanes
     block.F.(currentPlane) = Fall.F(keep_ind,Plane_set);
     block.Fneu.(currentPlane) = Fall.Fneu(keep_ind,Plane_set);
     block.spks.(currentPlane) = Fall.spks(keep_ind,Plane_set);
-    redcell = Fall.redcell;
-    block.redcell.(currentPlane) = redcell(keep_ind);
-    if n == 1 && any(block.redcell.(currentPlane)); disp('Found red cells'); end
+    
+    if isfield(Fall, 'redcell')
+        redcell = Fall.redcell;
+        block.redcell.(currentPlane) = redcell(keep_ind);
+        if n == 1 && any(block.redcell.(currentPlane)); disp('Found red cells'); end
+    end
     
     %Update zcorr frame set
     if isfield (Fall.ops, 'zcorr')
@@ -207,7 +211,8 @@ for n = 1:nPlanes
         end
         block.zcorr.(currentPlane) = Fall.ops.zcorr(:,Plane_set); %Dimensions are z-stack position vs. frame
     end
-        
+    
+    disp(['Processing ' currentPlane])        
 end
 
 end

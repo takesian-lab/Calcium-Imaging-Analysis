@@ -235,6 +235,7 @@ planeA = 13; %number of chars to start of frame number
 planeB = 8;  %number of chars to end of frame number
 cycleA = 23;
 cycleB = 19;
+chanA  = 15; %number of chars to channel number
 
 filelist_lengths = strlength(deblank(tiffs_str)); %Get length of each filename
 L = unique(filelist_lengths); %How many unique lengths are there
@@ -242,32 +243,51 @@ if length(L) > 1; error('Check filenames'); end
 
 planes = double(string(tiffs(:,L-planeA:L-planeB)));
 cycles = double(string(tiffs(:,L-cycleA:L-cycleB)));
+chans = double(string(tiffs(:,L-chanA)));
 unique_cycles = unique(cycles);
+unique_chans = unique(chans);
 if length(unique_cycles) ~= length(best_plane)
     error('Number of cycles does not match Z computation')
 end
+if length(unique_chans) == 2
+    files_for_timestamp = tiffs_str(chans == 2); %Green channel  only
+else
+    files_for_timestamp = tiffs_str;
+end
 
-moved_files = cell(length(best_plane),2);
+moved_files = cell(length(best_plane)*length(unique_chans),2);
 new_timestamp = nan(length(best_plane),1);
+count = 1;
 
 for c = 1:length(unique_cycles)
-    %select file
-    current_cycle_files = tiffs_str(cycles == unique_cycles(c));
-    best_plane_for_cycle = current_cycle_files(best_plane(c));
-    moved_files{c,1} = best_plane_for_cycle;
-    
-    %Update timestamp
-    file_ind = find(strcmp(tiffs_str,best_plane_for_cycle));
-    new_timestamp(c) = block.timestamp(file_ind);
+    for cc = 1:length(unique_chans)
+        channel = unique_chans(cc);
+        
+        %select file
+        current_cycle_files = tiffs_str(cycles == unique_cycles(c));
+        current_cycle_chans = chans(cycles == unique_cycles(c));
+        current_cycle_and_chan_files = current_cycle_files(current_cycle_chans == channel);
+        
+        best_plane_for_cycle = current_cycle_and_chan_files(best_plane(c));
+        moved_files{count,1} = best_plane_for_cycle;
 
-    %rename
-    new_filename = char(best_plane_for_cycle);
-    new_filename(1,L-planeA:L-planeB) = num2str(c,'%06.f');
-    new_filename(1,L-cycleA:L-cycleB) = num2str(1,'%05.f'); 
-    moved_files{c,2} = new_filename;
-    
-    %copy and rename file
-    copyfile(best_plane_for_cycle, [path '/' 'Zcorrected-'  folder_name '/' new_filename])
+        %Update timestamp
+        if channel == 2
+            file_ind = find(strcmp(files_for_timestamp,best_plane_for_cycle));
+            new_timestamp(c) = block.timestamp(file_ind);
+        end
+
+        %rename
+        new_filename = char(best_plane_for_cycle);
+        new_filename(1,L-planeA:L-planeB) = num2str(c,'%06.f');
+        new_filename(1,L-cycleA:L-cycleB) = num2str(1,'%05.f'); 
+        moved_files{count,2} = new_filename;
+
+        %copy and rename file
+        copyfile(best_plane_for_cycle, [path '/' 'Zcorrected-'  folder_name '/' new_filename])
+        
+        count = count + 1;
+    end
 end
 
 %% Save new block.csv file with timestamp

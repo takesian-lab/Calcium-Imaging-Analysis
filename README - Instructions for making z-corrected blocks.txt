@@ -46,7 +46,7 @@ INSTRUCTIONS FOR MAKING Z-CORRECTED BLOCKS
 
 	STEPS:
 	1. Load stat.npy
-	2. Define ROIs (can do either before or after Zcorr)
+	2. OPTIONAL: Define ROIs (can do either before or after Zcorr)
 	3. View registered binary > load z-stack tiff > compute z position
 	4. Track progress in terminal
 	5. When finished processing, click save to mat. Check if zcorr is now saved in fall.mat.

@@ -157,7 +157,7 @@ if sum(BOT_files_ind) == 1 %Regular BOT
     BOT_filename = BOT_files{BOT_files_ind};
     display(['Loading ' BOT_filename])
     frame_data = csvread(BOT_filename, 1,0);
-else %T-series or multi-plane BOT
+else %T-series or multiplane BOT
     display(['Loading ' num2str(sum(BOT_files_ind)) ' BOT files'])
     BOT_filename = nan;
     frame_data = [];

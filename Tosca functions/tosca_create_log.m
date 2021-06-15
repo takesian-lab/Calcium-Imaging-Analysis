@@ -30,7 +30,7 @@ for k = 1:length(D)
    % individual state timing information
    tState = [s.Time_s(1) s.Time_s(find(diff(s.State_Change)>0) + 1) max(s.Time_s)];
    names = s.History(1:2:end);
-   if length(names) ~= length(tState)-1
+   if length(names) > length(tState)-1
       names = names(1:length(tState)-1);
 %       warning('mismatch between state names and times'); 
    end

@@ -69,7 +69,8 @@ INSTRUCTIONS FOR MAKING Z-CORRECTED BLOCKS
    Load block
    Run zcorrect_multiplane(block,1) -> plot figures only
        zcorrect_multiplane(block,0) -> make new block folder with tiffs from best planes only
-                                       this will also copy BOT, voltage recording, and XML files
+                                       this will also make a new BOT with timestamps that correspond to the best planes
+				       this will also copy voltage recording and XML files
 
 
 8) RUN ZCORRECTED BLOCKS THROUGH SUITE2P, DEFINE ROIs, and COMPUTE ZCORR

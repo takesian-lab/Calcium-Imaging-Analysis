@@ -16,10 +16,10 @@ function visualize_active_cells(block)
 
 %% Magic numbers & Setup
 
-STDlevel = 5;
+STDlevel = 3;
 AUC_F_level = 5;
-AUC_S_level = 20;
-sort_active = 1;  % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
+AUC_S_level = 10;
+sort_active = 0;  % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
 
 disp('===========PARAMETERS===========')
 disp(['STD level = ' num2str(STDlevel)])
@@ -31,7 +31,7 @@ disp(['Sort active = ' num2str(sort_active)])
 stim_protocol = block.setup.stim_protocol;
 baseline_length = block.setup.constant.baseline_length; %seconds
 framerate = block.setup.framerate;
-nBaselineFrames = baseline_length*framerate; %frames
+nBaselineFrames = round(baseline_length*framerate); %frames
 
 stim_v1 = block.parameters.variable1';
 stim_v2 = block.parameters.variable2';
@@ -54,7 +54,7 @@ switch stim_protocol
         stim_v0 = stim_v1;
         stim_v2 = zeros(size(stim_v1));
 
-    case {6} %{'SAM', 'SAMfreq'} %NAN trials instead of zeros           
+    case {5,6} %{'SAM', 'SAMfreq'} %NAN trials instead of zeros           
         stim_v0 = stim_v1;
         stim_v0(isnan(stim_v0)) = 0;
 
@@ -73,6 +73,15 @@ end
 blankTrials = stim_v0 == 0; %0dB trials
 stimTrials = ~blankTrials;
 
+%Get list of all possible stim without blanks prior to removing loco trials
+unique_stim_v1 = unique(stim_v1(stim_v0 ~= 0));
+unique_stim_v2 = unique(stim_v2(stim_v0 ~= 0));
+
+%If RF, order intensities from highest to lowest
+if stim_protocol == 2 %RF
+    unique_stim_v2 = flipud(unique_stim_v2);
+end
+    
 %Remove loco trials
 blankTrials(remove,:) = 0;
 stimTrials(remove,:) = 0;
@@ -125,19 +134,20 @@ for c = 1:size(block.cell_number,1)
 
     %GET AVERAGED AND SMOOTHED RESPONSES
     %check if each condition is active, then concatenate and keep only active conditions
-    nStimConditions = size(unique([stim_v1,stim_v2],'rows'),1); %skip if there's only one stim condition (e.g. NoiseITI)
     analyze_by_stim_condition = 1; %I assume we'll almost always want to do this
-    if analyze_by_stim_condition &&  nStimConditions > 1 
+    if analyze_by_stim_condition
 
         F_by_Stim = [];
         S_by_Stim = [];
 
-        unique_stim_v1 = unique(stim_v1);
-        unique_stim_v2 = unique(stim_v2);
-
         for v = 1:length(unique_stim_v1)
             for vv = 1:length(unique_stim_v2)
                 stim_rows = intersect(find(stim_v1 == unique_stim_v1(v)), find(stim_v2 == unique_stim_v2(vv)));
+                
+                if isempty(stim_rows) %Some stim combinations might not exist due to loco
+                    continue
+                end
+                
                 F_temp = F(stim_rows,:);
                 S_temp = S(stim_rows,:);
 

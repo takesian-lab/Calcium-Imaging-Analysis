@@ -83,7 +83,7 @@ if plotFigure
     
     subplot(2,2,4)
     plot(sp_by_int); hold on
-    scatter(1:length(ints),sp_by_int)
+    scatter(1:length(sp_by_int),sp_by_int)
     camroll(-90)
     xlabel('Intensity')
     ylabel('Freq. sparseness by Intensity')
@@ -94,7 +94,7 @@ if plotFigure
     
     subplot(2,2,1)
     plot(sp_by_freq); hold on
-    scatter(1:length(freqs),sp_by_freq)
+    scatter(1:length(sp_by_freq),sp_by_freq)
     xlabel('Frequency')
     ylabel('Int. sparseness by Frequency')
     ylim([0 1])

@@ -43,10 +43,10 @@ else
 
     switch PC_name
         case 'RD0366' %Maryse
-            info_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-            compiled_blocks_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study/CompiledBlocks_v2';
-            save_path = 'D:/Data/2p/VIPvsNDNF_response_stimuli_study';
-            info_filename = 'Info_YE083020F1';
+            info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
+            compiled_blocks_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledBlocks_Pyr';
+            save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\ExtractedData';
+            info_filename = 'Combined Info Pyr';
         case 'RD0332' %Carolyn
             info_path = 'D:\2P analysis\2P local data\Carolyn';
 %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';

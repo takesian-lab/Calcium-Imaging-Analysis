@@ -28,8 +28,6 @@ function [fig1, fig2, fig3, fig4, fig5, fig6, fig7] = visualize_cell_AT(block, c
 SF = 0.5; %Shrinking factor for traces to appear more spread out (for visualization purposes)
 z = 1; %Portion of recording to plot between 0 and 1 e.g. 0.5, 0.33, 1 (for visualization purposes)
 ws = 0.15; %Multiplication factor for adding white space to the top of each graph (Above max value)
-t1 = 20; %Time of response window onset in frames (for receptive field plots)
-t2 = 40; %Time of response window offset in frames (for receptive field plots)
 Z_max_to_plot_lines = 1500; %If length of block is less than this (in seconds), plot lines for each stim
 
 if ~isfield(block,'aligned_stim')
@@ -60,11 +58,15 @@ F7_stim = block.aligned_stim.F7_stim;
 spks_stim = block.aligned_stim.spks_stim;
 baseline_length = block.setup.constant.baseline_length; %seconds
 framerate = block.setup.framerate;
-nBaselineFrames = baseline_length*framerate; %frames
+nBaselineFrames = round(baseline_length*framerate); %frames
 trial_duration_in_seconds = baseline_length + block.setup.constant.after_stim; %seconds
 trial_duration_in_frames = size(F7_stim,3);
 x_in_seconds = 0:0.5*(trial_duration_in_frames/trial_duration_in_seconds):trial_duration_in_frames;
 x_label_in_seconds = 0:0.5:trial_duration_in_seconds;
+
+%Use a 1 second window after baseline to average activity for RF
+t1 = nBaselineFrames; %Time of response window onset in frames
+t2 = nBaselineFrames + framerate; %Time of response window offset in frames
 
 %% Plot raw activity of cell(s) for duration of block
 %Raw activity of each cell vs. time with locomoter activity beneath
@@ -89,7 +91,11 @@ for c = 1:length(cellnum)
 
     mean_gCAMP = mean(cell_trace);% average green for each cell
     df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
-    A = smooth(df_f,20);
+    if framerate <= 10 %Don't smooth data if framerate is low
+        A = df_f;
+    else
+        A = smooth(df_f,20);
+    end
 
     plot(timestamp, A*SF + count,'LineWidth',2,'Color','k');
     count = count + 1;

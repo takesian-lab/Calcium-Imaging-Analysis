@@ -5,7 +5,7 @@
 %noiseburst = 1
 %ReceptiveField = 2
 %FM sweep = 3
-%SAM = 6s
+%SAM = 5
 %widefield = 4
 %SAM freq = 6
 %Behavior = 7 and 8
@@ -22,12 +22,12 @@ PC_name = getenv('computername');
 
 switch PC_name
     case 'RD0366' %Maryse
-        info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
-        blocks_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_V2';
-        save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\ExtractedData';
-        info_filename = 'Info_NxDF011321F2';
+        info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
+        blocks_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledBlocks_Pyr';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\ExtractedData';
+        info_filename = 'Combined Info Pyr';
        
-        stimProtocol = 3; %See stimProtocol list above
+        stimProtocol = 5; %See stimProtocol list above
         STDlevel = 2; %minimum # standard deviations above baseline to be considered significant
         AUC_F_level = 5; %minimum area under the curve to be considered significant for df/f traces
         AUC_S_level = 10; %minimum area under the curve to be considered significant for spike traces
@@ -117,6 +117,8 @@ activity = cell(size(cellList,1),2); %Auto-determined activity (activated/prolon
 [data_F, data_S] = deal(nan(size(cellList,1),length(numericalColumnHeaders))); %Numerical data
 [raster_F, raster_S] = deal(nan(size(cellList,1),76)); %76 is a magic number
 
+%Stim protocol specific measures
+
 if stimProtocol == 2 %RF
     RF.ColumnHeaders = {'Sparseness', 'BF', 'BF_I', 'CF', 'CF_I', 'BestInt', 'Int_RMS', 'Int_halfwidth',...
         'BW_20_RMS', 'BW_20_halfwidth', 'BW_BF_RMS', 'BW_BF_halfwidth', 'ISI', 'Type'};
@@ -127,6 +129,14 @@ if stimProtocol == 2 %RF
     st.data = nan(size(cellList,1), length(RF.ColumnHeaders));
     RF.F = st;
     RF.S = st;
+elseif stimProtocol == 3 %FM
+    FM.ColumnHeaders = {'TBD'};
+    st = struct; %temp variable
+    [st.response, st.isResponsive, st.peak, st.peakavg, st.area, RF.stim_v1, RF.stim_v2] = deal(nan(8,8,size(cellList,1))); %8x8 is magic number for FM size
+    [st.sp_by_int, st.sp_by_freq] = deal(nan(size(cellList,1),8));
+    st.data = nan(size(cellList,1), length(FM.ColumnHeaders));
+    FM.F = st;
+    FM.S = st;
 end
 
 %% Loop through all cells in each block
@@ -170,7 +180,7 @@ for c = 1:size(cellList,1)
             stim_v0 = stim_v1;
             stim_v2 = zeros(size(stim_v1));
             
-        case {6} %{'SAM', 'SAMfreq'} %NAN trials instead of zeros           
+        case {5,6} %{'SAM', 'SAMfreq'} %NAN trials instead of zeros           
             stim_v0 = stim_v1;
             stim_v0(isnan(stim_v0)) = 0;
 
@@ -189,6 +199,15 @@ for c = 1:size(cellList,1)
     blankTrials = stim_v0 == 0; %0dB trials
     stimTrials = ~blankTrials;
     
+    %Get list of all possible stim without blanks prior to removing loco trials
+    unique_stim_v1 = unique(stim_v1(stim_v0 ~= 0));
+    unique_stim_v2 = unique(stim_v2(stim_v0 ~= 0));
+
+    %If RF, order intensities from highest to lowest
+    if stimProtocol == 2 %RF
+        unique_stim_v2 = flipud(unique_stim_v2);
+    end
+        
     %Remove loco trials
     blankTrials(remove,:) = 0;
     stimTrials(remove,:) = 0;
@@ -200,7 +219,7 @@ for c = 1:size(cellList,1)
     %Only keep stim values for non-blank trials
     stim_v1 = stim_v1(stimTrials);
     stim_v2 = stim_v2(stimTrials);
-                
+              
     %Pull out all stim-aligned traces for this cell
     F7 = squeeze(block.aligned_stim.F7_stim(cellIndex,:,:));
     F7_baseline = F7(:,1:nBaselineFrames); %baseline for each trial
@@ -226,27 +245,22 @@ for c = 1:size(cellList,1)
 
     %GET AVERAGED RESPONSES
     %check if each condition is active, then concatenate and keep only active conditions
-    nStimConditions = size(unique([stim_v1,stim_v2],'rows'),1); %skip if there's only one stim condition (e.g. NoiseITI)
     analyze_by_stim_condition = 1; %I assume we'll almost always want to do this
-    if analyze_by_stim_condition &&  nStimConditions > 1 
+    if analyze_by_stim_condition
 
         F_by_Stim = [];
         S_by_Stim = [];
 
-        unique_stim_v1 = unique(stim_v1);
-        unique_stim_v2 = unique(stim_v2);
-
-        %If RF, order intensities from highest to lowest
-        if stimProtocol == 2 %RF
-            unique_stim_v2 = flipud(unique_stim_v2);
-        end
-
         for v = 1:length(unique_stim_v1)
             for vv = 1:length(unique_stim_v2)
                 stim_rows = intersect(find(stim_v1 == unique_stim_v1(v)), find(stim_v2 == unique_stim_v2(vv)));
+                
+                if isempty(stim_rows) %Some stim combinations might not exist due to loco
+                    continue
+                end
 
                 %Plot individual figures of each stim condition
-                plotStimFigures = 0;
+                plotStimFigures = 0; %Use for troubleshooting
                 if plotStimFigures; figure; end
 
                 for i = 1:2 % F and S
@@ -266,12 +280,10 @@ for c = 1:size(cellList,1)
                         units = 'spikes';
                     end
 
-                    if isempty(trials); continue; end
-
                     if plotStimFigures; subplot(1,2,i); end
 
                     [isActive, tempActivity, pk_temp, tr_temp] = checkIfActive_v2(trials, nBaselineFrames, STDlevel, AUClevel, plotStimFigures, units);
-
+                    [isActiveComparedToBlanks, pValue] = compare_to_blank_trials(trials, blank_trials);
                     if isActive
                         if i == 1
                             F_by_Stim = [F_by_Stim; trials];
@@ -386,6 +398,7 @@ for c = 1:size(cellList,1)
 
     %RECEPTIVE FIELD ONLY
     if stimProtocol == 2 %RF
+        
         %Compute tuning sparseness
         [RF.F.data(c,1), RF.F.sp_by_int(c,:), RF.F.sp_by_freq(c,:), figures{c,2}] = compute_tuning_sparseness_v2(RF.F.peak(:,:,c), plot_tuning, 'df/f',  unique_stim_v1, unique_stim_v2, cellNumber);
         [RF.S.data(c,1), RF.S.sp_by_int(c,:), RF.S.sp_by_freq(c,:), figures{c,3}] = compute_tuning_sparseness_v2(RF.S.peak(:,:,c), plot_tuning, 'spikes', unique_stim_v1, unique_stim_v2, cellNumber);  
@@ -396,7 +409,7 @@ for c = 1:size(cellList,1)
             compute_frequency_tuning_v2(RF.F.isResponsive(:,:,c), RF.F.response(:,:,c),...
             plot_tuning, unique_stim_v1, unique_stim_v2, cellNumber);
         end
-
+        
         if any(any(RF.S.isResponsive(:,:,c)))
             [RF.S.FRA{c,1}, RF.S.data(c,2:end), figures{c,9:13}] = ... 
             compute_frequency_tuning_v2(RF.S.isResponsive(:,:,c), RF.S.response(:,:,c),...
@@ -553,6 +566,7 @@ Groups = unique(groupList);
 Activity = {'activated', 'prolonged', 'suppressed'};
 groupRasters = struct;
 groupAverages = struct;
+groupActivity = {};
 
 for g = 1:length(Groups)
     currentCells = strcmpi(groupList,Groups(g));
@@ -561,6 +575,7 @@ for g = 1:length(Groups)
     resorted_raster_S = [];
     average_F = [];
     average_S = [];
+    activity_type = [];
         
     for i = 1:length(Activity)       
         activeRows = strcmpi(activityList, Activity{i});
@@ -591,7 +606,11 @@ for g = 1:length(Groups)
 
         resorted_raster_F = [resorted_raster_F; current_raster_F(sort_ind,:)];
         resorted_raster_S = [resorted_raster_S; current_raster_S(sort_ind,:)];
-           
+
+        temp_activity = cell(size(current_raster_F,1),1);
+        [temp_activity{:}] = deal(Activity(i));
+        activity_type = [activity_type; temp_activity];
+    
         %Save cell order (makeValidName gets rid of invalid characters like '-' or '/')
         ExtractedData.CellsInOrder.(matlab.lang.makeValidName([Groups{g}])).([Activity{i}]).F = cellNumbers(sort_ind); 
         ExtractedData.CellsInOrder.(matlab.lang.makeValidName([Groups{g}])).([Activity{i}]).S = cellNumbers(sort_ind);
@@ -601,10 +620,11 @@ for g = 1:length(Groups)
     groupRasters.S{g} = resorted_raster_S;
     groupAverages.F{g} = average_F;
     groupAverages.S{g} = average_S;
+    groupActivity{g} = activity_type;
 end
         
 
-%% PLOT FIGURE
+%% PLOT FIGURE BY GROUP
 
 figure; hold on
 suptitle(ExtractedData.StimType)
@@ -634,6 +654,57 @@ for g = 1:length(Groups)
 
     subplot(6,length(Groups),[g+4*length(Groups),g+5*length(Groups)])
     imagesc(groupRasters.S{g}(:,1:end-1))
+    ylabel('Cells')
+    xlabel('Frames')
+    h = colorbar;
+    set(get(h,'label'),'string','Spikes');
+    caxis([0, 100]);
+end
+
+%% PLOT FIGURE BY ACTIVITY TYPE
+
+figure; hold on
+suptitle(ExtractedData.StimType)
+
+for a = 1:length(Activity)
+
+    subplot(6,length(Activity),a); hold all
+    for g = 1:length(Groups)
+        plot(groupAverages.F{g}(a,:), 'LineWidth', 2)
+    end
+    legend(Groups)
+    xlabel('Frames')
+    ylabel('DF/F')
+    title([Activity{a} ' DF/F'])
+
+    subplot(6,length(Activity),a+3*length(Activity)); hold all
+    for g = 1:length(Groups)
+        plot(groupAverages.S{g}(a,:), 'LineWidth', 2)
+    end
+    legend(Groups)
+    xlabel('Frames')
+    ylabel('Spikes')
+    title([Activity{a} ' Spikes'])
+
+    subplot(6,length(Activity),[a+length(Activity),a+2*length(Activity)])
+    grp_Raster = [];
+    for g = 1:length(Groups)
+        grp_Activity  = strcmp([groupActivity{g}{:}], Activity{a})';
+        grp_Raster = [grp_Raster; groupRasters.F{g}(grp_Activity,1:end-1)];
+    end
+    imagesc(grp_Raster)
+    ylabel('Cells')
+    h = colorbar;
+    set(get(h,'label'),'string','DF/F');
+    caxis([-0.5, 5]);
+
+    subplot(6,length(Activity),[a+4*length(Activity),a+5*length(Activity)])
+    grp_Raster = [];
+    for g = 1:length(Groups)
+        grp_Activity  = strcmp([groupActivity{g}{:}], Activity{a})';
+        grp_Raster = [grp_Raster; groupRasters.S{g}(grp_Activity,1:end-1)];
+    end
+    imagesc(grp_Raster)
     ylabel('Cells')
     xlabel('Frames')
     h = colorbar;

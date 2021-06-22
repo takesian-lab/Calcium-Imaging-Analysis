@@ -237,7 +237,11 @@ else
                 
                 mean_gCAMP = mean(cell_trace);% average green for each cell
                 df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
-                A = smooth(df_f,10);
+                if setup.framerate <= 10 %Don't smooth data if framerate is low
+                    A = df_f;
+                else
+                    A = smooth(df_f,10);
+                end
 
                 plot(timestamp, A*SF + count,'LineWidth',1);
                 hold on;

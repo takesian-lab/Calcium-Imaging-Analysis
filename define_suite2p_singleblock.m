@@ -94,6 +94,10 @@ end
 %% Check ops
 
 block.ops = get_abridged_ops(Fall.ops);
+%Check that framerate matches block.ops.fs
+if round(block.ops.fs,2) ~= round(block.setup.framerate,2)
+    warning(['Suite2p framerate (' num2str(block.ops.fs) ') does not match block framerate (' num2str(block.setup.framerate) ')'])
+end
 
 %Check that neucoeff matches block.ops.neucoeff
 if ~isequal(block.setup.constant.neucoeff, block.ops.neucoeff)

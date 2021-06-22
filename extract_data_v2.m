@@ -149,6 +149,15 @@ for b = 1:length(uniqueBlocks)
     %Separate blank and stim trials
     blankTrials = stim_v0 == 0; %0dB trials
     stimTrials = ~blankTrials;
+
+    %Get list of all possible stim without blanks prior to removing loco trials
+    unique_stim_v1 = unique(stim_v1(stim_v0 ~= 0));
+    unique_stim_v2 = unique(stim_v2(stim_v0 ~= 0));
+
+    %If RF, order intensities from highest to lowest
+    if stimProtocol == 2 %RF
+        unique_stim_v2 = flipud(unique_stim_v2);
+    end
     
     %Remove loco trials
     blankTrials(remove,:) = 0;
@@ -213,24 +222,19 @@ for b = 1:length(uniqueBlocks)
         
         %GET AVERAGED RESPONSES
         %check if each condition is active, then concatenate and keep only active conditions
-        nStimConditions = size(unique([stim_v1,stim_v2],'rows'),1); %skip if there's only one stim condition (e.g. NoiseITI)
         analyze_by_stim_condition = 1; %I assume we'll almost always want to do this
-        if analyze_by_stim_condition &&  nStimConditions > 1 
+        if analyze_by_stim_condition
 
             F_by_Stim = [];
             S_by_Stim = [];
             
-            unique_stim_v1 = unique(stim_v1);
-            unique_stim_v2 = unique(stim_v2);
-            
-            %If RF, order intensities from highest to lowest
-            if strcmp(stimType, 'RF')
-                unique_stim_v2 = flipud(unique_stim_v2);
-            end
-            
             for v = 1:length(unique_stim_v1)
                 for vv = 1:length(unique_stim_v2)
                     stim_rows = intersect(find(stim_v1 == unique_stim_v1(v)), find(stim_v2 == unique_stim_v2(vv)));
+                 
+                    if isempty(stim_rows) %Some stim combinations might not exist due to loco
+                        continue
+                    end        
                     
                     %Plot individual figures of each stim condition
                     plotStimFigures = 0;
@@ -252,8 +256,6 @@ for b = 1:length(uniqueBlocks)
                             AUClevel = AUC_S_level;
                             units = 'spikes';
                         end
-
-                        if isempty(trials); continue; end
                        
                         if plotStimFigures; subplot(1,2,i); end
                         

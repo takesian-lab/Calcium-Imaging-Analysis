@@ -21,10 +21,10 @@ function [block] = align_to_stim(block, sound_time_delay)
 % -timestamp - from define_sound
 % -F - from define_suite2p
 % -Fneu - from define_suite2p
-% - spks - from define_suite2p
+% -spks - from define_suite2p
 %
 %
-% TODO: move dF/F calculation to analysis_2P_v3
+% TODO:
 % Search 'TODO'
 
 %%  Skip this function if Suite2p and Bruker data are not available
@@ -34,14 +34,9 @@ if ismissing(block.setup.suite2p_path) || ismissing(block.setup.block_path)
     return
 end
 
-if isfield(block, 'MultiplaneData')
-    disp('Skipping align to stim due to multiplane data...');
-    return
-end
-
 disp('Aligning to stim...');
 
-%% Pull out the traces to each stim
+
 %define sound window
 setup = block.setup;
 Sound_Time = block.Sound_Time;
@@ -53,59 +48,93 @@ if nargin == 2
     setup.constant.after_stim = 3;
 end
 
-%generate a neuropil corrected trace  = raw F - (neuropil coefficient)*neuropil signal
-F7 = block.F - setup.constant.neucoeff*block.Fneu;
- 
-%Preallocate variables and trial length in frames
-%Align everything to closest frame to sound start
-baseline_inFrames = setup.constant.baseline_length*block.setup.framerate;
-after_inFrames = setup.constant.after_stim*block.setup.framerate;
-duration_inFrames = baseline_inFrames + after_inFrames;
-
-nanMat = nan(size(block.F,1),length(Sound_Time),duration_inFrames);
-F7_stim = nanMat;
-F_stim = nanMat;
-Fneu_stim = nanMat;
-spks_stim = nanMat;
-
-% loop through each stim-presenation
-for time=1:length(Sound_Time)
-   
-    sound = Sound_Time(time);
-    [~, closest_frame_sound] = min(abs(block.timestamp(:)-sound));
-    A = closest_frame_sound - baseline_inFrames;
-    B = closest_frame_sound + after_inFrames - 1;
-    a = 1;
-    b = duration_inFrames;
-    
-    % loop through each "iscell" to find the stim-aligned 1) raw
-    % fluoresence 2) neuropil signal 3) neuropil-corrected floresence 4)
-    % df/F for the neuropil corrected fluoresence 5) deconvolved spikes
-    
-    %If user-defined baseline is before the beginning of the block
-    %recording, set A = 1 and the beginning of the block will be nan
-    if A < 1
-        a = abs(A) + 2;
-        A = 1;
-    end
-    
-    %If user-defined trial is longer than block recording, take portion
-    %of trial up to the end of recording, the rest of the frames will be nan
-    if B > size(F7,2)
-        B = size(F7,2);
-        b = length(A:B);
-    end
-    % pull out the frames aligned to a stim (defined in frames)
-    F7_stim(:,time,a:b) = F7(:,A:B);
-    F_stim(:,time,a:b) =  block.F(:,A:B);
-    Fneu_stim(:,time,a:b) = block.Fneu(:,A:B);
-    spks_stim(:,time,a:b) = block.spks(:,A:B);
+%Accomodate multiplane data
+if isfield(block, 'MultiplaneData')
+    multiplaneData = true;
+    nPlanes = setup.XML.nPlanes;
+else
+    multiplaneData = false;
+    nPlanes = 1;
 end
 
- block.aligned_stim.F7_stim = F7_stim;
- block.aligned_stim.F_stim = F_stim;
- block.aligned_stim.Fneu_stim = Fneu_stim;
- block.aligned_stim.spks_stim = spks_stim;
+%% ALIGN DATA
+
+for n = 1:nPlanes
+    
+    if multiplaneData
+        currentPlane = strcat('plane', num2str(n - 1));
+        F = block.F.(currentPlane);
+        Fneu = block.Fneu.(currentPlane);
+        spks = block.spks.(currentPlane);
+    else
+        F = block.F;
+        Fneu = block.Fneu;
+        spks = block.spks;
+    end
+    
+    %generate a neuropil corrected trace  = raw F - (neuropil coefficient)*neuropil signal
+    F7 = F - setup.constant.neucoeff*Fneu;
+
+    %Preallocate variables and trial length in frames
+    %Align everything to closest frame to sound start
+    baseline_inFrames = round(setup.constant.baseline_length*block.setup.framerate);
+    after_inFrames = round(setup.constant.after_stim*block.setup.framerate);
+    duration_inFrames = baseline_inFrames + after_inFrames;
+
+    nanMat = nan(size(F,1),length(Sound_Time),duration_inFrames);
+    F7_stim = nanMat;
+    F_stim = nanMat;
+    Fneu_stim = nanMat;
+    spks_stim = nanMat;
+
+    % loop through each stim-presenation
+    for time=1:length(Sound_Time)
+
+        sound = Sound_Time(time);
+        [~, closest_frame_sound] = min(abs(block.timestamp(:)-sound));
+        A = closest_frame_sound - baseline_inFrames;
+        B = closest_frame_sound + after_inFrames - 1;
+        a = 1;
+        b = duration_inFrames;
+
+        % loop through each "iscell" to find the stim-aligned 1) raw
+        % fluoresence 2) neuropil signal 3) neuropil-corrected floresence 4)
+        % df/F for the neuropil corrected fluoresence 5) deconvolved spikes
+
+        %If user-defined baseline is before the beginning of the block
+        %recording, set A = 1 and the beginning of the block will be nan
+        if A < 1
+            a = abs(A) + 2;
+            A = 1;
+        end
+
+        %If user-defined trial is longer than block recording, take portion
+        %of trial up to the end of recording, the rest of the frames will be nan
+        if B > size(F7,2)
+            B = size(F7,2);
+            b = length(A:B);
+        end
+        % pull out the frames aligned to a stim (defined in frames)
+        F7_stim(:,time,a:b) = F7(:,A:B);
+        F_stim(:,time,a:b) =  F(:,A:B);
+        Fneu_stim(:,time,a:b) = Fneu(:,A:B);
+        spks_stim(:,time,a:b) = spks(:,A:B);
+    end
+    
+    % SAVE ALIGNED DATA TO BLOCK
+    if multiplaneData
+         block.aligned_stim.F7_stim.(currentPlane) = F7_stim;
+         block.aligned_stim.F_stim.(currentPlane) = F_stim;
+         block.aligned_stim.Fneu_stim.(currentPlane) = Fneu_stim;
+         block.aligned_stim.spks_stim.(currentPlane) = spks_stim;
+    else
+         block.aligned_stim.F7_stim = F7_stim;
+         block.aligned_stim.F_stim = F_stim;
+         block.aligned_stim.Fneu_stim = Fneu_stim;
+         block.aligned_stim.spks_stim = spks_stim;
+    end
+end
+
  
 end
 

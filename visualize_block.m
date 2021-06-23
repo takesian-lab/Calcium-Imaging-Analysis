@@ -71,21 +71,30 @@ else
     active_time = loco_speed;
     active_time(active_time < block.setup.constant.locoThresh) = 0;
 
-    figure; 
+    figure; hold on
 
     subplot(2,1,1); hold on
     title('Locomotor activity')
-    ylabel('Activity (cm/s)')
-    plot(loco_time, loco_speed); hold on
-    hline(0.7);
+    ylabel('Activity (cm/s)') 
+    plotMax = max(loco_speed) + 1;
+    area(loco_time,(active_time > 0)*plotMax, 'EdgeColor', 'none', 'Facecolor', [210/255, 248/255, 210/255])
+    %area(loco_time,(active_time == 0)*plotMax, 'EdgeColor', 'none', 'Facecolor',[238/255, 144/255, 144/255])
+    plot(loco_time, loco_speed, 'LineWidth', 0.25)
+    hline(0.7)
+    ylim([0 plotMax])
+    xlim([loco_time(1) loco_time(end)])
 
     subplot(2,1,2); hold on
     ylabel('Considered active')
     xlabel('Seconds')
     set(gca, 'ytick', [0 1])
-    plot(loco_time, active_time > 0); hold on;
+    area(loco_time,(active_time > 0)*plotMax, 'EdgeColor', 'none', 'Facecolor', [210/255, 248/255, 210/255])
+    area(loco_time,(active_time == 0)*plotMax, 'EdgeColor', 'none', 'Facecolor',[238/255, 144/255, 144/255])
+    ylim([0 plotMax])
+    xlim([loco_time(1) loco_time(end)])
+    
     suptitle(block.setup.block_supname)
-   
+
 
 end %Skip if Tosca data is missing
 

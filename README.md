@@ -49,15 +49,15 @@ block.locIDX		= indices of loco_activity/loco_times that correspond to each tria
 ## Command line
 
 1. Compile blocks
-- Make Info excel spreadsheet outside of MATLAB. Look at the example spreadsheet and "Data Structure for Info" PDF within this folder for help.
-- Update paths at the top of compile_blocks_from_info
-- Run compile_blocks_from_info
+- Make Info excel spreadsheet outside of MATLAB. Look at the template spreadsheet and "Data Structure for Info" PDF within this folder for help.
+- Update paths at the top of compile_blocks_from_info_v2
+- Run compile_blocks_from_info_v2
 - Visualize the output of a single block with the function visualize_block
-- Visualize the output of a single cell from a block with the function visualize_cell
+- Visualize the output of a single cell from a block with the function visualize_cell or visualize_active_cells
 
 2. Analyze
 - You can use either the same Info spreadsheet as before or create a dedicated spreadsheet for each type of analysis you want to do.
-- Update paths at the top of anlaysis_2P_v3
+- Update paths at the top of analysis_2P_v3
 - Run analysis_2P_v3
 
 # Code Structure

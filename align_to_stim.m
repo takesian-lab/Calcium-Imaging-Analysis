@@ -60,16 +60,19 @@ end
 %% ALIGN DATA
 
 for n = 1:nPlanes
+    plane = nPlanes - 1;
     
     if multiplaneData
-        currentPlane = strcat('plane', num2str(n - 1));
-        F = block.F.(currentPlane);
-        Fneu = block.Fneu.(currentPlane);
-        spks = block.spks.(currentPlane);
+        planeName = strcat('plane', num2str(n - 1));
+        F = block.F.(planeName);
+        Fneu = block.Fneu.(planeName);
+        spks = block.spks.(planeName);
+        timestamp = block.timestamp.(planeName);
     else
         F = block.F;
         Fneu = block.Fneu;
         spks = block.spks;
+        timestamp = block.timestamp;
     end
     
     %generate a neuropil corrected trace  = raw F - (neuropil coefficient)*neuropil signal
@@ -91,7 +94,7 @@ for n = 1:nPlanes
     for time=1:length(Sound_Time)
 
         sound = Sound_Time(time);
-        [~, closest_frame_sound] = min(abs(block.timestamp(:)-sound));
+        [~, closest_frame_sound] = min(abs(timestamp(:)-sound));
         A = closest_frame_sound - baseline_inFrames;
         B = closest_frame_sound + after_inFrames - 1;
         a = 1;
@@ -114,6 +117,12 @@ for n = 1:nPlanes
             B = size(F7,2);
             b = length(A:B);
         end
+        
+        %Catch problems
+        if A > B
+            error('A should not be greater than B. Check timestamps')
+        end
+        
         % pull out the frames aligned to a stim (defined in frames)
         F7_stim(:,time,a:b) = F7(:,A:B);
         F_stim(:,time,a:b) =  F(:,A:B);
@@ -123,10 +132,10 @@ for n = 1:nPlanes
     
     % SAVE ALIGNED DATA TO BLOCK
     if multiplaneData
-         block.aligned_stim.F7_stim.(currentPlane) = F7_stim;
-         block.aligned_stim.F_stim.(currentPlane) = F_stim;
-         block.aligned_stim.Fneu_stim.(currentPlane) = Fneu_stim;
-         block.aligned_stim.spks_stim.(currentPlane) = spks_stim;
+         block.aligned_stim.F7_stim.(planeName) = F7_stim;
+         block.aligned_stim.F_stim.(planeName) = F_stim;
+         block.aligned_stim.Fneu_stim.(planeName) = Fneu_stim;
+         block.aligned_stim.spks_stim.(planeName) = spks_stim;
     else
          block.aligned_stim.F7_stim = F7_stim;
          block.aligned_stim.F_stim = F_stim;

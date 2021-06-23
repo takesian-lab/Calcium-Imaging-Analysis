@@ -1,4 +1,4 @@
-function visualize_cell(block, cellnum) 
+function visualize_cell(block, cellnum, plane) 
 % This function allows you to preview the stimulus-evoked responses from
 % a single cell (neuron) or selection of cells from a block
 %
@@ -25,13 +25,21 @@ function visualize_cell(block, cellnum)
 
 %% Magic numbers & Setup
 
+if nargin > 2
+    multiplaneData = true;
+    planeName = ['plane' num2str(plane)];
+    nPlanes = block.ops.nplanes;
+elseif nargin == 1 && isfield(block,'MultiplaneData')
+    error('Please choose plane number: visualize_cell(block, cellnum, plane)')
+else
+    multiplaneData = false;
+end
+
+
 SF = 0.5; %Shrinking factor for traces to appear more spread out (for visualization purposes)
 z = 1; %Portion of recording to plot between 0 and 1 e.g. 0.5, 0.33, 1 (for visualization purposes)
 ws = 0.15; %Multiplication factor for adding white space to the top of each graph (Above max value)
 
-if ~isfield(block,'aligned_stim')
-    error('No stim-aligned data to plot');
-end    
 
 if size(cellnum,1) > 1 && size(cellnum,2) > 1
     error('cellnum should be a 1-D array')
@@ -43,16 +51,29 @@ code = {'Noiseburst', 'Receptive Field', 'FM sweep', 'Widefield', 'SAM', 'SAM fr
 currentStim = code{stim_protocol};
 disp(['Plotting figures for ' currentStim '...'])
 
+%Accommodate multiplane data
+if multiplaneData
+    all_cell_numbers = block.cell_number.(planeName);
+    F = block.F.(planeName);
+    Fneu = block.Fneu.(planeName);
+    F7_stim = block.aligned_stim.F7_stim.(planeName);
+    spks_stim = block.aligned_stim.spks_stim.(planeName);
+    timestamp = block.timestamp.(planeName);
+else
+    all_cell_numbers = block.cell_number;
+    F = block.F;
+    Fneu = block.Fneu;
+    F7_stim = block.aligned_stim.F7_stim;
+    spks_stim = block.aligned_stim.spks_stim;
+    timestamp = block.timestamp; %In seconds
+end
+
 %Raw activity
-Sound_Time = block.Sound_Time;
-all_cell_numbers = block.cell_number;    
-F7 = block.F - (setup.constant.neucoeff*block.Fneu); %neuropil corrected traces
-timestamp = block.timestamp; %In seconds
+Sound_Time = block.Sound_Time;  
+F7 = F - (setup.constant.neucoeff*Fneu); %neuropil corrected traces
 Z = round(length(timestamp)*z);
 
 %Stim-aligned activity
-F7_stim = block.aligned_stim.F7_stim;
-spks_stim = block.aligned_stim.spks_stim;
 baseline_length = block.setup.constant.baseline_length; %seconds
 framerate = block.setup.framerate;
 nBaselineFrames = round(baseline_length*framerate); %frames
@@ -554,6 +575,9 @@ if plotReceptiveField
             max_spks = max(max(spks_mat,[], 1));
 
             %artificial ylim if no spikes
+            if isnan(max_df_f)
+                max_df_f = 5;
+            end
             if isnan(max_spks)
                 max_spks = 10;
             end

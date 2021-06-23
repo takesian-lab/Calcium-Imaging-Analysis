@@ -23,6 +23,11 @@ function visualize_zcorr(block, plane)
 if nargin > 1
     multiplaneData = true;
     planeName = ['plane' num2str(plane)];
+    
+    if block.setup.XML.bidirectionalZ
+        error('Code is not set up for bidirectional data yet')
+    end
+        
 elseif nargin == 1 && isfield(block,'MultiplaneData')
     error('Please choose plane number: visualize_zcorr(block,plane)')
 else
@@ -51,9 +56,7 @@ imaging_plane_cropped = mode(best_z);
 
 %locomotor activity
 if multiplaneData
-    planeInd = [1:nPlanes:length(block.timestamp)] + plane;
-    planeInd(planeInd > length(block.timestamp)) = [];
-    timestamp = block.timestamp(planeInd);
+    timestamp = block.timestamp.(planeName);
 else
     timestamp = block.timestamp;
 end

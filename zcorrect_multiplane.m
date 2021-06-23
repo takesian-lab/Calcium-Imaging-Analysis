@@ -25,6 +25,10 @@ if nargin < 2
     plotFigureOnly = 1;
 end
 
+if strcmp(block.setup.XML.bidirectionalZ, 'True')
+    error('Code is not set up for bidirectional data yet')
+end
+    
 max_drift = 10; %Number of planes that the imaging plane can drift in +/- Z
 
 %locomotor activity

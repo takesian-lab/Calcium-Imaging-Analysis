@@ -182,8 +182,7 @@ end
 
 %% Read XML file
 % We read the XML just to record info that might come in handly, like laser
-% power, PMT values, etc. For multiplane data, the XML timestamps are more
-% accurate than the BOT timestamps
+% power, PMT values, etc. For multiplane data, the XML timestamps are required
 
 disp('Reading XML file')
 XML_files = filenames(contains(filenames,'.xml'));  
@@ -242,7 +241,11 @@ else %2p
     elseif length(X.PVScan.Sequence) > 1 %Multiplane data
         XML.nPlanes = size(X.PVScan.Sequence{1,1}.Frame,2);
         framerate = framerate/XML.nPlanes;
-        XML.bidirectionalZ = X.PVScan.Sequence{1,1}.Attributes.bidirectionalZ;
+        if strcmp(X.PVScan.Sequence{1,1}.Attributes.bidirectionalZ,'False')
+            XML.bidirectionalZ = false;
+        else
+            XML.bidirectionalZ = true;
+        end
         XML.voltageRecording_absoluteTime = str2double(X.PVScan.Sequence{1,1}.VoltageRecording.Attributes.absoluteTime);
         XML.voltageRecording_relativeTime = str2double(X.PVScan.Sequence{1,1}.VoltageRecording.Attributes.relativeTime);
         XML.cycle = [];
@@ -276,7 +279,15 @@ else %2p
         if singleBOT %Z-corrected multiplane data (now single plane)
             timestamp = frame_data; %Use frame_data that hasn't been corrected since the times were originally generated from the XML
         else %Multiplane data
-            timestamp = XML.relativeTime;
+            timestamp.combined = XML.relativeTime;
+            if  XML.bidirectionalZ; error('This part of the script has not been written for bidirectional data yet'); end
+            for n = 1:XML.nPlanes
+                plane = n - 1;
+                planeName = ['plane' num2str(plane)];
+                planeInd = [1:XML.nPlanes:length(timestamp.combined)] + plane;
+                planeInd(planeInd > length(timestamp.combined)) = []; %remove 1 frame over, which can happen with : function
+                timestamp.(planeName) = timestamp.combined(planeInd);
+            end
         end
     end
 end

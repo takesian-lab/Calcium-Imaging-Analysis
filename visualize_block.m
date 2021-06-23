@@ -113,12 +113,7 @@ else
         redcell = block.redcell.(planeName);
         F = block.F.(planeName); %all the cell fluorescence data
         Fneu = block.Fneu.(planeName); %neuropil
-        
-        %Timestamp includes times for all planes
-        %Resample to only include times for this plane
-        planeInd = [1:nPlanes:length(block.timestamp)] + plane;
-        planeInd(planeInd > length(block.timestamp)) = []; %remove 1 frame over, which can happen with : function
-        timestamp = block.timestamp(planeInd);
+        timestamp = block.timestamp.(planeName);
     else
         cell_number = block.cell_number;
         redcell = block.redcell;

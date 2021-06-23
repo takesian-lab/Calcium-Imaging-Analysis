@@ -4,7 +4,7 @@
 cd('\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledBlocks_VIPvsNDNF')
 load('Compiled_NxDD070420F2_FOV1_2020-09-16_Session01_Run01_Block001_FM.mat')
 
-%Preview the locomotor activity, raw data, and FOV (check out cell #13!!)
+%Preview the locomotor activity, raw data, and FOV
 visualize_block(block)
 
 %This script automatically pulls out sound-responsive (either positively or negatively

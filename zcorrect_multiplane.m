@@ -25,14 +25,14 @@ if nargin < 2
     plotFigureOnly = 1;
 end
 
-if strcmp(block.setup.XML.bidirectionalZ, 'True')
+if block.setup.XML.bidirectionalZ
     error('Code is not set up for bidirectional data yet')
 end
     
 max_drift = 10; %Number of planes that the imaging plane can drift in +/- Z
 
 %locomotor activity
-timestamp = block.timestamp;
+timestamp = block.timestamp.combined;
 loco_time = block.locomotion_trace;
 loco_speed = block.loco_activity;
         
@@ -278,7 +278,7 @@ for c = 1:length(unique_cycles)
         %Update timestamp
         if channel == 2
             file_ind = find(strcmp(files_for_timestamp,best_plane_for_cycle));
-            new_timestamp(c) = block.timestamp(file_ind);
+            new_timestamp(c) = timestamp(file_ind);
         end
 
         %rename

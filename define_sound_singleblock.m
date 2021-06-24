@@ -190,13 +190,13 @@ X = xml2struct(XML_files{1});
 
 if ~ismissing(setup.VR_name) %widefield
     XML = struct;
-    XML.activeMode = X.PVScan.PVStateShard.PVStateValue{1, 1}.Attributes.value;
-    XML.camera_binFactor = X.PVScan.PVStateShard.PVStateValue{1, 3}.Attributes.value;
-    XML.camera_exposureMode = X.PVScan.PVStateShard.PVStateValue{1, 4}.Attributes.value;
-    XML.camera_exposureTime = X.PVScan.PVStateShard.PVStateValue{1, 5}.Attributes.value;
-    XML.dwellTime = X.PVScan.PVStateShard.PVStateValue{1, 9}.Attributes.value;
-    XML.framePeriod = X.PVScan.PVStateShard.PVStateValue{1, 10}.Attributes.value;
-    XML.opticalZoom = X.PVScan.PVStateShard.PVStateValue{1, 21}.Attributes.value;
+    XML.activeMode = X.PVScan.PVStateShard.PVStateValue{1,1}.Attributes.value;
+    XML.camera_binFactor = X.PVScan.PVStateShard.PVStateValue{1,3}.Attributes.value;
+    XML.camera_exposureMode = X.PVScan.PVStateShard.PVStateValue{1,4}.Attributes.value;
+    XML.camera_exposureTime = X.PVScan.PVStateShard.PVStateValue{1,5}.Attributes.value;
+    XML.dwellTime = X.PVScan.PVStateShard.PVStateValue{1,9}.Attributes.value;
+    XML.framePeriod = X.PVScan.PVStateShard.PVStateValue{1,10}.Attributes.value;
+    XML.opticalZoom = X.PVScan.PVStateShard.PVStateValue{1,21}.Attributes.value;
     
     framerate = ceil(1/str2double(XML.framePeriod));
     if framerate ~= 20
@@ -206,17 +206,17 @@ if ~ismissing(setup.VR_name) %widefield
 else %2p
     XML = struct;
     XML.filename = XML_files{1};
-    XML.activeMode = X.PVScan.PVStateShard.PVStateValue{1, 1}.Attributes.value;
-    XML.dwellTime = X.PVScan.PVStateShard.PVStateValue{1, 5}.Attributes.value;
-    XML.framePeriod = X.PVScan.PVStateShard.PVStateValue{1, 6}.Attributes.value;
-    XML.laserPower = X.PVScan.PVStateShard.PVStateValue{1, 8}.IndexedValue{1, 1}.Attributes.value;
-    XML.laserWavelength = X.PVScan.PVStateShard.PVStateValue{1, 9}.IndexedValue.Attributes.value;
-    XML.PMT1_Gain = X.PVScan.PVStateShard.PVStateValue{1, 19}.IndexedValue{1, 1}.Attributes.value;
-    XML.PMT2_Gain = X.PVScan.PVStateShard.PVStateValue{1, 19}.IndexedValue{1, 2}.Attributes.value;
-    XML.linesPerFrame = X.PVScan.PVStateShard.PVStateValue{1, 10}.Attributes.value;
-    XML.micronsPerPixelX = X.PVScan.PVStateShard.PVStateValue{1, 12}.IndexedValue{1, 1}.Attributes.value;
-    XML.micronsPerPixelY = X.PVScan.PVStateShard.PVStateValue{1, 12}.IndexedValue{1, 2}.Attributes.value;
-    XML.opticalZoom = X.PVScan.PVStateShard.PVStateValue{1, 17}.Attributes.value;
+    XML.activeMode = X.PVScan.PVStateShard.PVStateValue{1,1}.Attributes.value;
+    XML.dwellTime = X.PVScan.PVStateShard.PVStateValue{1,5}.Attributes.value;
+    XML.framePeriod = X.PVScan.PVStateShard.PVStateValue{1,6}.Attributes.value;
+    XML.laserPower = X.PVScan.PVStateShard.PVStateValue{1,8}.IndexedValue{1,1}.Attributes.value;
+    XML.laserWavelength = X.PVScan.PVStateShard.PVStateValue{1,9}.IndexedValue.Attributes.value;
+    XML.PMT1_Gain = X.PVScan.PVStateShard.PVStateValue{1,19}.IndexedValue{1,1}.Attributes.value;
+    XML.PMT2_Gain = X.PVScan.PVStateShard.PVStateValue{1,19}.IndexedValue{1,2}.Attributes.value;
+    XML.linesPerFrame = X.PVScan.PVStateShard.PVStateValue{1,10}.Attributes.value;
+    XML.micronsPerPixelX = X.PVScan.PVStateShard.PVStateValue{1,12}.IndexedValue{1,1}.Attributes.value;
+    XML.micronsPerPixelY = X.PVScan.PVStateShard.PVStateValue{1,12}.IndexedValue{1,2}.Attributes.value;
+    XML.opticalZoom = X.PVScan.PVStateShard.PVStateValue{1,17}.Attributes.value;
 
     framerate = ceil(1/str2double(XML.framePeriod));
     if framerate ~= 15 && framerate ~= 30

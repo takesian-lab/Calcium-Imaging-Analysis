@@ -29,7 +29,7 @@ if nargin > 2
     multiplaneData = true;
     planeName = ['plane' num2str(plane)];
     nPlanes = block.ops.nplanes;
-elseif nargin == 1 && isfield(block,'MultiplaneData')
+elseif nargin == 2 && isfield(block,'MultiplaneData')
     error('Please choose plane number: visualize_cell(block, cellnum, plane)')
 else
     multiplaneData = false;

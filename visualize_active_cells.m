@@ -26,7 +26,7 @@ else
     multiplaneData = false;
 end
 
-STDlevel = 50;
+STDlevel = 3;
 AUC_F_level = 5;
 AUC_S_level = 10;
 sort_active = 0;  % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials

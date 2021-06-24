@@ -26,7 +26,7 @@ else
     multiplaneData = false;
 end
 
-STDlevel = 5;
+STDlevel = 3;
 AUC_F_level = 5;
 AUC_S_level = 10;
 sort_active = 0;  % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
@@ -212,7 +212,7 @@ for c = 1:size(cell_number,1)
         subplot(1,2,2)
         checkIfActive_v2(avg_S, nBaselineFrames, STDlevel, AUC_S_level, 1, 'spikes');
         
-        suptitle(strcat(block.setup.block_supname, ' Cell ', num2str(cell_number(c))));
+        suptitle([block.setup.block_supname strcat(' Cell #', num2str(cell_number(c)))])
     end
 end
 

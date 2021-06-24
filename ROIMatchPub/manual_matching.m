@@ -2,7 +2,7 @@
 %Load roiMatchData file
 disp('Load roiMatchData file')
 [match_filename,match_filepath] = uigetfile('.mat');
-load(match_filename)
+load([match_filepath '/' match_filename])
 
 filepaths = roiMatchData.allRois;
 mapping = roiMatchData.allSessionMapping;
@@ -12,7 +12,8 @@ if isempty(mapping)
     noMatchingROIs = 1;
 end
 
-%%
+%% Extract data from Fall.mats and plot figure
+
 figure;
 
 matchedCells = {};
@@ -42,9 +43,11 @@ for f = 1:length(filepaths)
     
 end
 
-%%
+%% Confirm whether ROImatchpub matches are accurate
 
 if ~noMatchingROIs
+
+    cells2remove = [];
     
 for i = 1:size(mapping,1)
     
@@ -74,12 +77,16 @@ for i = 1:size(mapping,1)
     if userInput == 0
         unmatchedCells{1,1} = [unmatchedCells{1,1}; cellID_A];
         unmatchedCells{2,1} = [unmatchedCells{2,1}; cellID_B];
+        cells2remove = [cells2remove; i];
     elseif userInput ~= 1
         warning('Answer was not 0 or 1. If you meant to type 0, please type ctrl+c to start over.')
     end
     
     delete([h1 h2])
 end
+
+matchedCells{1,1}(cells2remove) = [];
+matchedCells{2,1}(cells2remove) = [];
 
 end
 
@@ -91,6 +98,7 @@ size_unmatchedCells2 = size(unmatchedCells{2,1},1);
 [~,min_ind] = min([size_unmatchedCells1, size_unmatchedCells2]);
 [~,max_ind] = max([size_unmatchedCells1, size_unmatchedCells2]);
 
+%If they have the same number of unmatched cells, arbitrarily choose one
 if min_ind == max_ind
     min_ind = 1;
     max_ind = 2;
@@ -98,6 +106,7 @@ end
 
 subplot(1,2,max_ind)
 
+%Plot previous matched cells in green so user doesn't have to rematch them
 if ~noMatchingROIs
     for i = 1:size(matchedCells{max_ind,1},1)
         cellID = matchedCells{max_ind,1}(i);
@@ -109,6 +118,7 @@ h1 = visboundaries(B, 'Color', 'g');
 cellIDMap = zeros(size(Fall.ops.meanImg));
 end
 
+%Plot unmatched cells in red
 for i = 1:size(unmatchedCells{max_ind,1},1)
     cellID = unmatchedCells{max_ind,1}(i);
     roiPix = sub2ind(size(cellIDMap),stat{max_ind,1}{cellID}.ypix+1,stat{max_ind,1}{cellID}.xpix+1);
@@ -120,7 +130,8 @@ h2 = visboundaries(B, 'Color', 'r');
 
 subplot(1,2,min_ind)
 cellIDMap2 = zeros(size(Fall.ops.meanImg));
- 
+
+%Plot previous matched cells in green for the other FOV
 if ~noMatchingROIs
     for i = 1:size(matchedCells{min_ind,1},1)
         cellID = matchedCells{min_ind,1}(i);
@@ -172,6 +183,7 @@ end
 
 
 disp('Saving data')
+manualMatching.filepaths = filepaths;
 manualMatching.matchedCells = matchedCells;
 manualMatching.unmatchedCells = unmatchedCells;
 manualMatching.newMatches = cellMatch;

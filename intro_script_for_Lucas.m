@@ -14,6 +14,7 @@ visualize_active_cells(block)
 
 %Look at all cells regardless of responsiveness (warning, this makes a lot of graphs)
 visualize_cell(block, block.cell_number)
+visualize_cell(block, 1)
 
 %For a synchronization analysis, you'll probably want to use spontaneous data.
 %For these we record ~2 minutes of spontaneous activity (not in silence because the

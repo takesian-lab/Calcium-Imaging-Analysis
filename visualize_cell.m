@@ -378,9 +378,9 @@ if stim_protocol == 2 %Receptive Field
     V2_label = 'Intensity (dB)';
     plotReceptiveField = 1;
 elseif stim_protocol == 3 %FM sweep
-    stim_units = {'', 'dB'};
-    V1_label = 'Frequency (kHz)';
-    V2_label = 'Speed';
+    stim_units = {'ov/s', 'dB'};
+    V1_label = 'Rate (ov/s)';
+    V2_label = 'Intensity (dB)';
     plotReceptiveField = 1;
 elseif stim_protocol == 5 %SAM
     stim_units = {'Hz', ''};
@@ -501,11 +501,11 @@ if plotReceptiveField
             end
             
             %artificial ylim if no max was found
-            if max_spks == 0
-                max_spks = 10;
+            if isnan(max_df_f) || max_df_f == 0
+                max_df_f = 5;
             end
-            if max_df_f == 0
-                max_df_f = 1;
+            if isnan(max_spks) || max_spks == 0
+                max_spks = 10;
             end
             
             figure; hold on
@@ -574,11 +574,11 @@ if plotReceptiveField
             max_df_f = max(max(F7_df_f_mat,[], 1)) + max(max(ebar_mat,[], 1));
             max_spks = max(max(spks_mat,[], 1));
 
-            %artificial ylim if no spikes
-            if isnan(max_df_f)
+            %artificial ylim if no max was found
+            if isnan(max_df_f) || max_df_f == 0
                 max_df_f = 5;
             end
-            if isnan(max_spks)
+            if isnan(max_spks) || max_spks == 0
                 max_spks = 10;
             end
             
@@ -594,13 +594,13 @@ if plotReceptiveField
                 ylim([0 max_df_f]);
                 vline(nBaselineFrames,'k') %stim onset
                 if p <= length(V1_stim)%Top row
-                    title([num2str(V1_list(p)) ' ' stim_units{v}])
+                    title([num2str(V1_list(p)) ' ' stim_units{1}])
                 end
                 if p > nPlots - length(V1_stim) %Bottom row
                     xlabel('Time (s)')
                 end
                 if ismember(p,[1:length(V1_stim):nPlots]) %First column
-                    ylabel([num2str(V2_list(p)) ' ' stim_units{v}])
+                    ylabel([num2str(V2_list(p)) ' ' stim_units{2}])
                 end
             end
             
@@ -657,7 +657,9 @@ if plotReceptiveField
     
             figure;
             imagesc(RF)
+            set(gca,'XTick', [1:length(V1_stim)])
             set(gca,'XTickLabel',V1_stim)
+            set(gca,'YTick', [1:length(V2_stim)])
             set(gca, 'YTickLabel', V2_stim)
             xlabel(V1_label)
             ylabel(V2_label)

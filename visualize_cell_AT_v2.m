@@ -1,4 +1,4 @@
-function [fig1, fig2, fig3, fig4, fig5, fig6, fig7] = visualize_cell_AT(block, cellnum, step) 
+function [fig1, fig2, fig3, fig4, fig5, fig6, fig7] = visualize_cell_AT_v2(block, cellnum, step) 
 % This function allows you to preview the stimulus-evoked responses from
 % a single cell (neuron) or selection of cells from a block
 %
@@ -24,6 +24,10 @@ function [fig1, fig2, fig3, fig4, fig5, fig6, fig7] = visualize_cell_AT(block, c
 % Search 'TODO'
 
 %% Magic numbers & Setup
+
+if nargin < 3
+    step = 1:4; %Plot all figures unless specified otherwise
+end
 
 SF = 0.5; %Shrinking factor for traces to appear more spread out (for visualization purposes)
 z = 1; %Portion of recording to plot between 0 and 1 e.g. 0.5, 0.33, 1 (for visualization purposes)
@@ -104,7 +108,7 @@ end
 suptitle(['Single Cell Traces ' num2str(block.setup.block_supname)])
 title('Normalized DF/F','FontSize', 28)
 xlim([0 timestamp(Z)])
-xlabel('Time (s)','FontSize', 28)
+%xlabel('Time (s)','FontSize', 28)
 set(gca, 'YTick', [1:1:count-1])
 a1 = get(h1,'ylim');
 set(gca, 'YTickLabel', [cellnum(1:count-1)])
@@ -145,15 +149,11 @@ hold on;
 
 %Plot locomotor activity
 if ~ismissing(block.setup.Tosca_path)
-    if isfield(block, 'locomotion_data')
-        loco_data = block.locomotion_data.speed;
-        loco_data_time = block.locomotion_data.t;
-    else
-        loco_data = block.loco_data;
-    end
-    
+    loco_time = block.loco_times;
+    loco_speed = block.loco_activity;
+
     h2 = subplot(3,4,9:12); hold on %loco
-    plot(loco_data_time(:,1), loco_data(:,1),'LineWidth',2,'Color','k');
+    plot(loco_time, loco_speed, 'LineWidth', 2, 'Color', 'k');
     title('Locomotor activity','FontSize', 28)
     ylabel('Activity (cm/s)','FontSize', 28)
     xlim([0 timestamp(Z)])
@@ -162,6 +162,7 @@ if ~ismissing(block.setup.Tosca_path)
     set(gcf,'color','w');
     set(gca,'FontSize',22)
 end
+
 %pause;
 %Make movie of dF/F traces
 % loops = 200;
@@ -416,9 +417,9 @@ if stim_protocol == 2 %Receptive Field
     V2_label = 'Intensity (dB)';
     plotReceptiveField = 1;
 elseif stim_protocol == 3 %FM sweep
-    stim_units = {'', 'dB'};
-    V1_label = 'Frequency (kHz)';
-    V2_label = 'Speed';
+    stim_units = {'ov/s', 'dB'};
+    V1_label = 'Rate (ov/s)';
+    V2_label = 'Intensity (dB)';
     plotReceptiveField = 1;
 elseif stim_protocol == 5 %SAM
     stim_units = {'Hz', ''};
@@ -537,6 +538,14 @@ if plotReceptiveField
                     max_spks = max(spks_mean);
                 end
             end
+
+            %artificial ylim if no max was found
+            if isnan(max_df_f) || max_df_f == 0
+                max_df_f = 5;
+            end
+            if isnan(max_spks) || max_spks == 0
+                max_spks = 10;
+            end
             
             if v == 1
                 fig3 = figure; hold on
@@ -630,6 +639,14 @@ if plotReceptiveField
             max_df_f = max(max(F7_df_f_mat,[], 1)) + max(max(ebar_mat,[], 1));
             max_spks = max(max(spks_mat,[], 1));
 
+            %artificial ylim if no max was found
+            if isnan(max_df_f) || max_df_f == 0
+                max_df_f = 5;
+            end
+            if isnan(max_spks) || max_spks == 0
+                max_spks = 10;
+            end
+            
             %DF_F average
             fig5 = figure; hold on
             for p = 1:nPlots
@@ -656,7 +673,7 @@ if plotReceptiveField
                     xlabel('Time (s)')
                 end
                 if ismember(p,[1:length(V1_stim):nPlots]) %First column
-                    ylabel([num2str(V2_list(p)) ' ' stim_units{v}])
+                    ylabel([num2str(V2_list(p)) ' ' stim_units{2}])
                 end
                 
                
@@ -735,7 +752,9 @@ if plotReceptiveField
     
             fig7 = figure;
             imagesc(RF)
+            set(gca,'XTick', [1:length(V1_stim)])
             set(gca,'XTickLabel',V1_stim)
+            set(gca,'YTick', [1:length(V2_stim)])
             set(gca, 'YTickLabel', V2_stim)
             xlabel(V1_label)
             ylabel(V2_label)

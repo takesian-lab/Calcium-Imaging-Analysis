@@ -374,11 +374,18 @@ for m = 1:length(Data)
     elseif setup.stim_protocol == 13 %Maryse behavior
         V1(1,m) = Data{1,m}.Standard_kHz;
         V2(1,m) = Data{1,m}.Target_kHz;
-        try
-            stim_level = Params.Output_States(2).StimChans(1).Stimulus.Level.Level;
-        catch
-            stim_level = Params.Tosca.Schedule.Families.Vars(3).expr;
-            %stim_level = Params.Tosca.Flowchart(3).State.SigMan.Channels(1).Channel.Level.Level;
+        if isfield(Params, 'Output_States')
+            try
+                stim_level = Params.Output_States(2).StimChans(1).Stimulus.Level.Level;
+            catch
+                stim_level = Params.Output_States(2).StimChans(1).Level.Level;
+            end
+        elseif isfield(Params, 'Tosca')
+            try
+                stim_level = Params.Tosca.Schedule.Families.Vars(3).expr;
+            catch
+                stim_level = Params.Tosca.Flowchart(3).State.SigMan.Channels(1).Channel.Level.Level;
+            end
         end
     else %stim_protocol doeesn't match any of the above
         warning(['stim_protocol ' num2str(setup.stim_protocol) ' does not exist yet'])

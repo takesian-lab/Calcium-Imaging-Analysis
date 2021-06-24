@@ -1,4 +1,4 @@
-function visualize_active_cells(block) 
+function visualize_active_cells(block, plane) 
 % Find sound responsive cells within a block and call visualize_cell to
 % plot only those cells
 %
@@ -16,10 +16,20 @@ function visualize_active_cells(block)
 
 %% Magic numbers & Setup
 
-STDlevel = 5;
+if nargin > 1
+    multiplaneData = true;
+    planeName = ['plane' num2str(plane)];
+    nPlanes = block.ops.nplanes;
+elseif nargin == 1 && isfield(block,'MultiplaneData')
+    error('Please choose plane number: visualize_active_cells(block,plane)')
+else
+    multiplaneData = false;
+end
+
+STDlevel = 3;
 AUC_F_level = 5;
-AUC_S_level = 20;
-sort_active = 1;  % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
+AUC_S_level = 10;
+sort_active = 0;  % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
 
 disp('===========PARAMETERS===========')
 disp(['STD level = ' num2str(STDlevel)])
@@ -31,7 +41,18 @@ disp(['Sort active = ' num2str(sort_active)])
 stim_protocol = block.setup.stim_protocol;
 baseline_length = block.setup.constant.baseline_length; %seconds
 framerate = block.setup.framerate;
-nBaselineFrames = baseline_length*framerate; %frames
+nBaselineFrames = round(baseline_length*framerate); %frames
+
+%Accommodate multiplane data
+if multiplaneData
+    cell_number = block.cell_number.(planeName);
+    F7_stim = block.aligned_stim.F7_stim.(planeName);
+    spks_stim = block.aligned_stim.spks_stim.(planeName);
+else
+    cell_number = block.cell_number;
+    F7_stim = block.aligned_stim.F7_stim;
+    spks_stim = block.aligned_stim.spks_stim;
+end
 
 stim_v1 = block.parameters.variable1';
 stim_v2 = block.parameters.variable2';
@@ -54,7 +75,7 @@ switch stim_protocol
         stim_v0 = stim_v1;
         stim_v2 = zeros(size(stim_v1));
 
-    case {6} %{'SAM', 'SAMfreq'} %NAN trials instead of zeros           
+    case {5,6} %{'SAM', 'SAMfreq'} %NAN trials instead of zeros           
         stim_v0 = stim_v1;
         stim_v0(isnan(stim_v0)) = 0;
 
@@ -73,6 +94,15 @@ end
 blankTrials = stim_v0 == 0; %0dB trials
 stimTrials = ~blankTrials;
 
+%Get list of all possible stim without blanks prior to removing loco trials
+unique_stim_v1 = unique(stim_v1(stim_v0 ~= 0));
+unique_stim_v2 = unique(stim_v2(stim_v0 ~= 0));
+
+%If RF, order intensities from highest to lowest
+if stim_protocol == 2 %RF
+    unique_stim_v2 = flipud(unique_stim_v2);
+end
+    
 %Remove loco trials
 blankTrials(remove,:) = 0;
 stimTrials(remove,:) = 0;
@@ -91,10 +121,10 @@ store_stim_v2 = stim_v2;
 store_stimTrials = stimTrials;
 store_blankTrials = blankTrials;
     
-responsiveCells_F = zeros(size(block.cell_number));
-responsiveCells_S = zeros(size(block.cell_number));
+responsiveCells_F = zeros(size(cell_number));
+responsiveCells_S = zeros(size(cell_number));
 
-for c = 1:size(block.cell_number,1)
+for c = 1:size(cell_number,1)
 
     %when we remove inf below stim might change so refresh it with original stim list
     stim_v1 = store_stim_v1;
@@ -102,10 +132,10 @@ for c = 1:size(block.cell_number,1)
     stimTrials = store_stimTrials;
     blankTrials = store_blankTrials;
 
-    F7 = squeeze(block.aligned_stim.F7_stim(c,:,:));
+    F7 = squeeze(F7_stim(c,:,:));
     F7_baseline = F7(:,1:nBaselineFrames); %baseline for each trial
     F7_df_f = (F7-nanmean(F7_baseline,2))./nanmean(F7_baseline,2); %compute df/f: (total-mean)/mean
-    spks = squeeze(block.aligned_stim.spks_stim(c,:,:));
+    spks = squeeze(spks_stim(c,:,:));
 
     %Remove trials with infinite values [this was a bug in a small number of blocks]
     [inf_rows,~] = find(isinf(F7_df_f));
@@ -125,19 +155,20 @@ for c = 1:size(block.cell_number,1)
 
     %GET AVERAGED AND SMOOTHED RESPONSES
     %check if each condition is active, then concatenate and keep only active conditions
-    nStimConditions = size(unique([stim_v1,stim_v2],'rows'),1); %skip if there's only one stim condition (e.g. NoiseITI)
     analyze_by_stim_condition = 1; %I assume we'll almost always want to do this
-    if analyze_by_stim_condition &&  nStimConditions > 1 
+    if analyze_by_stim_condition
 
         F_by_Stim = [];
         S_by_Stim = [];
 
-        unique_stim_v1 = unique(stim_v1);
-        unique_stim_v2 = unique(stim_v2);
-
         for v = 1:length(unique_stim_v1)
             for vv = 1:length(unique_stim_v2)
                 stim_rows = intersect(find(stim_v1 == unique_stim_v1(v)), find(stim_v2 == unique_stim_v2(vv)));
+                
+                if isempty(stim_rows) %Some stim combinations might not exist due to loco
+                    continue
+                end
+                
                 F_temp = F(stim_rows,:);
                 S_temp = S(stim_rows,:);
 
@@ -181,14 +212,14 @@ for c = 1:size(block.cell_number,1)
         subplot(1,2,2)
         checkIfActive_v2(avg_S, nBaselineFrames, STDlevel, AUC_S_level, 1, 'spikes');
         
-        suptitle(strcat(block.setup.block_supname, ' Cell ', num2str(block.cell_number(c))));
+        suptitle([block.setup.block_supname strcat(' Cell #', num2str(cell_number(c)))])
     end
 end
 
-disp(['Found ' num2str(sum(responsiveCells_F)) ' responsive F traces and ' num2str(sum(responsiveCells_S)) ' responsive spike traces out of ' num2str(length(block.cell_number)) ' cells'])
+disp(['Found ' num2str(sum(responsiveCells_F)) ' responsive F traces and ' num2str(sum(responsiveCells_S)) ' responsive spike traces out of ' num2str(length(cell_number)) ' cells'])
 
 responsiveCells = find(responsiveCells_F); %find(or(responsiveCells_F, responsiveCells_S));
-responsiveCellNums = block.cell_number(responsiveCells);
+responsiveCellNums = cell_number(responsiveCells);
 
 %% Plot responsive cells only
 
@@ -196,13 +227,18 @@ if isempty(responsiveCellNums)
     return
 end
 
-if stim_protocol == 2 %RF
-    visualize_cell_AT_v2(block, responsiveCellNums, [2 4])
-else
-    visualize_cell(block, responsiveCellNums)
+if multiplaneData
+    visualize_cell(block, responsiveCellNums, plane)
+    visualize_cell(block, responsiveCellNums', plane)
+else 
+    if stim_protocol == 2 %RF
+        visualize_cell_AT_v2(block, responsiveCellNums, [2 4])
+    else
+        visualize_cell(block, responsiveCellNums)
+    end
+    visualize_cell(block, responsiveCellNums')
 end
 
-visualize_cell(block, responsiveCellNums')
 
 end %function end
 

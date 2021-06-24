@@ -71,21 +71,30 @@ else
     active_time = loco_speed;
     active_time(active_time < block.setup.constant.locoThresh) = 0;
 
-    figure; 
+    figure; hold on
 
     subplot(2,1,1); hold on
     title('Locomotor activity')
-    ylabel('Activity (cm/s)')
-    plot(loco_time, loco_speed); hold on
-    hline(0.7);
+    ylabel('Activity (cm/s)') 
+    plotMax = max(loco_speed) + 1;
+    area(loco_time,(active_time > 0)*plotMax, 'EdgeColor', 'none', 'Facecolor', [210/255, 248/255, 210/255])
+    %area(loco_time,(active_time == 0)*plotMax, 'EdgeColor', 'none', 'Facecolor',[238/255, 144/255, 144/255])
+    plot(loco_time, loco_speed, 'LineWidth', 0.25)
+    hline(0.7)
+    ylim([0 plotMax])
+    xlim([loco_time(1) loco_time(end)])
 
     subplot(2,1,2); hold on
     ylabel('Considered active')
     xlabel('Seconds')
     set(gca, 'ytick', [0 1])
-    plot(loco_time, active_time > 0); hold on;
+    area(loco_time,(active_time > 0)*plotMax, 'EdgeColor', 'none', 'Facecolor', [210/255, 248/255, 210/255])
+    area(loco_time,(active_time == 0)*plotMax, 'EdgeColor', 'none', 'Facecolor',[238/255, 144/255, 144/255])
+    ylim([0 plotMax])
+    xlim([loco_time(1) loco_time(end)])
+    
     suptitle(block.setup.block_supname)
-   
+
 
 end %Skip if Tosca data is missing
 
@@ -104,12 +113,7 @@ else
         redcell = block.redcell.(planeName);
         F = block.F.(planeName); %all the cell fluorescence data
         Fneu = block.Fneu.(planeName); %neuropil
-        
-        %Timestamp includes times for all planes
-        %Resample to only include times for this plane
-        planeInd = [1:nPlanes:length(block.timestamp)] + plane;
-        planeInd(planeInd > length(block.timestamp)) = []; %remove 1 frame over, which can happen with : function
-        timestamp = block.timestamp(planeInd);
+        timestamp = block.timestamp.(planeName);
     else
         cell_number = block.cell_number;
         redcell = block.redcell;
@@ -237,7 +241,11 @@ else
                 
                 mean_gCAMP = mean(cell_trace);% average green for each cell
                 df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
-                A = smooth(df_f,10);
+                if setup.framerate <= 10 %Don't smooth data if framerate is low
+                    A = df_f;
+                else
+                    A = smooth(df_f,10);
+                end
 
                 plot(timestamp, A*SF + count,'LineWidth',1);
                 hold on;

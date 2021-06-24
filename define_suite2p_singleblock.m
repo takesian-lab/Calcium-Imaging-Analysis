@@ -87,13 +87,23 @@ setup.Frame_set = Frame_set;
 %Check that Frame_set matches timestamp from Bruker function
 if ismissing(block.setup.block_path) && ismissing(block.setup.VR_path)
     warning('Frame_set could not be checked against timestamp')
-elseif length(Frame_set) ~= length(block.timestamp)
-    error('Frame_set does not match timestamp')
+elseif isfield(block, 'MultiplaneData')
+    if length(Frame_set) ~= length(block.timestamp.combined)
+        error('Frame_set does not match timestamp')
+    end        
+else
+    if length(Frame_set) ~= length(block.timestamp)
+        error('Frame_set does not match timestamp')
+    end
 end
 
 %% Check ops
 
 block.ops = get_abridged_ops(Fall.ops);
+%Check that framerate matches block.ops.fs
+if round(block.ops.fs,2) ~= round(block.setup.framerate,2)
+    warning(['Suite2p framerate (' num2str(block.ops.fs) ') does not match block framerate (' num2str(block.setup.framerate) ')'])
+end
 
 %Check that neucoeff matches block.ops.neucoeff
 if ~isequal(block.setup.constant.neucoeff, block.ops.neucoeff)

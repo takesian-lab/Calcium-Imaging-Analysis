@@ -26,7 +26,10 @@ if nargin < 2
 end
 
 if block.setup.XML.bidirectionalZ
-    error('Code is not set up for bidirectional data yet')
+    bidirectional = true;
+    error('Code is not optimized for bidirectional data yet')
+else
+    bidirectional = false;
 end
     
 max_drift = 10; %Number of planes that the imaging plane can drift in +/- Z

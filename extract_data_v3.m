@@ -23,11 +23,11 @@ PC_name = getenv('computername');
 switch PC_name
     case 'RD0366' %Maryse
         info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
-        blocks_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledBlocks_Pyr';
+        blocks_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledBlocks_v2';
         save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\ExtractedData';
-        info_filename = 'Combined Info Pyr';
+        info_filename = 'Combined Info DREADDs';
        
-        stimProtocol = 5; %See stimProtocol list above
+        stimProtocol = 3; %See stimProtocol list above
         STDlevel = 2; %minimum # standard deviations above baseline to be considered significant
         AUC_F_level = 5; %minimum area under the curve to be considered significant for df/f traces
         AUC_S_level = 10; %minimum area under the curve to be considered significant for spike traces
@@ -92,13 +92,15 @@ cellList = {};
 unique_block_names = {};
 for a = 1:size(blockData.setup.mousename,1) %Mice
     mouseID = blockData.setup.mousename{a};
-    
+        
     for b = 1:size(blockData.setup.unique_block_names{a},2) %FOVs
         unique_block_name = blockData.setup.unique_block_names{a}(b);
         block = blockData.([mouseID]).([unique_block_name]);
         nCells = length(block.cell_number);
+
         clear tempCellList;
         clear temp_unique;
+        
         [tempCellList(1:nCells,1)] = deal(block.setup.expt_group);
         [tempCellList(1:nCells,2)] = deal(mouseID);
         [tempCellList(1:nCells,3)] = deal(block.setup.FOV);
@@ -283,7 +285,7 @@ for c = 1:size(cellList,1)
                     if plotStimFigures; subplot(1,2,i); end
 
                     [isActive, tempActivity, pk_temp, tr_temp] = checkIfActive_v2(trials, nBaselineFrames, STDlevel, AUClevel, plotStimFigures, units);
-                    [isActiveComparedToBlanks, pValue] = compare_to_blank_trials(trials, blank_trials);
+                    %[isActiveComparedToBlanks, pValue] = compare_to_blank_trials(trials, blank_trials);
                     if isActive
                         if i == 1
                             F_by_Stim = [F_by_Stim; trials];

@@ -32,7 +32,7 @@ checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 % Ndnf vs. Vip project: 0.5, 2.5, 1.5, 1.5, 0.8, 0.7
 
 % How many seconds of baseline?
-constant.baseline_length = 0.5;
+constant.baseline_length = 1; %0.5
 
 % How many seconds after stim should we look at?
 % Can be overwritten by column in info

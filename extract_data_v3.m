@@ -23,9 +23,9 @@ PC_name = getenv('computername');
 switch PC_name
     case 'RD0366' %Maryse
         info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
-        blocks_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledBlocks_v2';
+        blocks_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledBlocks_VIPvsNDNF';
         save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\ExtractedData';
-        info_filename = 'Combined Info DREADDs';
+        info_filename = 'Combined Info';
        
         stimProtocol = 3; %See stimProtocol list above
         STDlevel = 2; %minimum # standard deviations above baseline to be considered significant
@@ -90,34 +90,67 @@ disp('Loading blocks to include...')
 %Make cell list with nominal info to store and preallocate space for variables
 cellList = {};
 unique_block_names = {};
-for a = 1:size(blockData.setup.mousename,1) %Mice
-    mouseID = blockData.setup.mousename{a};
-        
-    for b = 1:size(blockData.setup.unique_block_names{a},2) %FOVs
-        unique_block_name = blockData.setup.unique_block_names{a}(b);
-        block = blockData.([mouseID]).([unique_block_name]);
-        nCells = length(block.cell_number);
+fsList = [];
+constants = [];
 
-        clear tempCellList;
-        clear temp_unique;
-        
-        [tempCellList(1:nCells,1)] = deal(block.setup.expt_group);
-        [tempCellList(1:nCells,2)] = deal(mouseID);
-        [tempCellList(1:nCells,3)] = deal(block.setup.FOV);
-        [tempCellList(1:nCells,4)] = deal(blockData.setup.stim);
-        [tempCellList(1:nCells,5)] = deal(block.setup.block_filename);
-        [tempCellList(1:nCells,6)] = block.cell_number;
-        [temp_unique(1:nCells,1)] = deal(unique_block_name);
-        
-        cellList = [cellList; tempCellList];
-        unique_block_names = [unique_block_names; temp_unique];
+for a = 1:size(blockData.setup.mousename,1) %Mice
+        mouseID = blockData.setup.mousename{a};
+    for f = 1:size(blockData.setup.mousename,2) %FOVs
+        for b = 1:size(blockData.setup.unique_block_names{a,f},2) %Blocks
+            unique_block_name = blockData.setup.unique_block_names{a,f}(b);
+            block = blockData.([mouseID]).([unique_block_name]);
+            nCells = length(block.cell_number);
+
+            clear tempCellList;
+            clear temp_unique;
+            clear temp_fsList;
+            clear temp_constants;
+
+            [tempCellList(1:nCells,1)] = deal(block.setup.expt_group);
+            [tempCellList(1:nCells,2)] = deal(mouseID);
+            [tempCellList(1:nCells,3)] = deal(block.setup.FOV);
+            [tempCellList(1:nCells,4)] = deal(blockData.setup.stim);
+            [tempCellList(1:nCells,5)] = deal(block.setup.block_filename);
+            [tempCellList(1:nCells,6)] = block.cell_number;
+            [temp_unique(1:nCells,1)] = deal(unique_block_name);
+            [temp_fsList(1:nCells,1)] = deal(block.setup.framerate);
+            [temp_constants(1:nCells,1)] = deal(block.setup.constant.baseline_length);
+            [temp_constants(1:nCells,2)] = deal(block.setup.constant.after_stim);
+
+            cellList = [cellList; tempCellList];
+            unique_block_names = [unique_block_names; temp_unique];
+            fsList = [fsList; temp_fsList];
+            constants = [constants; temp_constants];
+            
+        end
     end
+end
+
+%Determine what size the raster will be
+%If blocks have different frame rates or trial durations (e.g. baseline)
+%then we will have a problem because the traces won't match up.
+if length(unique(constants(:,1))) ~= 1
+    error('Blocks have different baseline durations. Check and recompile blocks to match.')
+end
+if length(unique(constants(:,2))) ~= 1
+    error('Blocks have different after_stim durations. Check and recompile blocks to match.')
+end
+
+if length(unique(fsList)) == 1 
+    fs = unique(fsList);
+    baseline = unique(constants(:,1));
+    after = unique(constants(:,2));
+    baseline_inFrames = round(baseline*fs);
+    after_inFrames = round(after*fs);
+    nFrames = baseline_inFrames + after_inFrames;
+else
+    error('Blocks have different framerates.')
 end
 
 figures = cell(size(cellList,1),21); %Store figures (if save_figures == 1)
 activity = cell(size(cellList,1),2); %Auto-determined activity (activated/prolonged/suppressed)
 [data_F, data_S] = deal(nan(size(cellList,1),length(numericalColumnHeaders))); %Numerical data
-[raster_F, raster_S] = deal(nan(size(cellList,1),76)); %76 is a magic number
+[raster_F, raster_S] = deal(nan(size(cellList,1),nFrames));
 
 %Stim protocol specific measures
 
@@ -344,10 +377,10 @@ for c = 1:size(cellList,1)
 
     %Data might be empty if too many trials were removed due to loco activity 
     if isempty(avg_F)
-        avg_F = nan(1,76); %magic number
+        avg_F = nan(1,nFrames);
     end
     if isempty(avg_S)
-        avg_S = nan(1,76); %magic number
+        avg_S = nan(1,nFrames);
     end
     raster_F(c,1:length(avg_F)) = avg_F;
     raster_S(c,1:length(avg_S)) = avg_S;

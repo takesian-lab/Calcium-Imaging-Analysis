@@ -241,8 +241,8 @@ else %2p
         end
         
         %XML.relativeTime is virtually equivalent to timestamp:
-        isequal(nFrames, length(block.timestamp)); %FYI
-        isequal(round(XML.relativeTime, 3), round(block.timestamp,3)); %FYI
+        isequal(nFrames, length(timestamp)); %FYI
+        isequal(round(XML.relativeTime, 3), round(timestamp,3)); %FYI
      
     elseif length(X.PVScan.Sequence) > 1 %Multiplane data
         XML.nPlanes = size(X.PVScan.Sequence{1,1}.Frame,2);

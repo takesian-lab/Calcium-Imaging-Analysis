@@ -52,10 +52,12 @@ moved_files = cell(length(tiffs_str),2); %Record old and new filenames
 count = 1;
 
 for c = 1:length(unique_chans)
+    
+    cc = unique_chans(c);
 
-    tiffs_ch = tiffs_str(chans == c);
-    cycles_ch = cycles(chans == c);
-    planes_ch = planes(chans == c);
+    tiffs_ch = tiffs_str(chans == cc);
+    cycles_ch = cycles(chans == cc);
+    planes_ch = planes(chans == cc);
     nFrames = length(tiffs_ch);
     nPlanes = length(tiffs_ch(cycles_ch == 1));
 

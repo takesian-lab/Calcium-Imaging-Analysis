@@ -13,9 +13,16 @@ INSTRUCTIONS FOR MAKING Z-CORRECTED BLOCKS
         - Record 6 slices at 4um steps = 5fps
 	- Leave shutter open
 	- Fastest acquisition
+	- One-directional
    Collect a Z-stack in the same position with greater precision and volume
         - 2um step size
         - Start and stop points don't matter as long as the volume includes the FOV
+
+
+1.5) CONVERT BIDIRECTIONAL DATA TO ONE-DIRECTIONAL
+   Suite2p expects multiplane data to be sequential. For now, I wrote a script to rename
+   bidirectional tiffs to match what Suite2p expects.
+   Run convert_bidirectional_tiffs
 
 
 2) RUN DATA THROUGH SUITE2P
@@ -40,7 +47,7 @@ INSTRUCTIONS FOR MAKING Z-CORRECTED BLOCKS
 	6. Reset brightness and save as tiff in block folder
 
 
-4) DEFINE ROIs AND COMPUTE ZCORR IN SUITE2P
+4) COMPUTE ZCORR IN SUITE2P
    *Repeat this for every plane (i.e. plane0 stat.npy, then plane 1 stat.npy... etc)
    There is an option to load all planes at once (File, Load multiplane data) but I haven't tested this
 

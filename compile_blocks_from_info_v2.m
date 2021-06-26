@@ -32,7 +32,7 @@ checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 % Ndnf vs. Vip project: 0.5, 2.5, 1.5, 1.5, 0.8, 0.7
 
 % How many seconds of baseline?
-constant.baseline_length = 1; %0.5
+constant.baseline_length = 0.5; %0.5
 
 % How many seconds after stim should we look at?
 % Can be overwritten by column in info
@@ -60,7 +60,7 @@ switch PC_name
         save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledBlocks_v2';
         %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior';
         %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior\Compiled Blocks v2';
-        info_filename = 'Info_NxDG021621F2';
+        info_filename = 'Combined Info DREADDs';
         ops_filename = 'Maryse_ops2.mat';
          
     case 'TAKESIANLAB2P' %2P computer

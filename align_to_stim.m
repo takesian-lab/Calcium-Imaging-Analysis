@@ -60,7 +60,6 @@ end
 %% ALIGN DATA
 
 for n = 1:nPlanes
-    plane = nPlanes - 1;
     
     if multiplaneData
         planeName = strcat('plane', num2str(n - 1));

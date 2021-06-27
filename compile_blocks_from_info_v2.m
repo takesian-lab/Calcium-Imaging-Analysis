@@ -25,7 +25,7 @@
 
 %% Load Info.mat and change user-specific options
 
-recompile = 1; %1 to save over previously compiled blocks, 0 to skip
+recompile = 0; %1 to save over previously compiled blocks, 0 to skip
 checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
 %% set up values for 'align to stim'
@@ -60,7 +60,7 @@ switch PC_name
         save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledBlocks_v2';
         %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior';
         %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior\Compiled Blocks v2';
-        info_filename = 'Combined Info DREADDs';
+        info_filename = 'Info_VxDG011121F1and2';
         ops_filename = 'Maryse_ops2.mat';
          
     case 'TAKESIANLAB2P' %2P computer
@@ -82,7 +82,6 @@ switch PC_name
         info_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\Behavior\SSRI_mice\Info_sheets';
         save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\Behavior\SSRI_mice\compiled blocks\Cn0012621F1';
         info_filename = 'Info_Cn0012621F1';
-        
         
     case 'RD0386' %Wisam
         % INSERT PATHS HERE

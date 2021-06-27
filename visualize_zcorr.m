@@ -23,11 +23,7 @@ function visualize_zcorr(block, plane)
 if nargin > 1
     multiplaneData = true;
     planeName = ['plane' num2str(plane)];
-    
-    if block.setup.XML.bidirectionalZ
-        error('Code is not set up for bidirectional data yet')
-    end
-        
+
 elseif nargin == 1 && isfield(block,'MultiplaneData')
     error('Please choose plane number: visualize_zcorr(block,plane)')
 else

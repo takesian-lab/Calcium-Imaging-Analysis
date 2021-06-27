@@ -190,13 +190,13 @@ X = xml2struct(XML_files{1});
 
 if ~ismissing(setup.VR_name) %widefield
     XML = struct;
-    XML.activeMode = X.PVScan.PVStateShard.PVStateValue{1,1}.Attributes.value;
-    XML.camera_binFactor = X.PVScan.PVStateShard.PVStateValue{1,3}.Attributes.value;
+    XML.activeMode          = X.PVScan.PVStateShard.PVStateValue{1,1}.Attributes.value;
+    XML.camera_binFactor    = X.PVScan.PVStateShard.PVStateValue{1,3}.Attributes.value;
     XML.camera_exposureMode = X.PVScan.PVStateShard.PVStateValue{1,4}.Attributes.value;
     XML.camera_exposureTime = X.PVScan.PVStateShard.PVStateValue{1,5}.Attributes.value;
-    XML.dwellTime = X.PVScan.PVStateShard.PVStateValue{1,9}.Attributes.value;
-    XML.framePeriod = X.PVScan.PVStateShard.PVStateValue{1,10}.Attributes.value;
-    XML.opticalZoom = X.PVScan.PVStateShard.PVStateValue{1,21}.Attributes.value;
+    XML.dwellTime           = X.PVScan.PVStateShard.PVStateValue{1,9}.Attributes.value;
+    XML.framePeriod         = X.PVScan.PVStateShard.PVStateValue{1,10}.Attributes.value;
+    XML.opticalZoom         = X.PVScan.PVStateShard.PVStateValue{1,21}.Attributes.value;
     
     framerate = ceil(1/str2double(XML.framePeriod));
     if framerate ~= 20
@@ -205,18 +205,22 @@ if ~ismissing(setup.VR_name) %widefield
     
 else %2p
     XML = struct;
-    XML.filename = XML_files{1};
-    XML.activeMode = X.PVScan.PVStateShard.PVStateValue{1,1}.Attributes.value;
-    XML.dwellTime = X.PVScan.PVStateShard.PVStateValue{1,5}.Attributes.value;
-    XML.framePeriod = X.PVScan.PVStateShard.PVStateValue{1,6}.Attributes.value;
-    XML.laserPower = X.PVScan.PVStateShard.PVStateValue{1,8}.IndexedValue{1,1}.Attributes.value;
-    XML.laserWavelength = X.PVScan.PVStateShard.PVStateValue{1,9}.IndexedValue.Attributes.value;
-    XML.PMT1_Gain = X.PVScan.PVStateShard.PVStateValue{1,19}.IndexedValue{1,1}.Attributes.value;
-    XML.PMT2_Gain = X.PVScan.PVStateShard.PVStateValue{1,19}.IndexedValue{1,2}.Attributes.value;
-    XML.linesPerFrame = X.PVScan.PVStateShard.PVStateValue{1,10}.Attributes.value;
+    XML.filename         = XML_files{1};
+    XML.activeMode       = X.PVScan.PVStateShard.PVStateValue{1,1}.Attributes.value;
+    XML.dwellTime        = X.PVScan.PVStateShard.PVStateValue{1,5}.Attributes.value;
+    XML.framePeriod      = X.PVScan.PVStateShard.PVStateValue{1,6}.Attributes.value;
+    XML.laserPower       = X.PVScan.PVStateShard.PVStateValue{1,8}.IndexedValue{1,1}.Attributes.value;
+    XML.laserWavelength  = X.PVScan.PVStateShard.PVStateValue{1,9}.IndexedValue.Attributes.value;
+    XML.PMT1_Gain        = X.PVScan.PVStateShard.PVStateValue{1,19}.IndexedValue{1,1}.Attributes.value;
+    XML.PMT2_Gain        = X.PVScan.PVStateShard.PVStateValue{1,19}.IndexedValue{1,2}.Attributes.value;
+    XML.linesPerFrame    = X.PVScan.PVStateShard.PVStateValue{1,10}.Attributes.value;
     XML.micronsPerPixelX = X.PVScan.PVStateShard.PVStateValue{1,12}.IndexedValue{1,1}.Attributes.value;
     XML.micronsPerPixelY = X.PVScan.PVStateShard.PVStateValue{1,12}.IndexedValue{1,2}.Attributes.value;
-    XML.opticalZoom = X.PVScan.PVStateShard.PVStateValue{1,17}.Attributes.value;
+    XML.opticalZoom      = X.PVScan.PVStateShard.PVStateValue{1,17}.Attributes.value;
+    XML.x                = X.PVScan.PVStateShard.PVStateValue{1,20}.SubindexedValues{1,1}.SubindexedValue.Attributes.value;
+    XML.y                = X.PVScan.PVStateShard.PVStateValue{1,20}.SubindexedValues{1,2}.SubindexedValue.Attributes.value;
+    XML.z                = X.PVScan.PVStateShard.PVStateValue{1,20}.SubindexedValues{1,3}.SubindexedValue{1,1}.Attributes.value;
+    XML.piezo            = X.PVScan.PVStateShard.PVStateValue{1,20}.SubindexedValues{1,3}.SubindexedValue{1,2}.Attributes.value;
 
     framerate = ceil(1/str2double(XML.framePeriod));
     if framerate ~= 15 && framerate ~= 30
@@ -227,6 +231,8 @@ else %2p
     if length(X.PVScan.Sequence) == 1 %Single plane data
         nFrames = size(X.PVScan.Sequence.Frame,2); %Should equal number of frames in timestamp
         XML.nPlanes = 1;
+        XML.voltageRecording_absoluteTime = str2double(X.PVScan.Sequence.VoltageRecording.Attributes.absoluteTime);
+        XML.voltageRecording_relativeTime = str2double(X.PVScan.Sequence.VoltageRecording.Attributes.relativeTime);
         XML.absoluteTime = nan(nFrames,1);
         XML.relativeTime = nan(nFrames,1);
         for f = 1:nFrames
@@ -235,8 +241,8 @@ else %2p
         end
         
         %XML.relativeTime is virtually equivalent to timestamp:
-        isequal(nFrames, length(block.timestamp)); %FYI
-        isequal(round(XML.relativeTime, 3), round(block.timestamp,3)); %FYI
+        isequal(nFrames, length(timestamp)); %FYI
+        isequal(round(XML.relativeTime, 3), round(timestamp,3)); %FYI
      
     elseif length(X.PVScan.Sequence) > 1 %Multiplane data
         XML.nPlanes = size(X.PVScan.Sequence{1,1}.Frame,2);
@@ -248,9 +254,11 @@ else %2p
         end
         XML.voltageRecording_absoluteTime = str2double(X.PVScan.Sequence{1,1}.VoltageRecording.Attributes.absoluteTime);
         XML.voltageRecording_relativeTime = str2double(X.PVScan.Sequence{1,1}.VoltageRecording.Attributes.relativeTime);
-        XML.cycle = [];
         XML.absoluteTime = [];
         XML.relativeTime = [];
+        XML.cycle = [];
+        XML.index = [];
+        XML.position = []; %Piezo position (some values are inf in 
         
         count = 1;
         for s = 1:size(X.PVScan.Sequence,2)
@@ -259,9 +267,17 @@ else %2p
                 if size(X.PVScan.Sequence{1,s}.Frame,2) == 1
                     XML.absoluteTime(count,1) = str2double(X.PVScan.Sequence{1,s}.Frame.Attributes.absoluteTime);
                     XML.relativeTime(count,1) = str2double(X.PVScan.Sequence{1,s}.Frame.Attributes.relativeTime);
+                    XML.index(count,1) = str2double(X.PVScan.Sequence{1,s}.Frame.Attributes.index);
+                    XML.position(count,1) = str2double(X.PVScan.Sequence{1,s}.Frame.PVStateShard.PVStateValue{1,2}.SubindexedValues{1,3}.SubindexedValue{1,2}.Attributes.value);
                 else
                     XML.absoluteTime(count,1) = str2double(X.PVScan.Sequence{1,s}.Frame{1,f}.Attributes.absoluteTime);
                     XML.relativeTime(count,1) = str2double(X.PVScan.Sequence{1,s}.Frame{1,f}.Attributes.relativeTime);
+                    XML.index(count,1) = str2double(X.PVScan.Sequence{1,s}.Frame{1,f}.Attributes.index);
+                    try
+                        XML.position(count,1) = str2double(X.PVScan.Sequence{1,s}.Frame{1,f}.PVStateShard.PVStateValue{1,2}.SubindexedValues{1,3}.SubindexedValue{1,2}.Attributes.value);
+                    catch
+                        XML.position(count,1) = nan;
+                    end
                 end
                 count = count + 1;
             end
@@ -273,19 +289,25 @@ else %2p
         %XML_fs = round(diff(XML.relativeTime),5); %FYI
         %XML_fs_betweenCycles = unique(XML_fs(XML.nPlanes:XML.nPlanes:end)); %FYI
         
-        %Replace timestamp with XML.relativeTime ONLY if the BOT data
-        %hasn't already been corrected using zcorrect_multiplane (in which
+        %Replace timestamp with XML.relativeTime ONLY if the BOT data hasn't already been corrected using zcorrect_multiplane (in which
         %case there will only be a single BOT in the folder)
+        
         if singleBOT %Z-corrected multiplane data (now single plane)
             timestamp = frame_data; %Use frame_data that hasn't been corrected since the times were originally generated from the XML
         else %Multiplane data
             timestamp.combined = XML.relativeTime;
-            if  XML.bidirectionalZ; error('This part of the script has not been written for bidirectional data yet'); end
             for n = 1:XML.nPlanes
                 plane = n - 1;
                 planeName = ['plane' num2str(plane)];
-                planeInd = [1:XML.nPlanes:length(timestamp.combined)] + plane;
-                planeInd(planeInd > length(timestamp.combined)) = []; %remove 1 frame over, which can happen with : function
+                if  XML.bidirectionalZ
+                    nFrames = length(XML.index);
+                    nReps = ceil(nFrames/(XML.nPlanes*2));
+                    index = repmat([1:XML.nPlanes, fliplr(1:XML.nPlanes)],1,nReps);
+                    index = index(1:nFrames)';
+                    planeInd = find(index == n);
+                else
+                    planeInd = find(XML.index == n);  
+                end
                 timestamp.(planeName) = timestamp.combined(planeInd);
             end
         end

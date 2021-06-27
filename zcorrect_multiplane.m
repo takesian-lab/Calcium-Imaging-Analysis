@@ -27,7 +27,6 @@ end
 
 if block.setup.XML.bidirectionalZ
     bidirectional = true;
-    error('Code is not optimized for bidirectional data yet')
 else
     bidirectional = false;
 end
@@ -256,10 +255,26 @@ unique_chans = unique(chans);
 if length(unique_cycles) ~= length(best_plane)
     error('Number of cycles does not match Z computation')
 end
-if length(unique_chans) == 2
-    files_for_timestamp = tiffs_str(chans == 2); %Green channel  only
+
+%If bidirectional, the timestamp will not be accurate
+%Use list of renamed files instead, which are in the correct order
+if bidirectional
+    X = importfile('BOT_file_identities.xls');
+    X(1,:) = []; %Remove header from Info
+    tiffs_2D_str = [X{:,2}]';
+    tiffs_2D = char(tiffs_2D_str);
+    chans_2D = double(string(tiffs_2D(:,L-chanA)));
+    if length(unique(chans_2D)) == 2
+        files_for_timestamp = tiffs_2D_str(chans_2D == 2); %Green channel  only
+    else
+        files_for_timestamp = tiffs_2D_str;
+    end
 else
-    files_for_timestamp = tiffs_str;
+    if length(unique_chans) == 2
+        files_for_timestamp = tiffs_str(chans == 2); %Green channel  only
+    else
+        files_for_timestamp = tiffs_str;
+    end
 end
 
 moved_files = cell(length(best_plane)*length(unique_chans),2);
@@ -291,7 +306,7 @@ for c = 1:length(unique_cycles)
         moved_files{count,2} = new_filename;
 
         %copy and rename file
-        copyfile(best_plane_for_cycle, [path '/' 'Zcorrected-'  folder_name '/' new_filename])
+        copyfile(best_plane_for_cycle, [path '/' 'Zcorrected-' folder_name '/' new_filename])
         
         count = count + 1;
     end
@@ -311,10 +326,10 @@ fclose(fid);
 dlmwrite(block_csv_name, new_timestamp ,'-append', 'precision', '%.7f');
 
 %% Copy voltage recording csv to new block
-copyfile([path '/' folder_name '/' block.setup.VR_filename], [path '/' 'Zcorrected-'  folder_name '/' block.setup.VR_filename])
+copyfile([path '/' folder_name '/' block.setup.VR_filename], [path '/' 'Zcorrected-' folder_name '/' block.setup.VR_filename])
 
 %% Copy XML file to new block
-copyfile([path '/' folder_name '/' block.setup.XML.filename], [path '/' 'Zcorrected-'  folder_name '/' block.setup.XML.filename])
+copyfile([path '/' folder_name '/' block.setup.XML.filename], [path '/' 'Zcorrected-' folder_name '/' block.setup.XML.filename])
 
 %% Save old and new filenames to new block
 moved_files_save = [{'Old filename', 'New filename'}; string(moved_files)];

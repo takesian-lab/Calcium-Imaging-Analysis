@@ -32,7 +32,7 @@ checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 % Ndnf vs. Vip project: 0.5, 2.5, 1.5, 1.5, 0.8, 0.7
 
 % How many seconds of baseline?
-constant.baseline_length = 0.5;
+constant.baseline_length = 0.5; %0.5
 
 % How many seconds after stim should we look at?
 % Can be overwritten by column in info
@@ -56,11 +56,11 @@ PC_name = getenv('computername');
 
 switch PC_name
     case 'RD0366' %Maryse
-        info_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study';
-        save_path = 'D:\Data\2p\VIPvsNDNF_response_stimuli_study\CompiledBlocks_V2';
+        info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledBlocks_v2';
         %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior';
         %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior\Compiled Blocks v2';
-        info_filename = 'Info_NxDG021621F2';
+        info_filename = 'Info_VxDG011121F1and2';
         ops_filename = 'Maryse_ops2.mat';
          
     case 'TAKESIANLAB2P' %2P computer
@@ -82,7 +82,6 @@ switch PC_name
         info_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\Behavior\SSRI_mice\Info_sheets';
         save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\Behavior\SSRI_mice\compiled blocks\Cn0012621F1';
         info_filename = 'Info_Cn0012621F1';
-        
         
     case 'RD0386' %Wisam
         % INSERT PATHS HERE

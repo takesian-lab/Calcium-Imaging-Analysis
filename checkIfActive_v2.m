@@ -26,7 +26,15 @@ function [isActive, activity, peak_data, trough_data] = checkIfActive_v2(trials,
 peak_data = nan(1,5);
 trough_data = nan(1,5);
 
-y = smooth(nanmean(trials,1),3)';
+%Don't smooth data with low sample rate
+%Eventually we might want to do this based on fs
+%30fps = 15 baseline frames for 0.5s baseline
+
+if nBaselineFrames < 10
+    y = nanmean(trials,1);
+else
+    y = smooth(nanmean(trials,1),3)';
+end
                     
 if ~any(y)
     isActive = 0;

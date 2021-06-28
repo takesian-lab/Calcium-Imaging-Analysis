@@ -131,7 +131,11 @@ if returnFrameSet
 
     %Accommodate Z-corrected data
     char_block_name = char(block_name);
-    if isequal(char_block_name(1:11),'Zcorrected-')
+    if isequal(char_block_name(1:3),'1D-')
+        block_name = char_block_name(4:end);
+    elseif isequal(char_block_name(1:14),'Zcorrected-1D-')
+        block_name = char_block_name(15:end);
+    elseif isequal(char_block_name(1:11),'Zcorrected-')
         block_name = char_block_name(12:end);
     end
         

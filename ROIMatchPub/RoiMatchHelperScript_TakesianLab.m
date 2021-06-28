@@ -58,7 +58,7 @@ while batchProcessing
 %Load roiMatchData file
 disp('Load roiMatchData file')
 [match_filename,match_filepath] = uigetfile('.mat');
-load(match_filename)
+load([match_filepath '/' match_filename])
 disp(match_filename)
 fall1Number = input('Input first fall number: ');
 fall2Number = input('Input second fall number: ');
@@ -81,7 +81,7 @@ while ~allFilesLoaded
         disp('Load additional fall.mat file')
     end
     [fall_filenames{nFilesLoaded},fall_filepaths{nFilesLoaded}] = uigetfile('.mat');
-    falls{nFilesLoaded} = load(fall_filenames{nFilesLoaded});
+    falls{nFilesLoaded} = load([fall_filepaths{nFilesLoaded} '/' fall_filenames{nFilesLoaded}]);
     disp(fall_filenames{nFilesLoaded});
     nFilesLoaded = nFilesLoaded + 1;
     if nFilesLoaded > 2

@@ -1,5 +1,4 @@
-function [FRA, data, fig1, fig2, fig3, fig4, fig5]...
-    = compute_frequency_tuning_v2(responsive, RF, plot_tuning, freqs, ints, cell)
+function [FRA, data, fig1, fig2, fig3, fig4, fig5] = compute_frequency_tuning_v2(responsive, RF, plot_tuning, freqs, ints, cell)
 % Compute tuning properties of a single cell and plot figures
 %
 % Argument(s): 
@@ -42,12 +41,18 @@ function [FRA, data, fig1, fig2, fig3, fig4, fig5]...
 
 disp(['Computing frequency tuning for cell ' num2str(cell)]);
 
-%Check RF for NaNs:
-if any(isnan(RF(:)))
-    warning('RF contains NaNs, fits will remove to run')
-    %RF will contain NaNs for conditions where there were no trials (for
-    %example due to loco activity)
+%In case RF is not 8x8
+if numel(RF) > length(freqs)*length(ints)
+    RF = RF(1:length(ints), 1:length(freqs));
+    responsive = responsive(1:length(ints), 1:length(freqs));
 end
+
+%Check RF for NaNs:
+% if any(isnan(RF(:)))
+%     warning('RF contains NaNs, fits will remove to run')
+%     %RF will contain NaNs for conditions where there were no trials (for
+%     %example due to loco activity)
+% end
 
 %Figures will return as [] if plot_tuning is 0
 [fig1, fig2, fig3, fig4, fig5] = deal([]);

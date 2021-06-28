@@ -25,10 +25,16 @@ if nargin < 2
     plotFigureOnly = 1;
 end
 
+if block.setup.XML.bidirectionalZ
+    bidirectional = true;
+else
+    bidirectional = false;
+end
+    
 max_drift = 10; %Number of planes that the imaging plane can drift in +/- Z
 
 %locomotor activity
-timestamp = block.timestamp;
+timestamp = block.timestamp.combined;
 loco_time = block.locomotion_trace;
 loco_speed = block.loco_activity;
         
@@ -235,6 +241,7 @@ planeA = 13; %number of chars to start of frame number
 planeB = 8;  %number of chars to end of frame number
 cycleA = 23;
 cycleB = 19;
+chanA  = 15; %number of chars to channel number
 
 filelist_lengths = strlength(deblank(tiffs_str)); %Get length of each filename
 L = unique(filelist_lengths); %How many unique lengths are there
@@ -242,32 +249,67 @@ if length(L) > 1; error('Check filenames'); end
 
 planes = double(string(tiffs(:,L-planeA:L-planeB)));
 cycles = double(string(tiffs(:,L-cycleA:L-cycleB)));
+chans = double(string(tiffs(:,L-chanA)));
 unique_cycles = unique(cycles);
+unique_chans = unique(chans);
 if length(unique_cycles) ~= length(best_plane)
     error('Number of cycles does not match Z computation')
 end
 
-moved_files = cell(length(best_plane),2);
+%If bidirectional, the timestamp will not be accurate
+%Use list of renamed files instead, which are in the correct order
+if bidirectional
+    X = importfile('BOT_file_identities.xls');
+    X(1,:) = []; %Remove header from Info
+    tiffs_2D_str = [X{:,2}]';
+    tiffs_2D = char(tiffs_2D_str);
+    chans_2D = double(string(tiffs_2D(:,L-chanA)));
+    if length(unique(chans_2D)) == 2
+        files_for_timestamp = tiffs_2D_str(chans_2D == 2); %Green channel  only
+    else
+        files_for_timestamp = tiffs_2D_str;
+    end
+else
+    if length(unique_chans) == 2
+        files_for_timestamp = tiffs_str(chans == 2); %Green channel  only
+    else
+        files_for_timestamp = tiffs_str;
+    end
+end
+
+moved_files = cell(length(best_plane)*length(unique_chans),2);
 new_timestamp = nan(length(best_plane),1);
+count = 1;
 
 for c = 1:length(unique_cycles)
-    %select file
-    current_cycle_files = tiffs_str(cycles == unique_cycles(c));
-    best_plane_for_cycle = current_cycle_files(best_plane(c));
-    moved_files{c,1} = best_plane_for_cycle;
-    
-    %Update timestamp
-    file_ind = find(strcmp(tiffs_str,best_plane_for_cycle));
-    new_timestamp(c) = block.timestamp(file_ind);
+    for cc = 1:length(unique_chans)
+        channel = unique_chans(cc);
+        
+        %select file
+        current_cycle_files = tiffs_str(cycles == unique_cycles(c));
+        current_cycle_chans = chans(cycles == unique_cycles(c));
+        current_cycle_and_chan_files = current_cycle_files(current_cycle_chans == channel);
+        
+        best_plane_for_cycle = current_cycle_and_chan_files(best_plane(c));
+        moved_files{count,1} = best_plane_for_cycle;
 
-    %rename
-    new_filename = char(best_plane_for_cycle);
-    new_filename(1,L-planeA:L-planeB) = num2str(c,'%06.f');
-    new_filename(1,L-cycleA:L-cycleB) = num2str(1,'%05.f'); 
-    moved_files{c,2} = new_filename;
-    
-    %copy and rename file
-    copyfile(best_plane_for_cycle, [path '/' 'Zcorrected-'  folder_name '/' new_filename])
+        %Update timestamp
+        if channel == 2
+            file_ind = find(strcmp(files_for_timestamp,best_plane_for_cycle));
+            new_timestamp(c) = timestamp(file_ind);
+        end
+
+        %rename
+        new_filename = char(best_plane_for_cycle);
+        new_filename(1,L-planeA:L-planeB) = num2str(c,'%06.f');
+        new_filename(1,L-cycleA:L-cycleB) = num2str(1,'%05.f'); 
+        moved_files{count,2} = new_filename;
+
+        %copy and rename file
+        copyfile(best_plane_for_cycle, [path '/' 'Zcorrected-' folder_name '/' new_filename])
+        
+        count = count + 1;
+    end
 end
 
 %% Save new block.csv file with timestamp
@@ -284,10 +326,10 @@ fclose(fid);
 dlmwrite(block_csv_name, new_timestamp ,'-append', 'precision', '%.7f');
 
 %% Copy voltage recording csv to new block
-copyfile([path '/' folder_name '/' block.setup.VR_filename], [path '/' 'Zcorrected-'  folder_name '/' block.setup.VR_filename])
+copyfile([path '/' folder_name '/' block.setup.VR_filename], [path '/' 'Zcorrected-' folder_name '/' block.setup.VR_filename])
 
 %% Copy XML file to new block
-copyfile([path '/' folder_name '/' block.setup.XML.filename], [path '/' 'Zcorrected-'  folder_name '/' block.setup.XML.filename])
+copyfile([path '/' folder_name '/' block.setup.XML.filename], [path '/' 'Zcorrected-' folder_name '/' block.setup.XML.filename])
 
 %% Save old and new filenames to new block
 moved_files_save = [{'Old filename', 'New filename'}; string(moved_files)];

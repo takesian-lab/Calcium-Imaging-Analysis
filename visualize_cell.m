@@ -1,4 +1,4 @@
-function visualize_cell(block, cellnum) 
+function visualize_cell(block, cellnum, plane) 
 % This function allows you to preview the stimulus-evoked responses from
 % a single cell (neuron) or selection of cells from a block
 %
@@ -25,15 +25,21 @@ function visualize_cell(block, cellnum)
 
 %% Magic numbers & Setup
 
+if nargin > 2
+    multiplaneData = true;
+    planeName = ['plane' num2str(plane)];
+    nPlanes = block.ops.nplanes;
+elseif nargin == 2 && isfield(block,'MultiplaneData')
+    error('Please choose plane number: visualize_cell(block, cellnum, plane)')
+else
+    multiplaneData = false;
+end
+
+
 SF = 0.5; %Shrinking factor for traces to appear more spread out (for visualization purposes)
 z = 1; %Portion of recording to plot between 0 and 1 e.g. 0.5, 0.33, 1 (for visualization purposes)
 ws = 0.15; %Multiplication factor for adding white space to the top of each graph (Above max value)
-t1 = 20; %Time of response window onset in frames (for receptive field plots)
-t2 = 40; %Time of response window offset in frames (for receptive field plots)
 
-if ~isfield(block,'aligned_stim')
-    error('No stim-aligned data to plot');
-end    
 
 if size(cellnum,1) > 1 && size(cellnum,2) > 1
     error('cellnum should be a 1-D array')
@@ -45,24 +51,40 @@ code = {'Noiseburst', 'Receptive Field', 'FM sweep', 'Widefield', 'SAM', 'SAM fr
 currentStim = code{stim_protocol};
 disp(['Plotting figures for ' currentStim '...'])
 
+%Accommodate multiplane data
+if multiplaneData
+    all_cell_numbers = block.cell_number.(planeName);
+    F = block.F.(planeName);
+    Fneu = block.Fneu.(planeName);
+    F7_stim = block.aligned_stim.F7_stim.(planeName);
+    spks_stim = block.aligned_stim.spks_stim.(planeName);
+    timestamp = block.timestamp.(planeName);
+else
+    all_cell_numbers = block.cell_number;
+    F = block.F;
+    Fneu = block.Fneu;
+    F7_stim = block.aligned_stim.F7_stim;
+    spks_stim = block.aligned_stim.spks_stim;
+    timestamp = block.timestamp; %In seconds
+end
+
 %Raw activity
-Sound_Time = block.Sound_Time;
-all_cell_numbers = block.cell_number;    
-F7 = block.F - (setup.constant.neucoeff*block.Fneu); %neuropil corrected traces
-timestamp = block.timestamp; %In seconds
+Sound_Time = block.Sound_Time;  
+F7 = F - (setup.constant.neucoeff*Fneu); %neuropil corrected traces
 Z = round(length(timestamp)*z);
 
 %Stim-aligned activity
-F7_stim = block.aligned_stim.F7_stim;
-spks_stim = block.aligned_stim.spks_stim;
 baseline_length = block.setup.constant.baseline_length; %seconds
 framerate = block.setup.framerate;
-nBaselineFrames = baseline_length*framerate; %frames
+nBaselineFrames = round(baseline_length*framerate); %frames
 trial_duration_in_seconds = baseline_length + block.setup.constant.after_stim; %seconds
 trial_duration_in_frames = size(F7_stim,3);
 x_in_seconds = 0:0.5*(trial_duration_in_frames/trial_duration_in_seconds):trial_duration_in_frames;
 x_label_in_seconds = 0:0.5:trial_duration_in_seconds;
 
+%Use a 1 second window after baseline to average activity for RF
+t1 = nBaselineFrames; %Time of response window onset in frames
+t2 = nBaselineFrames + framerate; %Time of response window offset in frames
 %% Plot raw activity of cell(s) for duration of block
 %Raw activity of each cell vs. time with locomoter activity beneath
 %Each cell is a separate trace
@@ -84,7 +106,11 @@ for c = 1:length(cellnum)
 
     mean_gCAMP = nanmean(cell_trace);% average green for each cell
     df_f = (cell_trace-mean_gCAMP)./mean_gCAMP;%(total-mean)/mean
-    A = smooth(df_f,10);
+    if framerate <= 10 %Don't smooth data if framerate is low
+        A = df_f;
+    else
+        A = smooth(df_f,20);
+    end
 
     plot(timestamp, A*SF + count,'LineWidth',1);
     count = count + 1;
@@ -352,9 +378,9 @@ if stim_protocol == 2 %Receptive Field
     V2_label = 'Intensity (dB)';
     plotReceptiveField = 1;
 elseif stim_protocol == 3 %FM sweep
-    stim_units = {'', 'dB'};
-    V1_label = 'Frequency (kHz)';
-    V2_label = 'Speed';
+    stim_units = {'ov/s', 'dB'};
+    V1_label = 'Rate (ov/s)';
+    V2_label = 'Intensity (dB)';
     plotReceptiveField = 1;
 elseif stim_protocol == 5 %SAM
     stim_units = {'Hz', ''};
@@ -475,11 +501,11 @@ if plotReceptiveField
             end
             
             %artificial ylim if no max was found
-            if max_spks == 0
-                max_spks = 10;
+            if isnan(max_df_f) || max_df_f == 0
+                max_df_f = 5;
             end
-            if max_df_f == 0
-                max_df_f = 1;
+            if isnan(max_spks) || max_spks == 0
+                max_spks = 10;
             end
             
             figure; hold on
@@ -548,8 +574,11 @@ if plotReceptiveField
             max_df_f = max(max(F7_df_f_mat,[], 1)) + max(max(ebar_mat,[], 1));
             max_spks = max(max(spks_mat,[], 1));
 
-            %artificial ylim if no spikes
-            if isnan(max_spks)
+            %artificial ylim if no max was found
+            if isnan(max_df_f) || max_df_f == 0
+                max_df_f = 5;
+            end
+            if isnan(max_spks) || max_spks == 0
                 max_spks = 10;
             end
             
@@ -565,13 +594,13 @@ if plotReceptiveField
                 ylim([0 max_df_f]);
                 vline(nBaselineFrames,'k') %stim onset
                 if p <= length(V1_stim)%Top row
-                    title([num2str(V1_list(p)) ' ' stim_units{v}])
+                    title([num2str(V1_list(p)) ' ' stim_units{1}])
                 end
                 if p > nPlots - length(V1_stim) %Bottom row
                     xlabel('Time (s)')
                 end
                 if ismember(p,[1:length(V1_stim):nPlots]) %First column
-                    ylabel([num2str(V2_list(p)) ' ' stim_units{v}])
+                    ylabel([num2str(V2_list(p)) ' ' stim_units{2}])
                 end
             end
             
@@ -628,7 +657,9 @@ if plotReceptiveField
     
             figure;
             imagesc(RF)
+            set(gca,'XTick', [1:length(V1_stim)])
             set(gca,'XTickLabel',V1_stim)
+            set(gca,'YTick', [1:length(V2_stim)])
             set(gca, 'YTickLabel', V2_stim)
             xlabel(V1_label)
             ylabel(V2_label)

@@ -13,9 +13,16 @@ INSTRUCTIONS FOR MAKING Z-CORRECTED BLOCKS
         - Record 6 slices at 4um steps = 5fps
 	- Leave shutter open
 	- Fastest acquisition
+	- One-directional
    Collect a Z-stack in the same position with greater precision and volume
         - 2um step size
         - Start and stop points don't matter as long as the volume includes the FOV
+
+
+1.5) CONVERT BIDIRECTIONAL DATA TO ONE-DIRECTIONAL
+   Suite2p expects multiplane data to be sequential. For now, I wrote a script to rename
+   bidirectional tiffs to match what Suite2p expects.
+   Run convert_bidirectional_tiffs
 
 
 2) RUN DATA THROUGH SUITE2P
@@ -40,13 +47,13 @@ INSTRUCTIONS FOR MAKING Z-CORRECTED BLOCKS
 	6. Reset brightness and save as tiff in block folder
 
 
-4) DEFINE ROIs AND COMPUTE ZCORR IN SUITE2P
+4) COMPUTE ZCORR IN SUITE2P
    *Repeat this for every plane (i.e. plane0 stat.npy, then plane 1 stat.npy... etc)
    There is an option to load all planes at once (File, Load multiplane data) but I haven't tested this
 
 	STEPS:
 	1. Load stat.npy
-	2. Define ROIs (can do either before or after Zcorr)
+	2. OPTIONAL: Define ROIs (can do either before or after Zcorr)
 	3. View registered binary > load z-stack tiff > compute z position
 	4. Track progress in terminal
 	5. When finished processing, click save to mat. Check if zcorr is now saved in fall.mat.
@@ -69,7 +76,8 @@ INSTRUCTIONS FOR MAKING Z-CORRECTED BLOCKS
    Load block
    Run zcorrect_multiplane(block,1) -> plot figures only
        zcorrect_multiplane(block,0) -> make new block folder with tiffs from best planes only
-                                       this will also copy BOT, voltage recording, and XML files
+                                       this will also make a new BOT with timestamps that correspond to the best planes
+				       this will also copy voltage recording and XML files
 
 
 8) RUN ZCORRECTED BLOCKS THROUGH SUITE2P, DEFINE ROIs, and COMPUTE ZCORR

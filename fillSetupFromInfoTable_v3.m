@@ -82,6 +82,7 @@ Info(1,:) = []; %Remove header from Info
 data = struct;
 data.setup = struct;
 data.setup.stim_protocol = stim_protocol;
+data.setup.stim = code{stim_protocol};
 data.setup.Info = Info;
 data.setup.compiled_blocks_path = compiled_blocks_path;
 
@@ -153,7 +154,7 @@ for i = 1:length(uniqueMice)
         for f = 1:size(currentInfo_F,1)
 
             if ~ismissing(setup.FOVs{i,j})
-                FOVtag = strcat('_FOV', setup.FOVs{i,j});
+                FOVtag = strcat('_FOV', num2str(setup.FOVs{i,j}));
             else
                 FOVtag = '';
             end
@@ -193,7 +194,7 @@ for i = 1:length(uniqueMice)
             data.([currentMouse]).([unique_block_names{1,f}]) = block;
             clear('block');
         end
-        setup.block_filename{i,j} = [block_filenames{:,:}];
+        setup.block_filename{i,j} = [string(block_filenames(:,:))];
         setup.unique_block_names{i,j} = [string(unique_block_names(:,:))];
     end
 end

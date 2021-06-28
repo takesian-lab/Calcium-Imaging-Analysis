@@ -25,7 +25,7 @@
 
 %% Load Info.mat and change user-specific options
 
-recompile = 0; %1 to save over previously compiled blocks, 0 to skip
+recompile = 1; %1 to save over previously compiled blocks, 0 to skip
 checkOps = 0; %1 to check Fall.ops against user-specified ops.mat file
 
 %% set up values for 'align to stim'
@@ -69,9 +69,9 @@ switch PC_name
         info_filename = 'Info';    
         
     case 'RD0332' %Carolyn
-       info_path = 'D:\2P analysis\2P local data\Maryse';
-        save_path = 'D:\2P analysis\2P local data\Maryse\maryse error blocks';
-        info_filename = 'Info errors';
+       info_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Final info sheets and compiled blocks\Info';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Final info sheets and compiled blocks\Blocks';
+        info_filename = 'Combined Info';
         
     case 'RD-6-TAK2' %Esther's computer
         info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';

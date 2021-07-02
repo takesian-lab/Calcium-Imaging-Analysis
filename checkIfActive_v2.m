@@ -1,4 +1,4 @@
-function [isActive, activity, peak_data, trough_data] = checkIfActive_v2(trials, nBaselineFrames, STDlevel, AUClevel, plotFigure, units)
+function [isActive, activity, peak_data, trough_data] = checkIfActive_v2(trials, nBaselineFrames, fs, STDlevel, AUClevel, plotFigure, units, use_zscore)
 % This will check if a cell is significantly active/responsive in response to sound stimuli
 % It does this by....
 %
@@ -23,14 +23,20 @@ function [isActive, activity, peak_data, trough_data] = checkIfActive_v2(trials,
 % TODO: 
 % Search 'TODO'
 
+if nargin < 7
+    use_zscore = 0;
+end
+
 peak_data = nan(1,5);
 trough_data = nan(1,5);
 
-%Don't smooth data with low sample rate
-%Eventually we might want to do this based on fs
-%30fps = 15 baseline frames for 0.5s baseline
+%Categorize positively responding cells as "prolonged" if their peak is
+%later than a typical GCaMP transient (>1.5 seconds)
+late_peak = 1.5*fs;
 
-if nBaselineFrames < 10
+%Don't smooth data with low sample rate
+%30fps = 15 baseline frames for 0.5s baseline
+if fs < 30
     y = nanmean(trials,1);
 else
     y = smooth(nanmean(trials,1),3)';
@@ -44,8 +50,14 @@ end
 
 baseline = y(1,1:nBaselineFrames);
 response = y(1,nBaselineFrames+1:end);
-peak_threshold = nanmean(baseline) + STDlevel*std(baseline);
-trough_threshold = nanmean(baseline) - STDlevel*std(baseline);
+    
+if use_zscore
+    peak_threshold = STDlevel;
+    trough_threshold = -STDlevel;
+else
+    peak_threshold = nanmean(baseline) + STDlevel*std(baseline);
+    trough_threshold = nanmean(baseline) - STDlevel*std(baseline);
+end
 
 %PEAK COMPUTATIONS
 [peak, peak_latency] = max(response);
@@ -129,7 +141,7 @@ elseif ~aat_pass && ~aup_pass
 elseif isnan(peak) && ~isnan(trough) && aat_pass
      activity = 'suppressed';
 elseif ~isnan(peak) && isnan(trough) && aup_pass
-    if peak_latency > 40 || isempty(p2_latency)
+    if peak_latency > late_peak || isempty(p2_latency)
         activity = 'prolonged';
     else
         activity = 'activated';
@@ -140,7 +152,7 @@ elseif ~isnan(peak) && ~isnan(trough)
     elseif (peak_latency < trough_latency) && aat_pass && ~aup_pass
         activity = 'suppressed';
     elseif aup_pass
-        if peak_latency > 40 || isempty(p2_latency)
+        if peak_latency > late_peak || isempty(p2_latency)
             activity = 'prolonged';
         else
             activity = 'activated';

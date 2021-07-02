@@ -61,6 +61,8 @@ xlabel('Time lags (frames)')
 %Dependence on recording depth, electrode separation, and age. J Neurophysiol. 68:1216–1228.
 %- Brosch M, Schreiner CE. 1999. Correlations between neural discharges are related to receptive field
 %properties in cat primary auditory cortex. Eur J Neurosci. 11:3517–3530.
+%- Downer, Joshua D., et al. “Feature-Selective Attention Adaptively Shifts Noise Correlations
+%  in Primary Auditory Cortex.” The Journal of Neuroscience, vol. 37, no. 21, 2017, pp. 5378–92
 
 %CAVEATS & CONSIDERATIONS:
 %   - How do you decide which cells to include? Although we manually curate

@@ -26,7 +26,8 @@ else
     multiplaneData = false;
 end
 
-STDlevel = 3;
+STDlevel = 1.5;
+use_zscore = 1;
 AUC_F_level = 5;
 AUC_S_level = 10;
 sort_active = 0;  % 0= dont perform, 1= non-locomotor trials, 2= locomotor trials
@@ -135,6 +136,7 @@ for c = 1:size(cell_number,1)
     F7 = squeeze(F7_stim(c,:,:));
     F7_baseline = F7(:,1:nBaselineFrames); %baseline for each trial
     F7_df_f = (F7-nanmean(F7_baseline,2))./nanmean(F7_baseline,2); %compute df/f: (total-mean)/mean
+    F7_zscore = (F7-nanmean(F7_baseline,2))./nanstd(F7_baseline,0,2); %compute zscore: (total-mean)/std
     spks = squeeze(spks_stim(c,:,:));
 
     %Remove trials with infinite values [this was a bug in a small number of blocks]
@@ -148,8 +150,13 @@ for c = 1:size(cell_number,1)
     end
 
     %Separate stim and blank trials
-    F = F7_df_f(stimTrials,:);
-    F_blanks = F7_df_f(blankTrials,:);
+    if use_zscore
+        F = F7_zscore(stimTrials,:);
+        F_blanks = F7_zscore(blankTrials,:);
+    else
+        F = F7_df_f(stimTrials,:);
+        F_blanks = F7_df_f(blankTrials,:);
+    end
     S = spks(stimTrials,:);
     S_blanks = spks(blankTrials,:);
 
@@ -172,8 +179,8 @@ for c = 1:size(cell_number,1)
                 F_temp = F(stim_rows,:);
                 S_temp = S(stim_rows,:);
 
-                [F_active, ~, ~, ~] = checkIfActive_v2(F_temp, nBaselineFrames, STDlevel, AUC_F_level, 0, '');
-                [S_active, ~, ~, ~] = checkIfActive_v2(S_temp, nBaselineFrames, STDlevel, AUC_F_level, 0, '');
+                [F_active, ~, ~, ~] = checkIfActive_v2(F_temp, nBaselineFrames, framerate, STDlevel, AUC_F_level, 0, '', use_zscore);
+                [S_active, ~, ~, ~] = checkIfActive_v2(S_temp, nBaselineFrames, framerate, STDlevel, AUC_F_level, 0, '', 0);
 
                 if F_active
                     F_by_Stim = [F_by_Stim; F_temp];
@@ -200,17 +207,22 @@ for c = 1:size(cell_number,1)
     avg_S = nanmean(S,1);
 
     %CHECK IF RESPONSIVE
-    [responsiveCells_F(c), ~, ~, ~] = checkIfActive_v2(avg_F, nBaselineFrames, STDlevel, AUC_F_level, 0, '');
-    [responsiveCells_S(c), ~, ~, ~] = checkIfActive_v2(avg_S, nBaselineFrames, STDlevel, AUC_S_level, 0, '');
+    [responsiveCells_F(c), ~, ~, ~] = checkIfActive_v2(avg_F, nBaselineFrames, framerate, STDlevel, AUC_F_level, 0, '', use_zscore);
+    [responsiveCells_S(c), ~, ~, ~] = checkIfActive_v2(avg_S, nBaselineFrames, framerate, STDlevel, AUC_S_level, 0, '', 0);
     
     %PLOT
     if responsiveCells_F(c)
         figure;
         subplot(1,2,1)
-        checkIfActive_v2(avg_F, nBaselineFrames, STDlevel, AUC_F_level, 1, 'df/f');
+        if use_zscore
+            units = 'z-score';
+        else
+            units = 'df/f';
+        end
+        checkIfActive_v2(avg_F, nBaselineFrames, framerate, STDlevel, AUC_F_level, 1, units, use_zscore);
         
         subplot(1,2,2)
-        checkIfActive_v2(avg_S, nBaselineFrames, STDlevel, AUC_S_level, 1, 'spikes');
+        checkIfActive_v2(avg_S, nBaselineFrames, framerate, STDlevel, AUC_S_level, 1, 'spikes', 0);
         
         suptitle([block.setup.block_supname strcat(' Cell #', num2str(cell_number(c)))])
     end

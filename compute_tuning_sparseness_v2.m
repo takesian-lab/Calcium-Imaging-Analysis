@@ -31,6 +31,9 @@ function [sp, sp_by_int, sp_by_freq, h] = compute_tuning_sparseness_v2(RF, plotF
 % TODO: 
 % Search 'TODO'
 
+%% Remove negatives
+RF(RF < 0) = 0; %If you don't do this, sp can be > 1
+
 %% Calculate sparseness of full trace not including NaNs
 R = RF(~isnan(RF));
 N = numel(R); %N = number of stimuli
@@ -65,6 +68,12 @@ for i = 1:size(RF,2)
     E1 = sum((R/N))^2;
     E2 = sum(R.^2/N);
     sp_by_freq(i) = (1 - E1/E2)/(1 - 1/N);
+end
+
+%% Catch errors
+
+if any(sp_by_freq > 1) || any(sp_by_int > 1)
+    error('Found sparseness values greater than 1')
 end
 
 %% Figure

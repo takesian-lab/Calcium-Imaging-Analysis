@@ -39,7 +39,7 @@ function [FRA, data, fig1, fig2, fig3, fig4, fig5] = compute_frequency_tuning_v2
 % Search 'TODO'
 %% Initial parameters
 
-disp(['Computing frequency tuning for cell ' num2str(cell)]);
+%disp(['Computing frequency tuning for cell ' num2str(cell)]);
 
 %In case RF is not 8x8
 if numel(RF) > length(freqs)*length(ints)

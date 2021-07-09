@@ -28,13 +28,13 @@ switch PC_name
         info_filename = 'Combined Info SFN';
        
         stimProtocol = 2; %See stimProtocol list above
+        use_zscore = 1; %use z-score instead of df/f
         STDlevel = 2; %minimum # standard deviations above baseline (or Z-scores) to be considered significant
         AUC_F_level = 5; %minimum area under the curve to be considered significant for df/f traces
         AUC_S_level = 10; %minimum area under the curve to be considered significant for spike traces
         sort_active = 1;  %0= dont perform, 1= non-locomotor trials, 2= locomotor trials
         plot_graphs = 0; %plot stim responses for each cell
         plot_tuning = 0; %plot tuning for each cell (RF only)
-        use_zscore = 1; %use z-scored df/f
         save_data = 1;
         save_figures = 0;
         
@@ -45,6 +45,7 @@ switch PC_name
         info_filename = 'VxDD062420M3_postFLX';
 
         stimProtocol = 2; %See stimProtocol list above
+        use_zscore = 1; %use z-score instead of df/f
         STDlevel = 2; %minimum # standard deviations above baseline (or Z-scores) to be considered significant
         AUC_F_level = 5; %minimum area under the curve to be considered significant for df/f traces
         AUC_S_level = 10; %minimum area under the curve to be considered significant for spike traces
@@ -61,6 +62,7 @@ switch PC_name
         info_filename = 'ResponsiveCells';
  
         stimProtocol = 2; %See stimProtocol list above
+        use_zscore = 1; %use z-score instead of df/f
         STDlevel = 2; %minimum # standard deviations above baseline (or Z-scores) to be considered significant
         AUC_F_level = 5; %minimum area under the curve to be considered significant for df/f traces
         AUC_S_level = 10; %minimum area under the curve to be considered significant for spike traces
@@ -172,7 +174,7 @@ st = struct;
 if stimProtocol == 2 %RF
     RF.stim = {'Intensity', 'Frequency'}; %corresponds to v1 and v2
     RF.ColumnHeaders = {'Sparseness', 'BF', 'BF_I', 'CF', 'CF_I', 'BestInt', 'Int_RMS', 'Int_halfwidth',...
-        'BW_20_RMS', 'BW_20_halfwidth', 'BW_BF_RMS', 'BW_BF_halfwidth', 'ISI', 'Type'};
+        'BW_20_RMS', 'BW_20_halfwidth', 'BW_BF_RMS', 'BW_BF_halfwidth', 'ISI', 'dPrime', 'Type'};
     st.FRA = {};
 elseif stimProtocol == 3 %FM
     RF.stim = {};

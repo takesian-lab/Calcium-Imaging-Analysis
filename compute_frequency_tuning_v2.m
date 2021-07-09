@@ -25,6 +25,7 @@ function [FRA, data, fig1, fig2, fig3, fig4, fig5] = compute_frequency_tuning_v2
 %     - BW_BF_RMS = freq bandwith at BF (RMS)
 %     - BW_BF_halfwidth = freq bandwith at BF (width)
 %     - ISI  = Intensity Selectivity Index (from Mesik et al)
+%     - dprime = sensitivity index (from Romero et al)
 %     - type = 1. simple (1 peak) or 2. complex (multipeaked) RF
 %   fig1 - Intensity tuning
 %   fig2 - CF
@@ -43,8 +44,14 @@ function [FRA, data, fig1, fig2, fig3, fig4, fig5] = compute_frequency_tuning_v2
 
 %In case RF is not 8x8
 if numel(RF) > length(freqs)*length(ints)
-    RF = RF(1:length(ints), 1:length(freqs));
-    responsive = responsive(1:length(ints), 1:length(freqs));
+    error('Stim parameters do not match RF')
+    %RF = RF(1:length(ints), 1:length(freqs));
+    %responsive = responsive(1:length(ints), 1:length(freqs));
+end
+
+%Check that ints are descending
+if ~issorted(ints,'descend')
+    error('Intensities should be descending')
 end
 
 %Check RF for NaNs:
@@ -58,16 +65,13 @@ end
 [fig1, fig2, fig3, fig4, fig5] = deal([]);
 
 %Variables will return as NaN if fits cannot be made
-[BF, BF_I, CF, CF_I, BestInt, Int_RMS, Int_halfwidth, BW_20_RMS, BW_20_halfwidth, BW_BF_RMS, BW_BF_halfwidth, ISI, typeNumber] = deal(nan);
+[BF, BF_I, CF, CF_I, BestInt, Int_RMS, Int_halfwidth, BW_20_RMS, BW_20_halfwidth, BW_BF_RMS, BW_BF_halfwidth, ISI, dprime, typeNumber] = deal(nan);
 
 %convert freqs to octaves 
 octaves = log2(freqs./freqs(1));
 x_freq = octaves(1):0.1:octaves(length(octaves));
 
 %flip RF such that lowest intensities on top
-if ~issorted(ints,'descend')
-    error('Intensities should be descending')
-end
 flip_RF = flip(RF,1);
 flip_ints = flip(ints);
 flip_responsive = flip(responsive,1);
@@ -254,6 +258,67 @@ else
    warning('Not enough points to fit gaussian at highest intensity')
 end   
 
+%% d prime sensitivity index (from Romero, Polley et al Cerebral Cortex 2019)
+%To determine the strength of frequency tuning for each pixel (widefield) or cell (two-photon),
+%we first identified the frequency/level combination from the entire frequency response area (FRA)
+%with the highest response amplitude. We then determined the response amplitude for the adjacent
+%frequencies and levels and calculated the average response amplitude from these five points.
+%Of the remaining 67 frequency-level combinations, we selected 5 points at random and calculated the
+%sensitivity index, d-prime (d') to reflect the difference between the response amplitudes near the
+%preferred stimulus versus stimuli selected at random. The process of selecting five random points was
+%repeated 1000 times and the average d' was operationally defined as the tuning quality.
+
+%BF_row and BF_col were identified earlier in the script
+
+%Find adjacent points
+adj_points = [BF_row, BF_col;...
+              BF_row, BF_col - 1;...
+              BF_row, BF_col + 1;...
+              BF_row - 1, BF_col;...
+              BF_row + 1, BF_col];
+
+%Convert subscripts to indices and only keep those within bounds of the RF
+ind = [];
+for i = 1:size(adj_points,1)
+    try
+        %This will error if subscripts are out of bounds
+        temp_ind = sub2ind(size(flip_RF), adj_points(i,1), adj_points(i,2));
+    catch
+        continue
+    end
+    
+    if isnan(flip_RF(temp_ind))
+        continue
+    end
+    
+    ind = [ind; temp_ind];
+end
+
+%Create array of indices to select random points from and remove adj_points and nan values
+all_points = 1:numel(flip_RF);
+all_points(ind) = nan;
+all_points(find(isnan(flip_RF))) = nan;
+all_points(isnan(all_points)) = [];
+
+%Cacluate the d prime between the adjacent points and the same number of randomly chosen points 1000 times
+%For univariate distributions a and b with the same standard deviation:
+%  d' = |MEANa - MEANb| / STD
+%When the standard deviations are not equal, da (d sub a) is more appropriate:
+%  da = |MEANa - MEANb| / sqrt((STDa^2 + STDb^2 )/2)
+%(Note that when STDa = STDb, d' = da)
+%http://psych.colorado.edu/~lharvey/P4165/P4165_2006_1_Spring/2006_Spring_pdf/P4165_SDT.pdf
+
+dprime_mat = nan(1000,1);
+for i = 1:1000
+    rand_ints = randi(length(all_points),[1,length(ind)]);
+    rand_points = all_points(rand_ints);
+    A = flip_RF(ind);
+    B = flip_RF(rand_points);
+    dprime_mat(i) = abs(mean(A) - mean(B)) / sqrt((std(A)^2 + std(B)^2)/2);
+end
+
+dprime = mean(dprime_mat);
+
 %% FRA - Frequency Receptive Area
 %make frequency receptive area (FRA) contour
 %determine type, single peak if continuous, dual peak, or comples (multi-peak)   
@@ -290,6 +355,6 @@ if plot_tuning
 end
 
 %% Store Data
-data = [BF, BF_I, CF, CF_I, BestInt, Int_RMS, Int_halfwidth, BW_20_RMS, BW_20_halfwidth, BW_BF_RMS, BW_BF_halfwidth, ISI, typeNumber];
+data = [BF, BF_I, CF, CF_I, BestInt, Int_RMS, Int_halfwidth, BW_20_RMS, BW_20_halfwidth, BW_BF_RMS, BW_BF_halfwidth, ISI, dprime, typeNumber];
 
 end %end function

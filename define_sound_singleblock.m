@@ -80,7 +80,7 @@ if ~ismissing(block.setup.Tosca_path) %Skip if Tosca info is missing
     
     %Align with VR csv
     display(['Loading ' VR_filename])
-    M = csvread(VR_filename, 1,0); %see notes at top for description of M
+    M = csvread(VR_filename,1,0); %see notes at top for description of M
     
     % find the start of each trial, and align times to it
     Bruker_trial_triggers = M(find( M(:,4) > 3 ) )./1000;

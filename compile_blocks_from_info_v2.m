@@ -70,8 +70,8 @@ switch PC_name
         
     case 'RD0332' %Carolyn
        info_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Final info sheets and compiled blocks\Info';
-        save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Final info sheets and compiled blocks\Blocks';
-        info_filename = 'Combined Info';
+        save_path = '\\apollo\research\ENT\Takesian Lab\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\\Compiled Blocks v2\widefield';
+        info_filename = 'Info_widefield';
         
     case 'RD-6-TAK2' %Esther's computer
         info_path = 'Z:\Carolyn\2P Imaging data\SSRI study with Jacob';

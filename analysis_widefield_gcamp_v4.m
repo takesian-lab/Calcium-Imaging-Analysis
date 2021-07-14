@@ -54,7 +54,7 @@ else
             info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Final info sheets and compiled blocks\Info';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
             compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks v2\widefield';
-            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\VxDC030520M4\gcamp_RF';
+            save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\analyzed widefield\VxDB082019M5\receptive field';
             info_filename = 'Info_widefield';
             
         case 'RD-6-TAK2' %Esther's computer
@@ -667,7 +667,76 @@ end
 %% visualize the zscored data - randomly selected data, will have to change window to window because of magic numbers
 visZ = squeeze(ZTrace.Tile4{4,7}(2,100,:,:))';
 imagesc(visZ);
+%% mean across stimuli - zscored 
+loops=parameters.loops;
+count=1;
+for ll=1:loops
+    loop_num=num2str(ll);
+%     if parameters.stim_protocol ==10;
+%         for lv=1:length(parameters.levels);
+%             if parameters.sort_loco ==0
+%                 idx=parameters.stimIDX{lv};
+%                 if lv ==1 & ll==1
+%                     display('...averaging across all trials, noiseburst...')
+%                 end
+%             else idx = parameters.loco_0.stimIDX{lv};
+%                 if lv ==1 & ll==1
+%                     display('...averaging across non-motor trials, noiseburst...')
+%                 end
+%             end
+%             % occasionally, a stim will be empty, and this will correct
+%             % for when this occurs
+%             TF = isempty(idx);
+%             if TF == 0
+%                 % do we want to pull out locomotor trials? If no (old
+%                 % version of the code) run this step, if yes, see below.
+%                 
+%                 m=ZTraces.(['Tile' loop_num]){lv};
+%                 %mean response per stim
+%                 mean_stim(:,:,:)=mean(m,4);
+%                 avgTrace.(['Tile' loop_num]){lv}= mean_stim;
+%                 clear mean_stim
+%                 
+%             end
+%         end
+%         
+%     else
+        for f=1:length(parameters.frequencies);
+            for lv=1:length(parameters.levels);
+                if parameters.sort_loco ==0
+                    idx=parameters.stimIDX{f,lv};
+                    if lv ==1 & f==1 & ll==1
+                        display('...averaging across all trials...')
+                    end
+                else idx = parameters.loco_0.stimIDX{f,lv};
+                    if lv ==1 & f==1 & ll==1
+                        display('...averaging across non-motor trials...')
+                    end
+                end
+                % occasionally, a stim will be empty, and this will correct
+                % for when this occurs
+                TF = isempty(idx);
+                if TF == 0
+                    % do we want to pull out locomotor trials? If no (old
+                    % version of the code) run this step, if yes, see below.
+                    
+                    m=ZTrace.(['Tile' loop_num]){f,lv};
+                    %mean response per stim
+                    mean_stim(:,:,:)=mean(m,4);
+                    avgTrace.(['Tile' loop_num]){f,lv}= mean_stim;
+                    clear mean_stim
+                    
+                end
+            end
+        end
+%     end
+end
 
+
+%
+% parameters.avgBaseline=mean(tempBase,1);
+% parameters.stdBaseline=std(tempBase,1);
+clear tempBase idx b count ll loop_num lv m mean_base
 
 %% put tiles back together
 rejoin_tiles=[];
@@ -744,194 +813,71 @@ else
         end
     end
 end
-%% convert to tif? and then store as individual file.
-folder = save_path;
-cd(folder)
-tic
-%noiseburst widefield
-if parameters.stim_protocol==10
-    for lv=1:length(parameters.levels);
-        numLV=num2str(parameters.levels(lv));
-        idx=parameters.stimIDX{lv};
-        fileName = matlab.lang.makeValidName(['avgStim_' numLV]);
-        a1 = stimAverages.(fieldName);
-        TF = isempty(a1);
-        if TF ==0
-            outputFileName= ([fileName 'db.tif']);
-            for k = 1:size(stimAverages.(fieldName),3)
-                imwrite(stimAverages.(fieldName)(:, :, k), outputFileName, 'WriteMode', 'append')
-            end
-        end
-    end
-else
-    % RF and FMsweep widefield
-    for f=1:length(parameters.frequencies);
-        toc
-        numF=num2str(round(parameters.frequencies(f)));
-        fieldName = matlab.lang.makeValidName(['kHz' numF]);
-        for lv=1:length(parameters.levels);
-            numLV=num2str(parameters.levels(lv));
-            idx=parameters.stimIDX{f,lv};
-            fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
-            a1 = stimAverages.(fieldName){lv};
-            TF = isempty(a1);
-            if TF ==0
-                outputFileName= ([fileName 'db.tif']);
-                for k = 1:size(stimAverages.(fieldName){lv},3)
-                    imwrite(stimAverages.(fieldName){lv}(:, :, k), outputFileName, 'WriteMode', 'append')
-                end
-            end
-        end
-    end
-end
 
-%% normalize traces to mean 0 and std 1 - in progress....
-% folder = save_path;
-% cd(folder)
-% d = dir([folder '/*.tif']);%extract tiffs
-% total_stim = length(parameters.levels)*length(parameters.frequencies);
-% accumBase = zeros(size(imageData.Cropped_Imaging_Data,1),size(imageData.Cropped_Imaging_Data,2),total_stim*length(baseline));
-% for f=1:length(parameters.frequencies);
-%     numF=num2str(round(parameters.frequencies(f)));
-%     fieldName = matlab.lang.makeValidName(['kHz' numF]);
-%     for lv=1:length(parameters.levels);
-%         numLV=num2str(parameters.levels(lv));
-%         % fname = (['SpatDenoise' numF 'khz' numLV 'db.tif']);
-%         % fname = (['TempDenoise' numF 'khz' numLV 'db.tif']);
-%         fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
-%         fname= ([fileName 'db.tif']);
-%          a1 = stimAverages.(fieldName){lv};
-%         TF = isempty(a1);
-%         if TF ==0
-%         %        fname = (['avgStim' numF 'khz' numLV 'db.tif']);
-%         info = imfinfo(fname);
-%         num_images = numel(info)
-%         for k = 1:num_images
-%             AA = imread(fname, k);
-%             stack(:,:,k)=AA(:,:);
-%             stack=double(stack);
-%         end
-%         dimx = size(stack,1);
-%         dimy = size(stack,2)
-%         for x = 1:dimx
-%             for y =  1:dimy
-%                 normz = zscore(stack,0,3); %cgs left off here
-%             end
-%         end
-%
-%         %TODO: CGS - put the zscore here?
-%
-%
-%         ResponseWindow{f,lv}=stack(:,:,window);
-%         DFF0_mean{f,lv} = stack (:,:,:);
-%         baseLoc = stack(:,:,baseline);
-%         accumBase = cat(3, accumBase, baseLoc); % why is this such a large number?
-%         end
-%
-%         %         base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
-%         %             wind.(['Tile' loop_num]){f,lv}(:,:,:,:)=traces.(['Tile' loop_num]){f,lv}(:,:,window,:);
-%         clear stack AA
-%     end
-% end
+%% do we need to store the tiffs? try without it. - response window
+for f=1:length(parameters.frequencies)
+        numF=num2str(round(parameters.frequencies(f)))
+        fieldName = matlab.lang.makeValidName(['kHz' numF ]);
+        for lv=1:length(parameters.levels);
+            numLV=num2str(parameters.levels(lv))
+           ResponseWindow{f,lv} = stimAverages.(fieldName){1,lv}(:,:,window);
+     
+        
+
+        end
+    end
 
 
 %% %% find cumulative baseline and the response window
-baseline=1:(block.setup.constant.baseline_length*data.setup.FrameRate{1});
-window=(length(baseline)):(data.setup.FrameRate{1}*block.setup.constant.response_window);
-folder = save_path;
-% folder = 'C:\Anne';
-cd(folder)
-d = dir([folder '/*.tif']);%extract tiffs
-count = 1;
-% image = imageData.Cropped_Imaging_Data;
-if parameters.stim_protocol==10
-    total_stim = length(parameters.levels);
-else total_stim = length(parameters.levels)*length(parameters.frequencies);
-end
-accumBase = zeros(size(imageData.Cropped_Imaging_Data,1),size(imageData.Cropped_Imaging_Data,2),total_stim*length(baseline));
 
-
-if parameters.stim_protocol==10
-    for lv=1:length(parameters.levels);
-        numLV=num2str(parameters.levels(lv));
-        % fname = (['SpatDenoise' numF 'khz' numLV 'db.tif']);
-        % fname = (['TempDenoise' numF 'khz' numLV 'db.tif']);
-        fileName = matlab.lang.makeValidName(['avgStim_' numLV]);
-        fname= ([fileName 'db.tif']);
-        TF = exist(fname);
-        %          a1 = stimAverages.(fieldName){lv};
-        %         TF = isempty(a1);
-        if TF ==2 %sometimes there is a stim that is missing in the matrix of variables, this will only run if it exists
-            %        fname = (['avgStim' numF 'khz' numLV 'db.tif']);
-            info = imfinfo(fname);
-            num_images = numel(info);
-            for k = 1:num_images
-                AA = imread(fname, k);
-                stack(:,:,k)=AA(:,:);
-                stack=double(stack);
-            end
-            ResponseWindow{lv}=stack(:,:,window);
-            DFF0_mean{lv} = stack (:,:,:);
-            baseLoc = stack(:,:,baseline);
-            accumBase = cat(3, accumBase, baseLoc); % why is this such a large number?
-        end
-        
-        %         base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
-        %             wind.(['Tile' loop_num]){f,lv}(:,:,:,:)=traces.(['Tile' loop_num]){f,lv}(:,:,window,:);
-        clear stack AA
-    end
-else
-    
-    for f=1:length(parameters.frequencies);
-        numF=num2str(round(parameters.frequencies(f)));
-        fieldName = matlab.lang.makeValidName(['kHz' numF]);
-        for lv=1:length(parameters.levels);
-            numLV=num2str(parameters.levels(lv));
-            % fname = (['SpatDenoise' numF 'khz' numLV 'db.tif']);
-            % fname = (['TempDenoise' numF 'khz' numLV 'db.tif']);
-            fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
-            fname= ([fileName 'db.tif']);
-            TF = exist(fname);
-            %          a1 = stimAverages.(fieldName){lv};
-            %         TF = isempty(a1);
-            if TF ==2 %sometimes there is a stim that is missing in the matrix of variables, this will only run if it exists
-                %        fname = (['avgStim' numF 'khz' numLV 'db.tif']);
-                info = imfinfo(fname);
-                num_images = numel(info);
-                for k = 1:num_images
-                    AA = imread(fname, k);
-                    stack(:,:,k)=AA(:,:);
-                    stack=double(stack);
-                end
-                ResponseWindow{f,lv}=stack(:,:,window);
-                DFF0_mean{f,lv} = stack (:,:,:);
-                baseLoc = stack(:,:,baseline);
-                accumBase = cat(3, accumBase, baseLoc); % why is this such a large number?
-            end
-            
-            %         base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
-            %             wind.(['Tile' loop_num]){f,lv}(:,:,:,:)=traces.(['Tile' loop_num]){f,lv}(:,:,window,:);
-            clear stack AA
-        end
-    end
-end
-
-stdBaseline=std(accumBase,0,3);
-meanAccumBaseline = mean(accumBase,3);
-
-%plot response window
-% y=DFF0_mean{5,2};%RF
-y=DFF0_mean{1,4};
-%y=y(150:180,170:200,:);
-y= squeeze(mean(mean(y,2),1));
-x=1:length(y);
-figure;
-plot(x,y)
-
-%what does a whole response window look like
-% g = mean(ResponseWindow{5,2},3);
-% %         CLIM = [0 350];
-% imagesc(g);
+% folder = save_path;
+% cd(folder)
+% d = dir([folder '/*.tif']);%extract tiffs
+% 
+%     for f=1:length(parameters.frequencies);
+%         numF=num2str(round(parameters.frequencies(f)));
+%         fieldName = matlab.lang.makeValidName(['kHz' numF]);
+%         for lv=1:length(parameters.levels);
+%             numLV=num2str(parameters.levels(lv));
+%             fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
+%             fname= ([fileName 'db.tif']);
+%             TF = exist(fname);
+% 
+%             if TF ==2 %sometimes there is a stim that is missing in the matrix of variables, this will only run if it exists
+%                 info = imfinfo(fname);
+%                 num_images = numel(info);
+%                 for k = 1:num_images
+%                     AA = imread(fname, k);
+%                     stack(:,:,k)=AA(:,:);
+%                     stack=double(stack);
+%                 end
+%                 ResponseWindow{f,lv}=stack(:,:,window);
+%                 DFF0_mean{f,lv} = stack (:,:,:);
+% %                 baseLoc = stack(:,:,baseline);
+% %                 accumBase = cat(3, accumBase, baseLoc); % why is this such a large number?
+%             end
+%             
+%             %         base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
+%             %             wind.(['Tile' loop_num]){f,lv}(:,:,:,:)=traces.(['Tile' loop_num]){f,lv}(:,:,window,:);
+%             clear stack AA
+%         end
+% %     end
+% end
+% 
+% 
+% %plot response window
+% % y=DFF0_mean{5,2};%RF
+% y=ResponseWindow{5,2};
+% %y=y(150:180,170:200,:);
+% y= squeeze(mean(mean(y,2),1));
+% x=1:length(y);
+% figure;
+% plot(x,y)
+% 
+% %what does a whole response window look like
+% % g = mean(ResponseWindow{5,2},3);
+% % %         CLIM = [0 350];
+% % imagesc(g);
 
 
 %% plot all frequencies and amplitudes
@@ -965,7 +911,7 @@ else
             n=n+1
             subplot(length(parameters.frequencies),length(parameters.levels),n);
             imagesc(y);
-            caxis([0 3]);
+            caxis([0 2]);
             title(sprintf('Freq %d', round(parameters.frequencies(f),2)));
             axis image;
             set(gca,'XTick',[], 'YTick', [])
@@ -993,40 +939,40 @@ for f=1:length(parameters.frequencies);
 end
 
 %% zscore data
-for f=1:length(parameters.frequencies);
-    numF=num2str(round(parameters.frequencies(f)))
-    figure;
-    for lv=1:length(parameters.levels);
-        numLV=num2str(parameters.levels(lv));
-        mainResponse = ResponseWindow{f,lv};%temporally/spatially filtered response (2s post  sound)
-        Df_f0 = DFF0_mean{f,lv};%temporally/spatially filtered mean response (entire trace i.e. baseline and 3s post sound)
-        %z score of every frame of response window
-        zscR = (bsxfun(@minus, mainResponse, (repmat(meanAccumBaseline,...
-            [1 1 length(window)]))))./(repmat(stdBaseline,...
-            [1 1 length(window)]));
-        %         zscR = zscore(Df_f0);
-        
-        %zscore of every frame for entire trace
-        zscResponse{f,lv}=zscR;
-        zscS = (bsxfun(@minus,Df_f0, (repmat(meanAccumBaseline,...
-            [1 1 size(Df_f0,3)]))))./(repmat(stdBaseline,...
-            [1 1 size(Df_f0,3)]));
-        zscSignal{f,lv} =  zscS;
-        
-        
-        [ d1 d2 frames ] =size(zscR);%size of response window data
-        
-        
-        maxResponse{f,lv} = max(mainResponse,[],3);%max of response window (not zscored)
-        meanR{f,lv} = mean(mainResponse);%average of sound response window
-        meanZresponse{f,lv} = mean(zscR(:,:,:),3);
-        plot(squeeze(mean(mean(zscR(:,:,:),1),2)));
-        title(sprintf('Freq %d', round(parameters.frequencies(f),2)));
-        
-        hold on;
-        
-    end
-end
+% for f=1:length(parameters.frequencies);
+%     numF=num2str(round(parameters.frequencies(f)))
+%     figure;
+%     for lv=1:length(parameters.levels);
+%         numLV=num2str(parameters.levels(lv));
+%         mainResponse = ResponseWindow{f,lv};%temporally/spatially filtered response (2s post  sound)
+%         Df_f0 = DFF0_mean{f,lv};%temporally/spatially filtered mean response (entire trace i.e. baseline and 3s post sound)
+%         %z score of every frame of response window
+%         zscR = (bsxfun(@minus, mainResponse, (repmat(meanAccumBaseline,...
+%             [1 1 length(window)]))))./(repmat(stdBaseline,...
+%             [1 1 length(window)]));
+%         %         zscR = zscore(Df_f0);
+%         
+%         %zscore of every frame for entire trace
+%         zscResponse{f,lv}=zscR;
+%         zscS = (bsxfun(@minus,Df_f0, (repmat(meanAccumBaseline,...
+%             [1 1 size(Df_f0,3)]))))./(repmat(stdBaseline,...
+%             [1 1 size(Df_f0,3)]));
+%         zscSignal{f,lv} =  zscS;
+%         
+%         
+%         [ d1 d2 frames ] =size(zscR);%size of response window data
+%         
+%         
+%         maxResponse{f,lv} = max(mainResponse,[],3);%max of response window (not zscored)
+%         meanR{f,lv} = mean(mainResponse);%average of sound response window
+%         meanZresponse{f,lv} = mean(zscR(:,:,:),3);
+%         plot(squeeze(mean(mean(zscR(:,:,:),1),2)));
+%         title(sprintf('Freq %d', round(parameters.frequencies(f),2)));
+%         
+%         hold on;
+%         
+%     end
+% end
 
 %% average z-scores across all levels
 figure;
@@ -1095,7 +1041,7 @@ end
 %% determine CFs for each pixel
 [dim1 dim2 dim3] = size(imageData.Cropped_Imaging_Data);
 CF=NaN(dim1,dim2,1);
-response_threshold = 2;
+response_threshold = 3;
 
 
 for x= 1:dim1 % go through all x pixels
@@ -1104,8 +1050,8 @@ for x= 1:dim1 % go through all x pixels
         threshold_reached = 0; %reset threshold flag
         threshold_level=length(parameters.levels); %reset threshold level
         for lv = 1:length(parameters.levels)-1  % if level is less than max level and threshold has not been found
-            for f = 1:length(parameters.frequencies)
-                peak_response = meanZresponse{f,lv}(x,y,:);%
+            for f = 1:7;%length(parameters.frequencies)
+                peak_response = max(ResponseWindow{f,lv}(x,y,:));%
                 if peak_response>response_threshold % if threshold has been found - set by user in parameter file above
                     threshold_level = lv;
                     threshold_reached=1;
@@ -1119,18 +1065,18 @@ for x= 1:dim1 % go through all x pixels
         
         if threshold_level < length(parameters.levels)
             level_level_plusone = threshold_level+1;
-            for f = 1:length(parameters.frequencies)
+            for f = 1:7;%length(parameters.frequencies)
                 frequency_num = num2str(round(parameters.frequencies(f)));
-                signal_threshold(f) = meanZresponse{f,threshold_level}(x,y,:);
-                signal_threshold_plus_one(f) = meanZresponse{f,level_level_plusone}(x,y,:);
+                signal_threshold(f) = max(ResponseWindow{f,threshold_level}(x,y,:));
+                signal_threshold_plus_one(f) = max(ResponseWindow{f,level_level_plusone}(x,y,:));
                 avg_threshold_responses(f) = (signal_threshold(f)+signal_threshold_plus_one(f))/2;
             end
             options = fitoptions('gauss1');
             options.Lower = [0 1 0];
-            gauss_fit = fit(parameters.frequencies',avg_threshold_responses', 'gauss1',options);
+            gauss_fit = fit(parameters.frequencies(1:7)',avg_threshold_responses', 'gauss1',options);
             
-            gauss_curve = gauss_fit(parameters.frequencies(1):0.1:parameters.frequencies(length(parameters.frequencies)));
-            x_freq = [parameters.frequencies(1):0.1:parameters.frequencies(length(parameters.frequencies))];
+            gauss_curve = gauss_fit(parameters.frequencies(1):0.1:parameters.frequencies(7));
+            x_freq = [parameters.frequencies(1):0.1:parameters.frequencies(7)];
             [peak_amplitude,characteristic_frequency] = max(gauss_fit(x_freq));
             %      figure; %plot gaussian fits
             %     plot(parameters.frequencies,avg_threshold_responses); % use
@@ -1194,70 +1140,6 @@ im2 = imagesc(CF_mask);
 pbaspect([1 1 1]);
 set(im2,'AlphaData',~isnan(CF_mask))
 
-%% test "hot spots" for activity
-message = sprintf('Draw a circle on completed map and then hit the space bar,');
-uiwait(msgbox(message));
-h = imellipse;
-pause;
-BW_2 = createMask(h);
-pos_window = getPosition(h); %returns [x min, y min, width, height]
-%csvwrite('[mouseID] 'window_position'']) to mouse folder
-x_minSMwin = pos_window(1)
-y_minSMwin = pos_window(2)
-x_maxSMwin = pos_window(3)+x_minSMwin
-y_maxSMwin = pos_window(4)+y_minSMwin
-Tile_Mean_ROIsmWIN = imageData.Cropped_Imaging_Data;
-Tile_Mean_ROIsmWINI(BW_2==0)=0;
-figure; imshow(Tile_Mean_ROIsmWIN);title(sprintf('Masked small Window'));
-pause;
-
-Tile_Mean_ROIsmWIN=Tile_Mean_ROIsmWIN(y_minSMwin:y_maxSMwin,x_minSMwin:x_maxSMwin);
-figure; imshow(Tile_Mean_ROIsmWIN); title(sprintf('Cropped small Window'));
-pause;
-Window_Postion_small = [x_minSMwin x_maxSMwin y_minSMwin y_maxSMwin];
-
-%apply the new cropping to the mean tiles, and look to see if the
-%tuning is as expected - note to Carolyn- this is still the code for
-%accumBase, but it will serve as an easy template for what you are doing
-%here
-smallWindow_data = Full_Tile_Matrix(y_minSMwin:y_maxSmwin,x_minSMwin:x_maxSMwin,:);
-folder = save_path;
-% folder = 'C:\Anne';
-cd(folder)
-d = dir([folder '/*.tif']);%extract tiffs
-count = 1;
-image = imageData.Cropped_Imaging_Data;
-total_stim = length(parameters.levels)*length(parameters.frequencies);
-accumBase = zeros(size(image,1),size(image,2),total_stim*length(baseline));
-for f=1:length(parameters.frequencies);
-    numF=num2str(round(parameters.frequencies(f)))
-    fieldName = matlab.lang.makeValidName(['kHz' numF]);
-    for lv=1:length(parameters.levels);
-        numLV=num2str(parameters.levels(lv))
-        % fname = (['SpatDenoise' numF 'khz' numLV 'db.tif']);
-        % fname = (['TempDenoise' numF 'khz' numLV 'db.tif']);
-        fileName = matlab.lang.makeValidName(['avgStim_' numF 'kHz_' numLV]);
-        fname= ([fileName 'db.tif']);
-        %        fname = (['avgStim' numF 'khz' numLV 'db.tif']);
-        info = imfinfo(fname);
-        num_images = numel(info);
-        for k = 1:num_images
-            AA = imread(fname, k);
-            stack(:,:,k)=AA(:,:);
-            stack=double(stack);
-        end
-        ResponseWindow{f,lv}=stack(:,:,window);
-        DFF0_mean{f,lv} = stack (:,:,:);
-        baseLoc = stack(:,:,baseline);
-        accumBase = cat(3, accumBase, baseLoc); % why is this such a large number?
-        
-        
-        %         base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
-        %             wind.(['Tile' loop_num]){f,lv}(:,:,:,:)=traces.(['Tile' loop_num]){f,lv}(:,:,window,:);
-        clear stack AA
-    end
-end
-
 
 %% Save data
 
@@ -1272,3 +1154,4 @@ end
 cd(save_path)
 save('imageData.mat','imageData','-v7.3');
 save('parameters.mat','parameters','-v7.3');
+save('stimAverages.mat','stimAverages','-v7.3')

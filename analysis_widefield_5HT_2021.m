@@ -8,7 +8,7 @@ clear all;
 
 %% Load Data if it already exists, otherwise create new Data struct
 
-loadPreviousData = 0;
+loadPreviousData = 1;
 
 % if loadPreviousData
 %     %Load data
@@ -30,7 +30,7 @@ loadPreviousData = 0;
     %Random air puff = 11
     
    
-    parameters.stim_protocol = 3; % widefield RF = 4, noiseburst ITI = 10
+    parameters.stim_protocol = 4; % widefield RF = 4, noiseburst ITI = 10
     imaging_chan = 'Ch2'; %was the data collected Ch1 or Ch2?
     BOT_start = [1];
     detrend_filter = [300 10];
@@ -53,7 +53,7 @@ loadPreviousData = 0;
             info_path = 'Z:\Carolyn\2P Imaging data\5HT sensor\Info Sheets';
             %             compiled_blocks_path = 'D:\2P analysis\2P local data\Carolyn\analyzed\Daily Imaging';
             compiled_blocks_path = 'Z:\Carolyn\2P Imaging data\5HT sensor\Compiled Blocks';
-            save_path = 'Z:\Carolyn\2P Imaging data\5HT sensor\Analyzed Data\Cn0012621F3\Passive imaging 1 FM';
+            save_path = 'Z:\Carolyn\2P Imaging data\5HT sensor\Analyzed Data\Cn0012621F3\Baseline RF';
             info_filename = 'Info_Cn0012621F3';
             
         case 'RD-6-TAK2' %Esther's computer
@@ -85,6 +85,7 @@ loadPreviousData = 0;
 % end
 %% crop the window
 if loadPreviousData ==1
+    carolyn =1
     cd(save_path)
     load('Full_Tile_Matrix.mat')
     figure;
@@ -331,7 +332,7 @@ save('All_Images_df_over_f.mat','All_Images_df_over_f','-v7.3');
 % the data are divided into multiple 'tiles' to reduce memory issues. Tiles
 % go from rostral to caudal when going from 1:length(Tiles) i.e.
 % Tile1==most rostral
-tile_to_view = [1];
+tile_to_view = [7];
 tilenum = num2str(tile_to_view);
 
 for i=1:length(data.setup.Imaging_sets)
@@ -461,10 +462,10 @@ for ll=1:loops
                     plot(smooth(Rxy,10));
 %                    clear DFxy
                 end
-                ras = squeeze(mean(mean(traces.(['Tile' loop_num]){f,lv}(:,:,:,:),1),2))';
-                figure;
-                title(['all traces for ' fnum 'khz ' lvnum 'dB'])
-                imagesc(ras);
+%                 ras = squeeze(mean(mean(traces.(['Tile' loop_num]){f,lv}(:,:,:,:),1),2))';
+%                 figure;
+%                 title(['all traces for ' fnum 'khz ' lvnum 'dB'])
+%                 imagesc(ras);
              
             end
             
@@ -496,7 +497,7 @@ for ll=1:loops
                 % do we want to pull out locomotor trials? If no (old
                 % version of the code) run this step, if yes, see below.
                 
-                m=traces.(['Tile' loop_num]){f,lv};
+                m=ZTtrace.(['Tile' loop_num]){f,lv};
                 %mean response per stim
                 mean_stim(:,:,:)=mean(m,4);
                 avgTrace.(['Tile' loop_num]){f,lv}= mean_stim;
@@ -528,10 +529,10 @@ loop_num=num2str(1);
             % for when this occurs
             TF = isempty(idx);
             if TF == 0
-                m=traces.(['Tile' loop_num]){f,lv};
+                m=ZTrace.(['Tile' loop_num]){f,lv};
                 figure;
                 for mm = 1:size(traces.(['Tile' loop_num]){f,lv},4);
-                    sTrace = traces.(['Tile' loop_num]){f,lv}(:,:,:,mm);
+                    sTrace = ZTrace.(['Tile' loop_num]){f,lv}(:,:,:,mm);
                     msTrace = squeeze(mean(mean(sTrace,1),2));
                     plot(smooth(msTrace,5)); hold on;
                   
@@ -574,7 +575,8 @@ end
 figure;
 for f=1:length(parameters.frequencies)
     numF=num2str(round(parameters.frequencies(f)))
-    subplot(2,ceil(length(parameters.frequencies)/2),f)
+%     subplot(2,ceil(length(parameters.frequencies)/2),f)
+subplot(1,ceil(length(parameters.frequencies)),f)
     
     for lv=1:length(parameters.levels);
         numLV=num2str(parameters.levels(lv))
@@ -585,6 +587,7 @@ for f=1:length(parameters.frequencies)
             a2 = squeeze(mean(mean(a1,1),2));
             plot(smooth(a2)); hold on
         end
+
     end
 end
 %% convert to tif? and then store as individual file.
@@ -626,6 +629,7 @@ count = 1;
 total_stim = length(parameters.levels)*length(parameters.frequencies);
 accumBase = zeros(size(imageData.Cropped_Imaging_Data,1),size(imageData.Cropped_Imaging_Data,2),total_stim*length(baseline));
 for f=1:length(parameters.frequencies);
+    f
     numF=num2str(round(parameters.frequencies(f)));
     fieldName = matlab.lang.makeValidName(['kHz' numF]);
     for lv=1:length(parameters.levels);
@@ -642,6 +646,7 @@ for f=1:length(parameters.frequencies);
         info = imfinfo(fname);
         num_images = numel(info);
         for k = 1:num_images
+            k
             AA = imread(fname, k);
             stack(:,:,k)=AA(:,:);
             stack=double(stack);
@@ -654,15 +659,16 @@ for f=1:length(parameters.frequencies);
         
         %         base.(['Tile' loop_num]){f,lv}(:,:,:,:) = traces.(['Tile' loop_num]){f,lv}(:,:,baseline,:);
         %             wind.(['Tile' loop_num]){f,lv}(:,:,:,:)=traces.(['Tile' loop_num]){f,lv}(:,:,window,:);
-        clear stack AA
+      clear stack AA 
     end
+     
 end
 
 stdBaseline=std(accumBase,0,3);
 meanAccumBaseline = mean(accumBase,3);
 
 %plot response window
-y=DFF0_mean{5,2};
+y=DFF0_mean{5,2}(:,:,:);
 %y=y(150:180,170:200,:);
 y= squeeze(mean(mean(y,2),1));
 x=1:length(y);
@@ -740,7 +746,7 @@ for f=1:length(parameters.frequencies);
         [ d1 d2 frames ] =size(zscR);%size of response window data
         
         
-        maxResponse{f,lv} = min(mainResponse,[],3);%max of response window (not zscored)
+        maxResponse{f,lv} = min(mainResponse,[],3);%min of response window (not zscored)
         meanR{f,lv} = mean(mainResponse);%average of sound response window
         meanZresponse{f,lv} = mean(zscR(:,:,:),3);
         plot(squeeze(mean(mean(zscR(:,:,:),1),2)));
@@ -819,7 +825,7 @@ end
 %% determine CFs for each pixel
 [dim1 dim2 dim3] = size(imageData.Cropped_Imaging_Data);
 CF=NaN(dim1,dim2,1);
-response_threshold = 2;
+response_threshold = 1;
 
 
 for x= 1:dim1 % go through all x pixels

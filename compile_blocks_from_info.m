@@ -73,8 +73,8 @@ switch PC_name
         
     case 'RD0332' %Carolyn
        info_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Info Sheets v1';
-        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks\For testing Ca transients';
-        info_filename = 'Info_VxDD033120F2';
+        save_path = 'Z:\Carolyn\2P Imaging data\VIPvsNDNF_response_stimuli_study\Compiled Blocks';
+        info_filename = 'Info_VxDC030520M4';
         
     case 'RD-6-TAK2' %Esther's computer
         info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';

@@ -252,13 +252,15 @@ else %2p
         else
             XML.bidirectionalZ = true;
         end
+        %When VR trigger mode is 'Start with next scan (PFI0)' the VR is aligned with frame #1
         XML.voltageRecording_absoluteTime = str2double(X.PVScan.Sequence{1,1}.VoltageRecording.Attributes.absoluteTime);
         XML.voltageRecording_relativeTime = str2double(X.PVScan.Sequence{1,1}.VoltageRecording.Attributes.relativeTime);
+        XML.voltageRecording_triggerMode = X.PVScan.Sequence{1,1}.VoltageRecording.Attributes.triggerMode;
         XML.absoluteTime = [];
         XML.relativeTime = [];
         XML.cycle = [];
         XML.index = [];
-        XML.position = []; %Piezo position (some values are inf in 
+        XML.position = []; %Piezo position (values are sometimes inf so we can't get all position data from this) 
         
         count = 1;
         for s = 1:size(X.PVScan.Sequence,2)
@@ -283,9 +285,10 @@ else %2p
             end
         end
         
-        %BOT framerate does not account for the time it takes the Piezo to move between cycles:
+        %BOT framerate does not account for the retrace frame that PV adds between cycles
+        %XML.relativeTime and absoluteTime show that each cycle takes an extra frame to process
+        %This is the same for both one-directional and bidirectional data
         %BOT_fs = unique(round(diff(timestamp),5)); %FYI
-        %XML.relativeTime and absoluteTime show that each cycle takes an extra frame to process:
         %XML_fs = round(diff(XML.relativeTime),5); %FYI
         %XML_fs_betweenCycles = unique(XML_fs(XML.nPlanes:XML.nPlanes:end)); %FYI
         
@@ -295,7 +298,7 @@ else %2p
         if singleBOT %Z-corrected multiplane data (now single plane)
             timestamp = frame_data; %Use frame_data that hasn't been corrected since the times were originally generated from the XML
         else %Multiplane data
-            timestamp.combined = XML.relativeTime;
+            timestamp.combined = XML.relativeTime - XML.relativeTime(1); %Align timestamp to 0 and save
             for n = 1:XML.nPlanes
                 plane = n - 1;
                 planeName = ['plane' num2str(plane)];

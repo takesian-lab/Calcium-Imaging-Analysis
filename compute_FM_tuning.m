@@ -1,4 +1,4 @@
-function [FRA, data, fig1, fig2, fig3, fig4, fig5] = compute_frequency_tuning_v2(responsive, RF, plot_tuning, freqs, ints, cell)
+function [data, fig1, fig2, fig3, fig4, fig5] = compute_FM_tuning(responsive, RF, plot_tuning, speeds, ints, cell)
 % Compute tuning properties of a single cell and plot figures
 %
 % Argument(s): 
@@ -6,13 +6,12 @@ function [FRA, data, fig1, fig2, fig3, fig4, fig5] = compute_frequency_tuning_v2
 %   cell is significantly responsive to that stim combination
 %   RF (X x Y matrix) - matrix of cell's response to that stim combination
 %   plot_tuning - 0 or 1 to plot figures
-%   freqs (X vector) - list of frequencies from low to high corresponding to RF stim
-%   ints (Y vector - list of intensities from high to low corresponding to RF stim
+%   speeds (X vector) - list of FM speeds (ov/s) from down to up corresponding to FM stim
+%   ints (Y vector) - list of intensities (only works for 1 int right now)
 %   cell (int) - cell number
 %
 % Returns:
-%   FRA
-%   data (1x12 vector) containing:
+%   data (1x3 vector) containing:
 %     - BF   = frequency with the strongest response
 %     - BF_I = intensity corresponding to BF
 %     - CF   = frequency with the strongest response at threshold

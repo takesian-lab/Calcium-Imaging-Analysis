@@ -46,11 +46,13 @@
 %allSessionMapping = r x N double of the final ROIs chosen 
 %... this is equivalent to 'mapping' except including only the final ROIs
 
-%% Load files
+%% Combine data across multiple roiMatchPub files
+
 clear all
 
 batchProcessing = 1;
-batchLabels = [];
+batchFiles = {};
+batchLabels = {};
 b = 1;
 
 while batchProcessing
@@ -60,85 +62,50 @@ disp('Load roiMatchData file')
 [match_filename,match_filepath] = uigetfile('.mat');
 load([match_filepath '/' match_filename])
 disp(match_filename)
-fall1Number = input('Input first fall number: ');
-fall2Number = input('Input second fall number: ');
-batchLabels(b,1) = fall1Number;
-batchLabels(b,2) = fall2Number;
 
-%Load Fall.mat files in the same order they were loaded for roiMatchPub
+%Load Fall.mat files from roiMatchData
 %We need a minimum of 2 files
 falls = {};
-fall_filenames = {};
-fall_filepaths = {};
-nFilesLoaded = 1;
-allFilesLoaded = 0;
-while ~allFilesLoaded
-    if nFilesLoaded == 1
-        disp('Load first fall.mat file')
-    elseif nFilesLoaded == 2
-        disp('Load second fall.mat file')
-    else
-        disp('Load additional fall.mat file')
-    end
-    [fall_filenames{nFilesLoaded},fall_filepaths{nFilesLoaded}] = uigetfile('.mat');
-    falls{nFilesLoaded} = load([fall_filepaths{nFilesLoaded} '/' fall_filenames{nFilesLoaded}]);
-    disp(fall_filenames{nFilesLoaded});
-    nFilesLoaded = nFilesLoaded + 1;
-    if nFilesLoaded > 2
-        allFilesLoaded = input('Done loading files? 1 for yes, 0 for no: ');
-    end
+for f = 1:size(roiMatchData.allRois,2)
+    falls{f} = load(roiMatchData.allRois{1,f});
+    batchFiles{b,f} = roiMatchData.allRois{1,f};
 end
 
-%% Check that loaded files match the roiMatchPub (as best as we can)
-% I can think of two ways to do this:
-% 1) check that the correct number of fall.mats were loaded
-% 2) check that the fall.mat has the same number of ROIs
-% 3) check that the mean image is identical
 
-% 1) check that the correct number of fall.mats were loaded
-if length(falls) ~= size(roiMatchData.allSessionMapping,2)
-    error('Number of fall.mat files does not match the roiMatchPub file')
-end
+%% Check that loaded fall.mats match the roiMatchPub (as best as we can)
+% If the user modified the fall.mat ROIs anytime after matching, the suite2p cell
+% labels might have changed. We don't have a great way to catch this except
+% to check that total number of ROIs is the same (but total N could stay the same
+% even if labels change so it's not perfect)
 
 for f = 1:length(falls)
-    % 2) check that the fall.mat has the same number of ROIs
     nROIs = sum(falls{1,f}.iscell(:,1));
     cellCount = roiMatchData.rois{1,f}.cellCount;
+
     if nROIs ~= cellCount
-        error('One of the loaded fall.mats does not match the roiMatchPub file')
+        error('Suite2p labels have changed since matching was performed')
     end
-    
-    % 3) check that the mean image is identical
-    meanImg = falls{1,f}.ops.meanImg;
-    meanFrame = roiMatchData.rois{1,f}.meanFrame;
-    if ~isequal(meanImg,meanFrame)
-        error('One of the loaded fall.mats does not match the roiMatchPub file')
-    end   
 end
 
 %% Convert ROI mapping to suite2p labels
 
 allSessionMapping = roiMatchData.allSessionMapping;
 all_ROIs_to_label = []; %Convert ROI to suite2p labels
-all_manualMatches = []; %Manual matches added by user during manual matching (Be more careful with these)
+unmatchedCells = {};
 
 for f = 1:length(falls)
-    
+
     current_suite2p_labels = find(falls{1,f}.iscell(:,1)) - 1;
     ROI_to_label = [];
-    ROI_to_label_new = [];
         
     %Use manual labelling if available
     if isfield(roiMatchData, 'manualMatching')
         ROI_to_label = roiMatchData.manualMatching.matchedCells{f,1} - 1; %Corrected auto-matches, -1 is for python correction
         
-        %If new manual matches exist, save to new variable to not mix with auto-matches
-        if ~isempty(roiMatchData.manualMatching.newMatches) %Manual matches
-            ROI_to_label_new = roiMatchData.manualMatching.newMatches(:,f) - 1; %-1 is for python correction
-            all_manualMatches = [all_manualMatches, ROI_to_label_new];
-        else
-            ROI_to_label_new = nan;
-            all_manualMatches = [all_manualMatches, ROI_to_label_new];
+        %New manual matches
+        if ~isempty(roiMatchData.manualMatching.newMatches)
+            newMatches = roiMatchData.manualMatching.newMatches(:,f) - 1; %-1 is for python correction
+            ROI_to_label = [ROI_to_label; newMatches];
         end
             
     else
@@ -146,126 +113,110 @@ for f = 1:length(falls)
         for r = 1:size(current_allSessionMapping,1)
             ROI_to_label(r,1) = current_suite2p_labels(current_allSessionMapping(r));
         end
-        
-        ROI_to_label_new = nan;
-        all_manualMatches = [all_manualMatches, ROI_to_label_new];
+
     end
     
-    all_ROIs_to_label = [all_ROIs_to_label, ROI_to_label];
+    %Add any cells that didn't have a match
+    unmatchedCells{f} = setdiff(current_suite2p_labels, ROI_to_label);
     
-    falls{1,f}.allSessionMapping = ROI_to_label;
-    falls{1,f}.roiMatchData = roiMatchData;
-    falls{1,f}.roiMatchData.fall_filenames = fall_filenames;
-    falls{1,f}.roiMatchData.fall_filepaths = fall_filepaths;
+    all_ROIs_to_label = [all_ROIs_to_label, ROI_to_label];
 end
 
-ROIs_to_label{1,b} = all_ROIs_to_label;
-ManualROIs_to_label{1,b} = all_manualMatches;
+%Append unmatched cells to ROI labels by padding with nans
+for f = 1:length(falls)
+    current_unmatchedCells = unmatchedCells{f};
+    nanmat = nan(length(current_unmatchedCells),length(falls));
+    nanmat(:,f) = current_unmatchedCells;
+    all_ROIs_to_label = [all_ROIs_to_label; nanmat];
+end
+
+batchLabels{b,1} = all_ROIs_to_label;
 b = b + 1; %batch loop count
 batchProcessing = input('Continue batch processing? 1 for yes, 0 for no: ');
 
 end %while loop
 
-%% Combine multiple ROIs_to_label and ManualROIs_to_label using batchLabels
+%% Combine multiple ROIs_to_label using batchLabels
 
-for r = 1:2
-    if r == 1
-        labels = ROIs_to_label;
-    elseif r == 2
-        labels = ManualROIs_to_label;
+for b = 1:size(batchLabels,1)
+    
+    if b == 1
+        combinedLabels = batchLabels{1}; 
+        columns = batchFiles(1,:);
+        continue
     end
     
-    combinedLabels = []; 
-    columns = []; 
-    firstSetOfLabels = 1;
+    if isempty(batchLabels{b})
+        batchLabels{b} = [nan, nan]; %fake data so that column numbers will stay the same
+    end
     
-    for i = 1:size(batchLabels,1)
-        
-        if isempty(labels{i})
-            labels{i} = [nan, nan]; %fake data so that column numbers will stay the same
-        end
-           
-        file1 = batchLabels(i,1);
-        file2 = batchLabels(i,2);
-        
-        if firstSetOfLabels
-            combinedLabels(:,file1) = labels{i}(:,1);
-            combinedLabels(:,file2) = labels{i}(:,2);
-            columns(1) = file1;
-            columns(2) = file2;
-            column_count = 3;
-            firstSetOfLabels = 0;
-            continue
-        end
+    if size(batchLabels{b},2) > 2
+        error('This part of the script only works with 2-file matches right now')
+    end
+    
+    column_index1 = find(strcmp(batchFiles{b,1}, columns));
+    column_index2 = find(strcmp(batchFiles{b,2}, columns));
 
-        column_index1 = find(columns == file1);
-        column_index2 = find(columns == file2);
-        if ~isempty(column_index1) && isempty(column_index2) %File 1 matches previous file
-            existingList = labels{i}(:,1);
-            newList = labels{i}(:,2);
-            combinedLabels(:,column_count) = nan;
-            for j = 1:length(existingList)
-                if ismember(existingList(j),combinedLabels(:,column_index1))
-                    list_ind = find(combinedLabels(:,column_index1) == existingList(j));
-                    combinedLabels(list_ind,column_count) = newList(j);
-                else
-                    listLength = size(combinedLabels,1);
-                    combinedLabels(listLength + 1, :) = nan;
-                    combinedLabels(listLength + 1, column_index1) = existingList(j);
-                    combinedLabels(listLength + 1, column_count) = newList(j);
-                end
+    if isempty(column_index1) && isempty(column_index2) %Files do not match previous files
+        %Pad combinedLabels with NaNs
+        c1 = size(combinedLabels,2) + 1;
+        c2 = c1 + 1;
+        combinedLabels(:,c1:c2) = nan;
+        %Pad new labels with NaNs
+        nanmat = nan(size(batchLabels{b},1),c2);
+        nanmat(:,c1:c2) = batchLabels{b};
+        %Append new labels to the end of combinedLabels
+        combinedLabels = [combinedLabels; nanmat];
+    
+    elseif ~isempty(column_index1) || isempty(column_index2) %One file matches previous file
+        existingList = batchLabels{b}(:,1);
+        newList = labels{b}(:,2);
+        combinedLabels(:,column_count) = nan;
+        for j = 1:length(existingList)
+            if ismember(existingList(j),combinedLabels(:,column_index1))
+                list_ind = find(combinedLabels(:,column_index1) == existingList(j));
+                combinedLabels(list_ind,column_count) = newList(j);
+            else
+                listLength = size(combinedLabels,1);
+                combinedLabels(listLength + 1, :) = nan;
+                combinedLabels(listLength + 1, column_index1) = existingList(j);
+                combinedLabels(listLength + 1, column_count) = newList(j);
             end
-            columns(column_count) = file2;
-            column_count = column_count + 1;
-            
-        elseif ~isempty(column_index1) && ~isempty(column_index2) %Both File 1 and 2 match previous files
-            existingList1 = labels{i}(:,1);
-            existingList2 = labels{i}(:,2);
-            for j = 1:length(existingList1)
-                if ismember(existingList1(j),combinedLabels(:,column_index1))
-                    list_ind = find(combinedLabels(:,column_index1) == existingList1(j));
-                    label_to_check = combinedLabels(list_ind, column_index2);
-                    if isnan(label_to_check)
-                        combinedLabels(list_ind, column_index2) = existingList2(j);
-                    elseif label_to_check == existingList2(j) %labels match
-                        continue
-                    else %labels don't match
-                        listLength = size(combinedLabels,1);
-                        combinedLabels(listLength + 1, :) = nan;
-                        combinedLabels(listLength + 1, column_index1) = existingList1(j);
-                        combinedLabels(listLength + 1, column_index2) = existingList2(j);
-                    end
-                else
+        end
+        columns(column_count) = file2;
+        column_count = column_count + 1;
+
+    elseif ~isempty(column_index1) && ~isempty(column_index2) %Both File 1 and 2 match previous files
+        existingList1 = labels{b}(:,1);
+        existingList2 = labels{b}(:,2);
+        for j = 1:length(existingList1)
+            if ismember(existingList1(j),combinedLabels(:,column_index1))
+                list_ind = find(combinedLabels(:,column_index1) == existingList1(j));
+                label_to_check = combinedLabels(list_ind, column_index2);
+                if isnan(label_to_check)
+                    combinedLabels(list_ind, column_index2) = existingList2(j);
+                elseif label_to_check == existingList2(j) %labels match
+                    continue
+                else %labels don't match
                     listLength = size(combinedLabels,1);
                     combinedLabels(listLength + 1, :) = nan;
                     combinedLabels(listLength + 1, column_index1) = existingList1(j);
-                    combinedLabels(listLength + 1, column_index2) = existingList2(j);                
+                    combinedLabels(listLength + 1, column_index2) = existingList2(j);
                 end
+            else
+                listLength = size(combinedLabels,1);
+                combinedLabels(listLength + 1, :) = nan;
+                combinedLabels(listLength + 1, column_index1) = existingList1(j);
+                combinedLabels(listLength + 1, column_index2) = existingList2(j);                
             end
         end
     end
- 
-    if r == 1
-        combined_ROIs_to_label = combinedLabels;
-    elseif r == 2
-        combined_ManualROIs_to_label = combinedLabels;
-    end
 end
 
+
 % Save combined matching data
+save('CombinedMatchingData', 'batchLabels', 'combinedLlabel');
 
-save('CombinedMatchingData', 'batchLabels', 'combined_ROIs_to_label', 'combined_ManualROIs_to_label');
-
-
-%% Save fall.mats
-
-% for f = 1:length(falls)
-%     fullpath = [fall_filepaths{f} '/' fall_filenames{f}];
-%     fall = falls{1,f};
-%     save(fullpath, '-struct', 'fall');
-% end
-% 
-% disp('Finished processing!')
 
 %If you want to check the labels against each other quickly,
 %look at the variable all_ROIs_to_label

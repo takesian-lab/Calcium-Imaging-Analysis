@@ -166,8 +166,8 @@ for i = 1:size(unmatchedCells{min_ind,1},1)
             disp('Try again')
             [x,y] = ginput(1);
         end
-        cellMatch(matchCount,max_ind) = cellID;
-        cellMatch(matchCount,min_ind) = cellIDMap(round(y),round(x));
+        cellMatch(matchCount,min_ind) = cellID;
+        cellMatch(matchCount,max_ind) = cellIDMap(round(y),round(x));
         matchCount = matchCount + 1;
         
         subplot(1,2,max_ind)

@@ -60,7 +60,7 @@ switch PC_name
         save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledBlocks_v2';
         %info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior';
         %save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p data\Behavior\Compiled Blocks v2';
-        info_filename = 'Info_VxDG011121F1and2';
+        info_filename = 'Info_NxDH042521M3';
         ops_filename = 'Maryse_ops2.mat';
          
     case 'TAKESIANLAB2P' %2P computer

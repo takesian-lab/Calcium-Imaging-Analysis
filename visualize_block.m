@@ -24,7 +24,7 @@ function visualize_block(block,plane)
 % Search 'TODO'
 
 %% Magic numbers and setup
-
+%hi Maryse, again
 if nargin > 1
     multiplaneData = true;
     planeName = ['plane' num2str(plane)];

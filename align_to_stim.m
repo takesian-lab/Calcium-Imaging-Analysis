@@ -74,6 +74,11 @@ for n = 1:nPlanes
         timestamp = block.timestamp;
     end
     
+    %If no cells exist in block/plane
+    if isempty(F)
+        return
+    end
+    
     %generate a neuropil corrected trace  = raw F - (neuropil coefficient)*neuropil signal
     F7 = F - setup.constant.neucoeff*Fneu;
 

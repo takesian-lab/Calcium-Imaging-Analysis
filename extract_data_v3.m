@@ -23,11 +23,11 @@ PC_name = getenv('computername');
 switch PC_name
     case 'RD0366' %Maryse
         info_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis';
-        blocks_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledBlocks_SFN';
+        blocks_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\CompiledBlocks_VIPvsNDNF';
         save_path = '\\apollo\research\ENT\Takesian Lab\Maryse\2p analysis\ExtractedData';
-        info_filename = 'Combined Info SFN';
+        info_filename = 'Combined Info';
        
-        stimProtocol = 2; %See stimProtocol list above
+        stimProtocol = 3; %See stimProtocol list above
         use_zscore = 1; %use z-score instead of df/f
         STDlevel = 2; %minimum # standard deviations above baseline (or Z-scores) to be considered significant
         AUC_F_level = 5; %minimum area under the curve to be considered significant for df/f traces
@@ -177,8 +177,8 @@ if stimProtocol == 2 %RF
         'BW_20_RMS', 'BW_20_halfwidth', 'BW_BF_RMS', 'BW_BF_halfwidth', 'ISI', 'dPrime', 'Type'};
     st.FRA = {};
 elseif stimProtocol == 3 %FM
-    RF.stim = {};
-    RF.ColumnHeaders = {'TBD'};
+    RF.stim = {'Speed', 'Intensity'};
+    RF.ColumnHeaders = {'Best Speed', 'Speed BW', 'Frequency Modulation Index'};
 elseif stimProtocol == 5 %SAM
     RF.stim = {};
     RF.ColumnHeaders = {'TBD'};
@@ -580,6 +580,22 @@ for c = 1:size(cellList,1)
         end
     end
 
+    %FM SWEEP ONLY
+    if stim_protocol == 3
+        %Compute FM tuning
+        if any(any(RF.F.isResponsive(ind_v1,ind_v2,c)))
+            [RF.F.FRA{c,1}, RF.F.data(c,2:end), figures{c,4:8}] = ... 
+            compute_frequency_tuning_v2(RF.F.isResponsive(ind_v1,ind_v2,c), RF.F.response(ind_v1,ind_v2,c),...
+            plot_tuning, unique_stim_v2, unique_stim_v1, cellNumber);
+        end
+        
+        if any(any(RF.S.isResponsive(ind_v1,ind_v2,c)))
+            [RF.S.FRA{c,1}, RF.S.data(c,2:end), figures{c,9:13}] = ... 
+            compute_frequency_tuning_v2(RF.S.isResponsive(ind_v1,ind_v2,c), RF.S.response(ind_v1,ind_v2,c),...
+            plot_tuning, unique_stim_v2, unique_stim_v1, cellNumber);
+        end
+    end
+    
     if save_figures
         mouse = num2str(block.setup.mousename);
         block_filename = num2str(block.setup.block_filename);

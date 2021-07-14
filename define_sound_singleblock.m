@@ -298,7 +298,7 @@ else %2p
         if singleBOT %Z-corrected multiplane data (now single plane)
             timestamp = frame_data; %Use frame_data that hasn't been corrected since the times were originally generated from the XML
         else %Multiplane data
-            timestamp.combined = XML.relativeTime;
+            timestamp.combined = XML.relativeTime - XML.relativeTime(1); %Align timestamp to 0 and save
             for n = 1:XML.nPlanes
                 plane = n - 1;
                 planeName = ['plane' num2str(plane)];
